@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Retirer un co-organisateur" %} - KaramuManage{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-12">
+    <div class="glass-card p-6 text-center">
+        <!-- Icône -->
+        <div class="w-16 h-16 mx-auto rounded-full bg-red-500/20 flex items-center justify-center mb-4">
+            <i class="fas fa-user-minus text-2xl text-red-400"></i>
+        </div>
+
+        <h1 class="text-xl font-bold mb-2">{% trans "Retirer le co-organisateur" %}</h1>
+        <p class="text-gray-400 text-sm">
+            {% blocktrans with name=object.user.email event=object.event.name %}
+                Retirer "{{ name }}" de l'événement "{{ event }}" ?
+            {% endblocktrans %}
+        </p>
+
+        <!-- Avertissement -->
+        <div class="mt-4 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-xs text-yellow-400">
+            <i class="fas fa-info-circle mr-1"></i>
+            {% trans "Cette action est irréversible." %}
+        </div>
+
+        <form method="post" class="mt-6">
+            {% csrf_token %}
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button type="submit" class="btn-danger flex-1 justify-center">
+                    <i class="fas fa-user-minus"></i> {% trans "Retirer" %}
+                </button>
+                <a href="{% url 'events:event_detail' object.event.slug %}" class="btn-secondary flex-1 justify-center">
+                    <i class="fas fa-times"></i> {% trans "Annuler" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

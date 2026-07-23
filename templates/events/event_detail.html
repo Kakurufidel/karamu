@@ -1,0 +1,890 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ event.name }} - KaramuManage{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* ============================================================ */
+    /* MENU MOBILE */
+    /* ============================================================ */
+    .mobile-menu-toggle {
+        display: none;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        padding: 6px 12px;
+        color: rgba(255,255,255,0.6);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 12px;
+        width: 100%;
+        justify-content: center;
+    }
+    .mobile-menu-toggle:hover {
+        background: rgba(255,255,255,0.08);
+        color: #fff;
+    }
+    .mobile-menu-toggle.active {
+        background: rgba(139,92,246,0.15);
+        border-color: rgba(139,92,246,0.3);
+        color: #A78BFA;
+    }
+    
+    @media (max-width: 768px) {
+        .mobile-menu-toggle { display: inline-flex; }
+        .mobile-menu-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease;
+            opacity: 0;
+            padding: 0 2px;
+        }
+        .mobile-menu-content.open {
+            max-height: 3000px;
+            opacity: 1;
+            padding: 12px 2px 2px 2px;
+        }
+        .desktop-only { display: none; }
+    }
+    
+    @media (min-width: 769px) {
+        .mobile-only { display: none; }
+    }
+
+    /* ============================================================ */
+    /* SECTIONS PLIABLES */
+    /* ============================================================ */
+    .section-toggle {
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.2s ease;
+        padding: 4px 0;
+    }
+    .section-toggle:hover {
+        color: #8B5CF6;
+    }
+    .section-toggle .chevron {
+        transition: transform 0.3s ease;
+    }
+    .section-toggle.active .chevron {
+        transform: rotate(180deg);
+    }
+    .section-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease;
+        opacity: 0;
+        padding: 0 2px;
+    }
+    .section-content.open {
+        max-height: 2000px;
+        opacity: 1;
+        padding: 12px 2px 2px 2px;
+    }
+    @media (min-width: 640px) {
+        .section-content.open {
+            padding: 16px 4px 4px 4px;
+        }
+    }
+
+    /* ============================================================ */
+    /* STAT CARDS */
+    /* ============================================================ */
+    .stat-card {
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+        cursor: pointer;
+        display: block;
+        text-decoration: none;
+        background: rgba(255,255,255,0.02);
+        border-radius: 10px;
+    }
+    .stat-card:hover {
+        border-color: rgba(139, 92, 246, 0.3);
+        background: rgba(255,255,255,0.04);
+    }
+    .stat-card .stat-number {
+        font-size: 22px;
+        font-weight: 700;
+    }
+    .stat-card .stat-label {
+        font-size: 10px;
+        color: rgba(255,255,255,0.4);
+        margin-top: 2px;
+    }
+    @media (min-width: 640px) {
+        .stat-card .stat-number { font-size: 28px; }
+        .stat-card .stat-label { font-size: 12px; }
+    }
+
+    /* ============================================================ */
+    /* BOUTON PREVISIONS */
+    /* ============================================================ */
+    .btn-forecast {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.375rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+        color: white;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 12px;
+    }
+    .btn-forecast:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        color: white;
+        text-decoration: none;
+    }
+    .btn-forecast.btn-sm { padding: 0.25rem 0.6rem; font-size: 11px; }
+
+    /* ============================================================ */
+    /* BADGES */
+    /* ============================================================ */
+    .badge-pink { background: rgba(236, 72, 153, 0.15); color: #f472b6; }
+    .badge-cyan { background: rgba(6, 182, 212, 0.15); color: #67e8f9; }
+    .badge-purple { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+    .badge-gray { background: rgba(255,255,255,0.05); color: #9ca3af; }
+    .badge-green { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .badge-yellow { background: rgba(234, 179, 8, 0.15); color: #fbbf24; }
+    .badge-red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+
+    /* ============================================================ */
+    /* MODAL SUPPRESSION */
+    /* ============================================================ */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(8px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        padding: 16px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+        background: rgba(20,20,35,0.97);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 24px;
+        padding: 32px;
+        max-width: 520px;
+        width: 100%;
+        animation: modalIn 0.3s ease-out;
+        max-height: 90vh;
+        overflow-y: auto;
+        position: relative;
+    }
+    .modal-close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(255,255,255,0.05);
+        border: none;
+        color: rgba(255,255,255,0.5);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    @keyframes modalIn {
+        from { opacity: 0; transform: scale(0.95) translateY(20px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* ============================================================ */
+    /* RESPONSIVE */
+    /* ============================================================ */
+    @media (max-width: 640px) {
+        .stat-card .stat-number { font-size: 18px; }
+        .stat-card .stat-label { font-size: 9px; }
+        .glass-card { padding: 12px; }
+        .modal-content { padding: 24px 20px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
+
+    <!-- ============================================================ -->
+    <!-- EN-TÊTE -->
+    <!-- ============================================================ -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+        <div class="w-full sm:w-auto">
+            <a href="{% url 'events:event_list' %}" class="text-purple-400 hover:text-purple-300 transition text-xs sm:text-sm">
+                <i class="fas fa-arrow-left mr-1"></i> {% trans "Retour" %}
+            </a>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mt-0.5 truncate max-w-[200px] sm:max-w-[400px] md:max-w-none">{{ event.name }}</h1>
+            <div class="flex flex-wrap gap-1 sm:gap-2 mt-1">
+                <span class="badge badge-purple text-[10px] sm:text-xs">{{ event.get_event_type_display }}</span>
+                <span class="badge badge-gray text-[10px] sm:text-xs">
+                    <i class="fas fa-calendar-day mr-1"></i>
+                    {{ event.date|date:"d F Y" }}{% if event.time %} à {{ event.time|time:"H:i" }}{% endif %}
+                </span>
+                <span class="badge badge-gray text-[10px] sm:text-xs">
+                    <i class="fas fa-clock mr-1"></i>
+                    {% trans "Créé le" %} {{ event.created_at|date:"d/m/Y" }}
+                </span>
+                {% if event.is_published %}
+                    <span class="badge badge-green text-[10px] sm:text-xs"><i class="fas fa-globe mr-1"></i> {% trans "Publié" %}</span>
+                {% else %}
+                    <span class="badge badge-yellow text-[10px] sm:text-xs"><i class="fas fa-pencil mr-1"></i> {% trans "Brouillon" %}</span>
+                {% endif %}
+                {% if display_names %}
+                    <span class="badge badge-pink text-[10px] sm:text-xs">
+                        <i class="fas fa-heart mr-1"></i> {{ display_names }}
+                    </span>
+                {% endif %}
+                {% if event.has_tables %}
+                    <span class="badge badge-cyan text-[10px] sm:text-xs">
+                        <i class="fas fa-chair mr-1"></i> {% trans "Tables" %}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="flex gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto">
+            <a href="{% url 'events:event_update' event.slug %}" class="btn-secondary btn-sm text-xs sm:text-sm">
+                <i class="fas fa-edit"></i> <span class="hidden xs:inline">{% trans "Modifier" %}</span>
+            </a>
+            <button onclick="openDeleteModal()" class="btn-danger btn-sm text-xs sm:text-sm">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STATISTIQUES -->
+    <!-- ============================================================ -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
+        <a href="{% url 'guests:invited_list' event.id %}" class="stat-card text-center p-2 sm:p-3">
+            <div class="stat-number text-purple-400">{{ stats.total_invited|default:0 }}</div>
+            <div class="stat-label">{% trans "Invités" %}</div>
+        </a>
+        <a href="{% url 'guests:guest_list' event.id %}" class="stat-card text-center p-2 sm:p-3">
+            <div class="stat-number text-cyan-400">{{ stats.total_responses|default:0 }}</div>
+            <div class="stat-label">{% trans "Réponses" %}</div>
+        </a>
+        <a href="{% url 'guests:guest_list' event.id %}?status=attending" class="stat-card text-center p-2 sm:p-3">
+            <div class="stat-number text-green-400">{{ stats.attendance_rate|default:0 }}%</div>
+            <div class="stat-label">{% trans "Présence" %}</div>
+        </a>
+        <a href="{% url 'guests:checkin_scan' event.id %}" class="stat-card text-center p-2 sm:p-3">
+            <div class="stat-number text-yellow-400">{{ stats.expected_guests|default:0 }}</div>
+            <div class="stat-label">{% trans "Attendus" %}</div>
+        </a>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- GRILLE PRINCIPALE -->
+    <!-- ============================================================ -->
+    <div class="grid lg:grid-cols-3 gap-4 sm:gap-6">
+
+        <!-- ==================== COLONNE GAUCHE ==================== -->
+        <div class="space-y-4 sm:space-y-6">
+
+            <!-- Informations -->
+            <div class="glass-card p-3 sm:p-4">
+                <div class="section-toggle flex justify-between items-center cursor-pointer" onclick="toggleSection('info-section')">
+                    <h2 class="text-sm sm:text-base font-semibold flex items-center gap-2">
+                        <i class="fas fa-info-circle text-purple-400"></i>
+                        {% trans "Informations" %}
+                    </h2>
+                    <i class="fas fa-chevron-down chevron text-gray-400 text-xs transition-transform"></i>
+                </div>
+                <div id="info-section" class="section-content">
+                    <div class="space-y-2 text-xs sm:text-sm">
+                        <div class="flex items-start gap-2 sm:gap-3">
+                            <i class="fas fa-map-marker-alt text-cyan-400 mt-0.5 w-4 sm:w-5"></i>
+                            <div class="min-w-0">
+                                <span class="text-gray-400">{% trans "Lieu :" %}</span>
+                                <span class="text-gray-200 break-words">{{ event.location }}</span>
+                            </div>
+                        </div>
+                        {% if event.google_maps_link %}
+                            <div class="flex items-start gap-2 sm:gap-3">
+                                <i class="fas fa-external-link-alt text-green-400 mt-0.5 w-4 sm:w-5"></i>
+                                <a href="{{ event.google_maps_link }}" target="_blank" class="text-cyan-400 hover:text-cyan-300 text-xs sm:text-sm break-words">
+                                    <i class="fas fa-map-marked-alt mr-1"></i> {% trans "Google Maps" %}
+                                </a>
+                            </div>
+                        {% endif %}
+                        {% if event.dress_code %}
+                            <div class="flex items-start gap-2 sm:gap-3">
+                                <i class="fas fa-tshirt text-pink-400 mt-0.5 w-4 sm:w-5"></i>
+                                <div class="min-w-0">
+                                    <span class="text-gray-400">{% trans "Tenue :" %}</span>
+                                    <span class="text-gray-200 break-words">{{ event.dress_code }}</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                        {% if event.description %}
+                            <div class="flex items-start gap-2 sm:gap-3">
+                                <i class="fas fa-align-left text-gray-400 mt-0.5 w-4 sm:w-5"></i>
+                                <div class="min-w-0">
+                                    <p class="text-gray-200 text-xs sm:text-sm leading-relaxed break-words">{{ event.description|truncatechars:150 }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liens d'invitation -->
+            <div class="glass-card p-3 sm:p-4">
+                <div class="section-toggle flex justify-between items-center cursor-pointer" onclick="toggleSection('links-section')">
+                    <h2 class="text-sm sm:text-base font-semibold flex items-center gap-2">
+                        <i class="fas fa-link text-cyan-400"></i>
+                        {% trans "Liens" %}
+                    </h2>
+                    <i class="fas fa-chevron-down chevron text-gray-400 text-xs transition-transform"></i>
+                </div>
+                <div id="links-section" class="section-content">
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-[10px] sm:text-xs text-gray-400 block mb-1">{% trans "Lien RSVP" %}</label>
+                            <div class="flex gap-1 sm:gap-2">
+                                <input type="text" id="rsvp-link" value="{{ request.scheme }}://{{ request.get_host }}{{ rsvp_url }}"
+                                       readonly class="form-input text-[10px] sm:text-xs font-mono flex-1 min-w-0 truncate">
+                                <button onclick="copyLink('rsvp-link')" class="btn-secondary btn-sm px-2 sm:px-3 flex-shrink-0 text-xs">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <button onclick="shareWhatsApp('rsvp-link')" class="btn-success btn-sm w-full mt-2 justify-center text-xs sm:text-sm">
+                                <i class="fab fa-whatsapp"></i> {% trans "WhatsApp" %}
+                            </button>
+                        </div>
+                        <div>
+                            <label class="text-[10px] sm:text-xs text-gray-400 block mb-1">{% trans "Lien co-organisateurs" %}</label>
+                            <div class="flex gap-1 sm:gap-2">
+                                <input type="text" id="coorg-link" value="{{ request.scheme }}://{{ request.get_host }}{{ coorganizer_url }}"
+                                       readonly class="form-input text-[10px] sm:text-xs font-mono flex-1 min-w-0 truncate">
+                                <button onclick="copyLink('coorg-link')" class="btn-secondary btn-sm px-2 sm:px-3 flex-shrink-0 text-xs">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <button onclick="shareWhatsApp('coorg-link')" class="btn-success btn-sm w-full mt-2 justify-center text-xs sm:text-sm">
+                                <i class="fab fa-whatsapp"></i> {% trans "WhatsApp" %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Code co-organisateur -->
+            <div class="glass-card p-3 sm:p-4">
+                <div class="section-toggle flex justify-between items-center cursor-pointer" onclick="toggleSection('code-section')">
+                    <h2 class="text-sm sm:text-base font-semibold flex items-center gap-2">
+                        <i class="fas fa-qrcode text-purple-400"></i>
+                        {% trans "Code co-organisateur" %}
+                    </h2>
+                    <i class="fas fa-chevron-down chevron text-gray-400 text-xs transition-transform"></i>
+                </div>
+                <div id="code-section" class="section-content">
+                    <div class="flex items-center gap-1 sm:gap-2">
+                        <input type="text" id="coorg-short-code" value="{{ event.coorganizer_short_code }}"
+                               readonly class="form-input text-center font-mono text-lg sm:text-xl tracking-widest flex-1">
+                        <button onclick="copyLink('coorg-short-code')" class="btn-secondary btn-sm px-2 sm:px-3 flex-shrink-0 text-xs">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <p class="text-[10px] sm:text-xs text-gray-400 mt-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        {% trans "Envoyez ce code à un collègue." %}
+                    </p>
+                    <a href="{% url 'events:join_coorganizer_short' event.coorganizer_short_code %}" class="btn-secondary btn-sm w-full mt-2 justify-center text-xs sm:text-sm">
+                        <i class="fas fa-external-link-alt"></i> {% trans "Lien direct" %}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Co-organisateurs -->
+            <div class="glass-card p-3 sm:p-4">
+                <div class="section-toggle flex justify-between items-center cursor-pointer" onclick="toggleSection('collab-section')">
+                    <h2 class="text-sm sm:text-base font-semibold flex items-center gap-2">
+                        <i class="fas fa-user-friends text-cyan-400"></i>
+                        {% trans "Co-organisateurs" %}
+                        <span class="badge badge-gray text-[8px] sm:text-[10px]">{{ collaborators|length|add:1 }}</span>
+                    </h2>
+                    <i class="fas fa-chevron-down chevron text-gray-400 text-xs transition-transform"></i>
+                </div>
+                <div id="collab-section" class="section-content">
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center text-white font-bold text-[10px] sm:text-sm flex-shrink-0">
+                                {{ event.main_organizer.first_name|slice:":1"|upper }}{{ event.main_organizer.last_name|slice:":1"|upper }}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs sm:text-sm font-semibold truncate">{{ event.main_organizer.first_name }} {{ event.main_organizer.last_name }}</p>
+                                <p class="text-[10px] sm:text-xs text-gray-400 truncate">
+                                    <i class="fas fa-crown mr-1 text-yellow-400"></i> {% trans "Organisateur" %}
+                                </p>
+                            </div>
+                        </div>
+                        {% for collab in collaborators %}
+                            <div class="flex items-center justify-between gap-2 p-2 sm:p-3 rounded-xl bg-white/5 hover:bg-white/10 transition">
+                                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-700/50 flex items-center justify-center text-white font-bold text-[10px] sm:text-sm flex-shrink-0">
+                                        {{ collab.user.first_name|slice:":1"|upper }}{{ collab.user.last_name|slice:":1"|upper }}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-xs sm:text-sm font-semibold truncate">{{ collab.user.first_name }} {{ collab.user.last_name }}</p>
+                                        <p class="text-[10px] sm:text-xs text-gray-400 truncate">{{ collab.user.email }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                                    <form method="post" action="{% url 'events:collaborator_toggle_scan' collab.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="text-[10px] sm:text-xs px-1.5 sm:px-2 py-1 rounded-full transition {% if collab.can_scan %}badge-green{% else %}badge-gray{% endif %}">
+                                            <i class="fas fa-qrcode mr-0.5 sm:mr-1"></i>
+                                            {% if collab.can_scan %}{% trans "Scan" %}{% else %}{% trans "Scan" %}{% endif %}
+                                        </button>
+                                    </form>
+                                    <a href="{% url 'events:collaborator_delete' collab.id %}" class="text-red-400 hover:text-red-300 transition text-xs sm:text-sm">
+                                        <i class="fas fa-user-minus"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="text-center text-gray-400 text-xs sm:text-sm py-2">{% trans "Aucun co-organisateur." %}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== COLONNE DROITE ==================== -->
+        <div class="lg:col-span-2 space-y-4 sm:space-y-6">
+
+            <!-- ========================================================== -->
+            <!-- CARTE BOISSONS -->
+            <!-- ========================================================== -->
+            <div class="glass-card p-3 sm:p-4 md:p-5 border-2 border-purple-500/30 bg-gradient-to-r from-purple-500/5 to-cyan-500/5">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div class="min-w-0">
+                        <h2 class="text-base sm:text-lg font-semibold flex items-center gap-2">
+                            <i class="fas fa-calculator text-purple-400"></i>
+                            {% trans "Boissons" %}
+                        </h2>
+                        <p class="text-xs sm:text-sm text-gray-400 mt-0.5 truncate max-w-[200px] sm:max-w-none">
+                            {% trans "Prévisions et estimation" %}
+                        </p>
+                    </div>
+                    <div class="flex gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto">
+                        <a href="{% url 'expenses:forecast' event.id %}" class="btn-forecast btn-sm text-[10px] sm:text-xs">
+                            <i class="fas fa-chart-line"></i> {% trans "Prévisions" %}
+                        </a>
+                        <a href="{% url 'expenses:estimation' event.id %}" class="btn-primary btn-sm text-[10px] sm:text-xs">
+                            <i class="fas fa-chart-pie"></i> {% trans "Estimation" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- TABLES (UNIQUEMENT SI has_tables = True) -->
+            <!-- ========================================================== -->
+            {% if event.has_tables %}
+                <div class="glass-card p-3 sm:p-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-base sm:text-lg font-semibold flex items-center gap-2">
+                            <i class="fas fa-chair text-purple-400"></i>
+                            {% trans "Tables" %}
+                            <span class="badge badge-gray text-[8px] sm:text-[10px]">{{ tables|length }}</span>
+                        </h2>
+                        <a href="{% url 'events:table_list' event.id %}" class="text-cyan-400 hover:text-cyan-300 transition text-xs sm:text-sm">
+                            {% trans "Gérer" %} <i class="fas fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                        <a href="{% url 'events:table_list' event.id %}" class="btn-secondary btn-sm text-xs sm:text-sm">
+                            <i class="fas fa-list"></i> {% trans "Voir toutes" %}
+                        </a>
+                        <form method="post" action="{% url 'events:auto_assign_tables' event.id %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-primary btn-sm text-xs sm:text-sm">
+                                <i class="fas fa-random"></i> {% trans "Attribuer" %}
+                            </button>
+                        </form>
+                    </div>
+                    {% if not tables %}
+                        <div class="mt-2 p-2 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            {% trans "Aucune table n'a encore été créée." %}
+                            <a href="{% url 'events:table_list' event.id %}" class="text-cyan-400 hover:underline ml-1">
+                                {% trans "Créer des tables" %}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <!-- ========================================================== -->
+            <!-- MENU MOBILE -->
+            <!-- ========================================================== -->
+            <div class="lg:hidden">
+                <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars mr-2"></i> {% trans "Plus d'options" %}
+                    <i class="fas fa-chevron-down ml-2 text-xs transition-transform" id="mobile-chevron"></i>
+                </button>
+                <div class="mobile-menu-content mt-2 space-y-4" id="mobile-menu">
+                    
+                    <!-- Réponses (mobile) -->
+                    <div class="glass-card p-3 sm:p-4">
+                        <div class="section-toggle flex justify-between items-center cursor-pointer" onclick="toggleSection('responses-section-mobile')">
+                            <h2 class="text-sm sm:text-base font-semibold flex items-center gap-2">
+                                <i class="fas fa-list-check text-cyan-400"></i>
+                                {% trans "Réponses" %}
+                                <span class="badge badge-gray text-[8px] sm:text-[10px]">{{ stats.will_attend|default:0 }}/{{ stats.total_responses|default:0 }}</span>
+                            </h2>
+                            <i class="fas fa-chevron-down chevron text-gray-400 text-xs transition-transform"></i>
+                        </div>
+                        <div id="responses-section-mobile" class="section-content">
+                            <div class="flex flex-wrap gap-1 sm:gap-2 mb-3">
+                                <span class="badge badge-green text-[10px] sm:text-xs">{{ stats.will_attend|default:0 }} {% trans "présents" %}</span>
+                                <span class="badge badge-red text-[10px] sm:text-xs">{{ stats.will_not_attend|default:0 }} {% trans "absents" %}</span>
+                                <span class="badge badge-gray text-[10px] sm:text-xs">{{ stats.unverified|default:0 }} {% trans "non vérifiés" %}</span>
+                            </div>
+                            <div class="overflow-x-auto -mx-3 sm:-mx-4">
+                                <table class="w-full text-[10px] sm:text-xs">
+                                    <thead>
+                                        <tr class="border-b border-white/10">
+                                            <th class="text-left py-1.5 px-2 text-gray-400 font-medium">{% trans "Invité" %}</th>
+                                            <th class="text-left py-1.5 px-2 text-gray-400 font-medium hidden sm:table-cell">{% trans "Présence" %}</th>
+                                            <th class="text-left py-1.5 px-2 text-gray-400 font-medium hidden md:table-cell">{% trans "Boisson" %}</th>
+                                            <th class="text-left py-1.5 px-2 text-gray-400 font-medium">{% trans "Table" %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for response in recent_responses|slice:":8" %}
+                                            <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                                                <td class="py-1.5 px-2">
+                                                    <div class="font-medium text-[10px] sm:text-xs truncate max-w-[80px] sm:max-w-[120px]">{{ response.first_name }} {{ response.last_name }}</div>
+                                                    <div class="text-[8px] sm:text-[10px] text-gray-500 truncate max-w-[80px] sm:max-w-[120px]">{{ response.email }}</div>
+                                                </td>
+                                                <td class="py-1.5 px-2 hidden sm:table-cell">
+                                                    {% if response.will_attend %}
+                                                        <span class="badge badge-green text-[8px] sm:text-[10px]">{% trans "Oui" %}</span>
+                                                    {% else %}
+                                                        <span class="badge badge-red text-[8px] sm:text-[10px]">{% trans "Non" %}</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="py-1.5 px-2 hidden md:table-cell text-[10px] sm:text-xs">{{ response.drink_display|default:"-"|truncatechars:10 }}</td>
+                                                <td class="py-1.5 px-2">
+                                                    {% if response.table %}
+                                                        <span class="badge badge-purple text-[8px] sm:text-[10px]">{{ response.table.id }}</span>
+                                                    {% else %}
+                                                        <span class="text-gray-500 text-[8px] sm:text-[10px]">-</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="4" class="text-center py-4 text-gray-400 text-xs">
+                                                    <i class="fas fa-inbox text-lg mb-1 block"></i>
+                                                    {% trans "Aucune réponse." %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-3 flex flex-wrap justify-between items-center gap-2">
+                                <a href="{% url 'guests:guest_list' event.id %}" class="text-cyan-400 hover:text-cyan-300 transition text-[10px] sm:text-xs">
+                                    {% trans "Voir toutes" %} <i class="fas fa-arrow-right ml-1"></i>
+                                </a>
+                                <div class="flex gap-1 sm:gap-2">
+                                    <a href="{% url 'guests:export_checkins_csv' event.id %}" class="btn-secondary btn-sm text-[10px] sm:text-xs">
+                                        <i class="fas fa-file-csv"></i> CSV
+                                    </a>
+                                    <a href="{% url 'guests:export_checkins_excel' event.id %}" class="btn-secondary btn-sm text-[10px] sm:text-xs">
+                                        <i class="fas fa-file-excel"></i> Excel
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gestion des invités (mobile) -->
+                    <div class="glass-card p-3 sm:p-4">
+                        <h2 class="text-sm sm:text-base font-semibold mb-3 flex items-center gap-2">
+                            <i class="fas fa-users-cog text-purple-400"></i>
+                            {% trans "Invités" %}
+                        </h2>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
+                            <a href="{% url 'guests:invited_list' event.id %}" class="btn-secondary btn-sm text-[10px] sm:text-xs justify-center">
+                                <i class="fas fa-list"></i> {% trans "Pré-enregistrés" %}
+                            </a>
+                            <a href="{% url 'guests:guest_list' event.id %}" class="btn-secondary btn-sm text-[10px] sm:text-xs justify-center">
+                                <i class="fas fa-reply"></i> {% trans "Réponses" %}
+                            </a>
+                            <a href="{% url 'guests:checkin_scan' event.id %}" class="btn-primary btn-sm text-[10px] sm:text-xs justify-center">
+                                <i class="fas fa-qrcode"></i> {% trans "Scanner" %}
+                            </a>
+                            <a href="{% url 'guests:bulk_import' event.id %}" class="btn-secondary btn-sm text-[10px] sm:text-xs justify-center">
+                                <i class="fas fa-file-upload"></i> {% trans "Importer" %}
+                            </a>
+                        </div>
+                        <div class="mt-2 p-2 rounded-xl bg-white/5 text-[8px] sm:text-[10px] text-gray-400">
+                            <i class="fas fa-info-circle mr-0.5 sm:mr-1"></i>
+                            <span>
+                                {% blocktrans with invited=stats.total_invited verified=stats.verified unverified=stats.unverified %}
+                                    {{ invited }} pré-enregistrés | {{ verified }} vérifiés | {{ unverified }} non vérifiés
+                                {% endblocktrans %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- VERSION DESKTOP -->
+            <!-- ========================================================== -->
+            <div class="desktop-only space-y-4 sm:space-y-6">
+
+                <!-- Réponses -->
+                <div class="glass-card p-3 sm:p-4">
+                    <div class="section-toggle flex justify-between items-center cursor-pointer" onclick="toggleSection('responses-section')">
+                        <h2 class="text-sm sm:text-base font-semibold flex items-center gap-2">
+                            <i class="fas fa-list-check text-cyan-400"></i>
+                            {% trans "Réponses" %}
+                            <span class="badge badge-gray text-[8px] sm:text-[10px]">{{ stats.will_attend|default:0 }}/{{ stats.total_responses|default:0 }}</span>
+                        </h2>
+                        <i class="fas fa-chevron-down chevron text-gray-400 text-xs transition-transform"></i>
+                    </div>
+                    <div id="responses-section" class="section-content">
+                        <div class="flex flex-wrap gap-1 sm:gap-2 mb-3">
+                            <span class="badge badge-green text-[10px] sm:text-xs">{{ stats.will_attend|default:0 }} {% trans "présents" %}</span>
+                            <span class="badge badge-red text-[10px] sm:text-xs">{{ stats.will_not_attend|default:0 }} {% trans "absents" %}</span>
+                            <span class="badge badge-gray text-[10px] sm:text-xs">{{ stats.unverified|default:0 }} {% trans "non vérifiés" %}</span>
+                        </div>
+                        <div class="overflow-x-auto -mx-3 sm:-mx-4">
+                            <table class="w-full text-[10px] sm:text-xs">
+                                <thead>
+                                    <tr class="border-b border-white/10">
+                                        <th class="text-left py-1.5 px-2 text-gray-400 font-medium">{% trans "Invité" %}</th>
+                                        <th class="text-left py-1.5 px-2 text-gray-400 font-medium hidden sm:table-cell">{% trans "Présence" %}</th>
+                                        <th class="text-left py-1.5 px-2 text-gray-400 font-medium hidden md:table-cell">{% trans "Boisson" %}</th>
+                                        <th class="text-left py-1.5 px-2 text-gray-400 font-medium">{% trans "Table" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for response in recent_responses|slice:":8" %}
+                                        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                                            <td class="py-1.5 px-2">
+                                                <div class="font-medium text-[10px] sm:text-xs truncate max-w-[80px] sm:max-w-[120px]">{{ response.first_name }} {{ response.last_name }}</div>
+                                                <div class="text-[8px] sm:text-[10px] text-gray-500 truncate max-w-[80px] sm:max-w-[120px]">{{ response.email }}</div>
+                                            </td>
+                                            <td class="py-1.5 px-2 hidden sm:table-cell">
+                                                {% if response.will_attend %}
+                                                    <span class="badge badge-green text-[8px] sm:text-[10px]">{% trans "Oui" %}</span>
+                                                {% else %}
+                                                    <span class="badge badge-red text-[8px] sm:text-[10px]">{% trans "Non" %}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="py-1.5 px-2 hidden md:table-cell text-[10px] sm:text-xs">{{ response.drink_display|default:"-"|truncatechars:10 }}</td>
+                                            <td class="py-1.5 px-2">
+                                                {% if response.table %}
+                                                    <span class="badge badge-purple text-[8px] sm:text-[10px]">{{ response.table.id }}</span>
+                                                {% else %}
+                                                    <span class="text-gray-500 text-[8px] sm:text-[10px]">-</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center py-4 text-gray-400 text-xs">
+                                                <i class="fas fa-inbox text-lg mb-1 block"></i>
+                                                {% trans "Aucune réponse." %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-3 flex flex-wrap justify-between items-center gap-2">
+                            <a href="{% url 'guests:guest_list' event.id %}" class="text-cyan-400 hover:text-cyan-300 transition text-[10px] sm:text-xs">
+                                {% trans "Voir toutes" %} <i class="fas fa-arrow-right ml-1"></i>
+                            </a>
+                            <div class="flex gap-1 sm:gap-2">
+                                <a href="{% url 'guests:export_checkins_csv' event.id %}" class="btn-secondary btn-sm text-[10px] sm:text-xs">
+                                    <i class="fas fa-file-csv"></i> CSV
+                                </a>
+                                <a href="{% url 'guests:export_checkins_excel' event.id %}" class="btn-secondary btn-sm text-[10px] sm:text-xs">
+                                    <i class="fas fa-file-excel"></i> Excel
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestion des invités -->
+                <div class="glass-card p-3 sm:p-4">
+                    <h2 class="text-sm sm:text-base font-semibold mb-3 flex items-center gap-2">
+                        <i class="fas fa-users-cog text-purple-400"></i>
+                        {% trans "Invités" %}
+                    </h2>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
+                        <a href="{% url 'guests:invited_list' event.id %}" class="btn-secondary btn-sm text-[10px] sm:text-xs justify-center">
+                            <i class="fas fa-list"></i> {% trans "Pré-enregistrés" %}
+                        </a>
+                        <a href="{% url 'guests:guest_list' event.id %}" class="btn-secondary btn-sm text-[10px] sm:text-xs justify-center">
+                            <i class="fas fa-reply"></i> {% trans "Réponses" %}
+                        </a>
+                        <a href="{% url 'guests:checkin_scan' event.id %}" class="btn-primary btn-sm text-[10px] sm:text-xs justify-center">
+                            <i class="fas fa-qrcode"></i> {% trans "Scanner" %}
+                        </a>
+                        <a href="{% url 'guests:bulk_import' event.id %}" class="btn-secondary btn-sm text-[10px] sm:text-xs justify-center">
+                            <i class="fas fa-file-upload"></i> {% trans "Importer" %}
+                        </a>
+                    </div>
+                    <div class="mt-2 p-2 rounded-xl bg-white/5 text-[8px] sm:text-[10px] text-gray-400">
+                        <i class="fas fa-info-circle mr-0.5 sm:mr-1"></i>
+                        <span>
+                            {% blocktrans with invited=stats.total_invited verified=stats.verified unverified=stats.unverified %}
+                                {{ invited }} pré-enregistrés | {{ verified }} vérifiés | {{ unverified }} non vérifiés
+                            {% endblocktrans %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL SUPPRESSION -->
+<!-- ============================================================ -->
+<div id="delete-modal" class="modal-overlay">
+    <div class="modal-content">
+        <button onclick="closeDeleteModal()" class="modal-close">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="text-center">
+            <div class="w-16 h-16 mx-auto rounded-full bg-red-500/20 flex items-center justify-center mb-4">
+                <i class="fas fa-trash text-2xl text-red-400"></i>
+            </div>
+            <h2 class="text-xl font-bold mb-2">{% trans "Supprimer l'événement" %}</h2>
+            <p class="text-gray-400 text-sm">
+                {% blocktrans with name=event.name|truncatechars:30 %}Supprimer "{{ name }}" ? Cette action est irréversible.{% endblocktrans %}
+            </p>
+            <div class="flex flex-col sm:flex-row gap-3 mt-6">
+                <form method="post" action="{% url 'events:event_delete' event.slug %}" class="flex-1">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-danger w-full justify-center">
+                        <i class="fas fa-trash"></i> {% trans "Supprimer" %}
+                    </button>
+                </form>
+                <button onclick="closeDeleteModal()" class="btn-secondary w-full justify-center">
+                    <i class="fas fa-times"></i> {% trans "Annuler" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCRIPTS -->
+<!-- ============================================================ -->
+<script>
+    /**
+     * Toggle une section pliable
+     */
+    function toggleSection(sectionId) {
+        const content = document.getElementById(sectionId);
+        const toggle = content.closest('.glass-card').querySelector('.section-toggle');
+        content.classList.toggle('open');
+        if (toggle) toggle.classList.toggle('active');
+    }
+
+    /**
+     * Toggle le menu mobile
+     */
+    function toggleMobileMenu() {
+        const menu = document.getElementById('mobile-menu');
+        const chevron = document.getElementById('mobile-chevron');
+        const btn = document.querySelector('.mobile-menu-toggle');
+        
+        menu.classList.toggle('open');
+        btn.classList.toggle('active');
+        if (chevron) {
+            chevron.style.transform = menu.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+    }
+
+    /**
+     * Copier un lien
+     */
+    function copyLink(elementId) {
+        const input = document.getElementById(elementId);
+        input.select();
+        input.setSelectionRange(0, 99999);
+        try {
+            document.execCommand('copy');
+            const btn = input.nextElementSibling;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check text-green-400"></i>';
+            setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+        } catch (err) {
+            showToast('Erreur lors de la copie', 'error');
+        }
+    }
+
+    /**
+     * Partager sur WhatsApp
+     */
+    function shareWhatsApp(elementId) {
+        const input = document.getElementById(elementId);
+        const text = encodeURIComponent('Invitation : ' + input.value);
+        window.open('https://wa.me/?text=' + text, '_blank');
+    }
+
+    /**
+     * Ouvrir le modal de suppression
+     */
+    function openDeleteModal() {
+        document.getElementById('delete-modal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    /**
+     * Fermer le modal de suppression
+     */
+    function closeDeleteModal() {
+        document.getElementById('delete-modal').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Fermer le modal avec la touche Echap
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeDeleteModal();
+        }
+    });
+
+    // Fermer le modal en cliquant à l'extérieur
+    document.getElementById('delete-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDeleteModal();
+        }
+    });
+</script>
+{% endblock %}

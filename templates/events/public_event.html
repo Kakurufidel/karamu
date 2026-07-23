@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ event.title }} - KaramuManage{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <!-- Carte principale -->
+    <div class="glass-card p-6 md:p-8 mb-6 text-center">
+        {% if event.event_photo %}
+            <img src="{{ event.event_photo.url }}" alt="{{ event.title }}" class="w-full max-h-80 object-cover rounded-xl mb-6">
+        {% endif %}
+
+        <h1 class="text-2xl md:text-3xl font-bold">{{ event.title }}</h1>
+
+        <!-- Informations -->
+        <div class="flex flex-wrap justify-center gap-4 mt-4 text-sm text-gray-400">
+            <span>
+                <i class="fas fa-calendar-day text-purple-400 mr-1"></i>
+                {{ event.event_date|date:"l d F Y" }}
+            </span>
+            <span>
+                <i class="fas fa-clock text-cyan-400 mr-1"></i>
+                {{ event.event_date|date:"H:i" }}
+            </span>
+            <span>
+                <i class="fas fa-map-marker-alt text-yellow-400 mr-1"></i>
+                {{ event.location_name }}
+            </span>
+        </div>
+
+        <!-- Dress code -->
+        {% if event.dress_code %}
+            <div class="mt-4">
+                <span class="badge badge-purple">
+                    <i class="fas fa-tshirt mr-1"></i>
+                    {{ event.dress_code }}
+                </span>
+            </div>
+        {% endif %}
+
+        <!-- Description -->
+        {% if event.description %}
+            <div class="mt-6 p-4 rounded-xl bg-white/5 text-left">
+                <p class="text-gray-300 text-sm leading-relaxed">{{ event.description }}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- QR Code -->
+    {% if event.qr_code %}
+        <div class="glass-card p-6 text-center">
+            <h2 class="text-lg font-semibold mb-4">
+                <i class="fas fa-qrcode text-purple-400 mr-2"></i>
+                {% trans "QR Code d'accès" %}
+            </h2>
+            <img src="{{ event.qr_code.url }}" alt="QR Code" class="mx-auto max-w-[200px] rounded-lg">
+            <p class="text-xs text-gray-400 mt-3">
+                {% trans "Présentez ce QR code à l'entrée" %}
+            </p>
+        </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="mt-6 text-center">
+        <a href="{% url 'guests:rsvp' event.id %}" class="btn-primary">
+            <i class="fas fa-check-circle"></i>
+            {% trans "Confirmer ma présence" %}
+        </a>
+    </div>
+</div>
+{% endblock %}

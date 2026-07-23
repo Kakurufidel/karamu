@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ title }} - KaramuManage{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+    <!-- En-tête -->
+    <div class="text-center mb-8">
+        <div class="inline-flex items-center gap-2 bg-purple-500/10 rounded-full px-4 py-1.5 text-sm text-purple-400 mb-3">
+            <i class="fas fa-credit-card"></i>
+            <span>{% trans "Demande de paiement" %}</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold">{{ title }}</h1>
+        <p class="text-gray-400 text-sm mt-1">
+            {% blocktrans with event_name=event.name %}Demande de paiement pour "{{ event_name }}"{% endblocktrans %}
+        </p>
+    </div>
+
+    <div class="glass-card p-6 md:p-8">
+        <!-- Plans disponibles -->
+        <div class="bg-white/5 p-4 rounded-xl mb-6">
+            <h3 class="text-sm font-semibold text-gray-400 mb-3">
+                <i class="fas fa-crown text-purple-400 mr-1"></i>
+                {% trans "Plans disponibles" %}
+            </h3>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="p-3 rounded-xl bg-purple-500/10 text-center border border-purple-500/20">
+                    <p class="font-bold text-purple-400">{% trans "Basic" %}</p>
+                    <p class="text-lg font-bold text-white">25 $</p>
+                    <p class="text-xs text-gray-400">{% trans "400 invités max" %}</p>
+                </div>
+                <div class="p-3 rounded-xl bg-cyan-500/10 text-center border border-cyan-500/20">
+                    <p class="font-bold text-cyan-400">{% trans "Premium" %}</p>
+                    <p class="text-lg font-bold text-white">40 $</p>
+                    <p class="text-xs text-gray-400">{% trans "Invités illimités" %}</p>
+                </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-3 text-center">
+                <i class="fas fa-info-circle mr-1"></i>
+                {% trans "Paiement unique par événement. Sans abonnement." %}
+            </p>
+        </div>
+
+        <!-- Formulaire -->
+        <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <!-- Erreurs globales -->
+            {% if form.non_field_errors %}
+                <div class="form-errors-global">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <ul>
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <!-- Plan -->
+            <div class="mb-4">
+                <label for="{{ form.plan.id_for_label }}" class="form-label">
+                    <i class="fas fa-crown text-purple-400 mr-1"></i>
+                    {% trans "Plan" %} <span class="text-red-400">*</span>
+                </label>
+                {{ form.plan }}
+                {% if form.plan.errors %}
+                    <div class="form-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ form.plan.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Capture d'écran -->
+            <div class="mb-6">
+                <label for="{{ form.screenshot.id_for_label }}" class="form-label">
+                    <i class="fas fa-image text-cyan-400 mr-1"></i>
+                    {% trans "Capture d'écran du paiement" %} <span class="text-red-400">*</span>
+                </label>
+                <div class="relative">
+                    {{ form.screenshot }}
+                    <div class="mt-2 p-4 rounded-xl border-2 border-dashed border-white/10 text-center">
+                        <i class="fas fa-cloud-upload-alt text-2xl text-gray-500 mb-2 block"></i>
+                        <p class="text-xs text-gray-400">
+                            {% trans "Cliquez pour télécharger ou glissez-déposez ici" %}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            {{ form.screenshot.help_text }}
+                        </p>
+                    </div>
+                </div>
+                {% if form.screenshot.errors %}
+                    <div class="form-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ form.screenshot.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Boutons -->
+            <div class="flex flex-wrap gap-3 pt-6 border-t border-white/10">
+                <button type="submit" class="btn-primary flex-1 sm:flex-none">
+                    <i class="fas fa-paper-plane"></i>
+                    {% trans "Envoyer la demande" %}
+                </button>
+                <a href="{% url 'events:event_detail' event.slug %}" class="btn-secondary flex-1 sm:flex-none">
+                    <i class="fas fa-times"></i> {% trans "Annuler" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

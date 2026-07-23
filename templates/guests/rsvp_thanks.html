@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merci - {{ event.name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .thanks-card {
+            max-width: 460px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 40px 32px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .icon-success {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #d1fae5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        .icon-success i { font-size: 32px; color: #059669; }
+        .icon-info {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #fef3c7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        .icon-info i { font-size: 32px; color: #d97706; }
+        .thanks-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+        .thanks-subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 16px;
+        }
+        .event-details {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
+            text-align: left;
+        }
+        .event-details span { display: block; margin-bottom: 2px; }
+        .event-details i { width: 18px; color: #7c3aed; }
+        .btn-primary {
+            display: inline-block;
+            padding: 12px 32px;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 4px 14px rgba(124,58,237,0.25); }
+        .btn-secondary {
+            display: inline-block;
+            padding: 10px 24px;
+            background: transparent;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            color: #6b7280;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover { background: #f9fafb; color: #1f2937; }
+        .btn-success {
+            display: inline-block;
+            padding: 10px 28px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-success:hover { transform: scale(1.02); box-shadow: 0 4px 14px rgba(16,185,129,0.25); }
+        .btn-whatsapp {
+            display: inline-block;
+            padding: 10px 28px;
+            background: #25D366;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-whatsapp:hover { transform: scale(1.02); box-shadow: 0 4px 14px rgba(37,211,102,0.3); }
+        .flex-center { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+        .badge {
+            display: inline-block;
+            background: #ede9fe;
+            color: #7c3aed;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 12px;
+            border-radius: 12px;
+        }
+        .box-verified {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
+        }
+        .box-pending {
+            background: #fef3c7;
+            border-radius: 8px;
+            padding: 8px 14px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #92400e;
+        }
+        .box-download {
+            background: #f0fdf4;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            border: 1px solid #bbf7d0;
+        }
+        .box-download-title {
+            color: #065f46;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        .text-muted { color: #6b7280; font-size: 13px; }
+        .mt-1 { margin-top: 4px; }
+
+        @media (max-width: 480px) {
+            .thanks-card { padding: 28px 18px; }
+            .thanks-title { font-size: 20px; }
+            .btn-primary, .btn-success, .btn-whatsapp, .btn-secondary { 
+                padding: 10px 20px; 
+                font-size: 14px; 
+                width: 100%; 
+            }
+            .flex-center { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+    <div class="thanks-card">
+        
+        <!-- ============================================ -->
+        <!-- CAS 1 : L'INVITÉ A DIT "OUI" -->
+        <!-- ============================================ -->
+        {% if will_attend %}
+            <div class="icon-success">
+                <i class="fas fa-check"></i>
+            </div>
+            <h1 class="thanks-title">Merci pour votre réponse</h1>
+            <p class="thanks-subtitle">Votre présence a bien été enregistrée.</p>
+
+            <!-- Affichage du statut vérifié -->
+            {% if response.verification_status == 'verified' %}
+                <!-- ✅ INVITÉ VÉRIFIÉ → Téléchargement disponible -->
+                <div class="badge" style="margin-bottom:10px;">
+                    <i class="fas fa-check-circle mr-1"></i> Invité vérifié
+                </div>
+                <div class="box-verified">
+                    <i class="fas fa-user mr-1"></i> {{ response.first_name }} {{ response.last_name }}
+                    {% if response.table %}
+                        <span style="margin-left:12px;"><i class="fas fa-chair mr-1"></i> Table {{ response.table.number }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Téléchargement de l'invitation -->
+                <div class="box-download">
+                    <div class="box-download-title">
+                        <i class="fas fa-file-pdf mr-2"></i> Téléchargez votre invitation
+                    </div>
+                    <div class="flex-center">
+                        <a href="{% url 'invitation:download_pdf' response.invitation_token %}" class="btn-success" style="padding:8px 22px;font-size:14px;">
+                            <i class="fas fa-download mr-2"></i> Télécharger
+                        </a>
+                        <a href="https://wa.me/?text=Invitation pour {{ event.name }} - {{ request.scheme }}://{{ request.get_host }}{% url 'invitation:preview_pdf' response.invitation_token %}" target="_blank" class="btn-whatsapp" style="padding:8px 22px;font-size:14px;">
+                            <i class="fab fa-whatsapp mr-2"></i> Partager
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Lien vers l'événement -->
+                <div class="flex-center">
+                    <a href="{% url 'events:event_detail' event.slug %}" class="btn-primary">
+                        <i class="fas fa-calendar mr-2"></i> Voir l'événement
+                    </a>
+                </div>
+
+            {% else %}
+                <!-- ⏳ INVITÉ EN ATTENTE DE VÉRIFICATION -->
+                <div class="box-pending">
+                    <i class="fas fa-info-circle mr-1"></i> En attente de vérification
+                    <p class="text-muted mt-1" style="color:#78350f;font-size:12px;">
+                        L'invitation sera disponible après vérification par l'organisateur.
+                    </p>
+                </div>
+                
+                <!-- Lien vers l'événement -->
+                <div class="flex-center">
+                    <a href="{% url 'events:event_detail' event.slug %}" class="btn-primary">
+                        <i class="fas fa-calendar mr-2"></i> Voir l'événement
+                    </a>
+                </div>
+            {% endif %}
+
+        <!-- ============================================ -->
+        <!-- CAS 2 : L'INVITÉ A DIT "NON" -->
+        <!-- ============================================ -->
+        {% else %}
+            <div class="icon-info">
+                <i class="fas fa-info"></i>
+            </div>
+            <h1 class="thanks-title">Merci d'avoir répondu</h1>
+            <p class="thanks-subtitle">Nous sommes désolés que vous ne puissiez pas venir.</p>
+            <p class="text-muted" style="font-size:13px; margin-top:4px;">
+                Votre réponse a bien été enregistrée.
+            </p>
+            
+            <!-- Pas de lien vers l'événement, fin du parcours -->
+            <div class="flex-center" style="margin-top:20px;">
+                <a href="{% url 'authentication:home' %}" class="btn-secondary">
+                    <i class="fas fa-home mr-2"></i> Retour à l'accueil
+                </a>
+            </div>
+        {% endif %}
+
+    </div>
+</body>
+</html>

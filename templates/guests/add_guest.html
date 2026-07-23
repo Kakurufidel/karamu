@@ -1,0 +1,397 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Ajouter un invité" %} - KaramuManage{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-8">
+
+    <!-- ============================================================ -->
+    <!-- EN-TÊTE -->
+    <!-- ============================================================ -->
+    <div class="flex items-center gap-3 mb-6">
+        <a href="{% url 'guests:invited_list' event.id %}" class="text-purple-400 hover:text-purple-300 transition text-sm">
+            <i class="fas fa-arrow-left mr-1"></i> {% trans "Retour" %}
+        </a>
+        <h1 class="text-xl sm:text-2xl font-bold">{% trans "Ajouter un invité" %}</h1>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- FORMULAIRE -->
+    <!-- ============================================================ -->
+    <div class="glass-card p-4 sm:p-6 md:p-8">
+
+        <form method="post" novalidate id="guest-form">
+            {% csrf_token %}
+
+            <!-- Erreurs globales -->
+            {% if form.non_field_errors %}
+                <div class="form-errors-global mb-4">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <ul>
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <!-- ========================================================== -->
+            <!-- Prénom -->
+            <!-- ========================================================== -->
+            <div class="mb-4">
+                <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1.5">
+                    <i class="fas fa-user text-purple-400 mr-1"></i>
+                    {% trans "Prénom" %} <span class="text-red-400">*</span>
+                </label>
+                <input type="text" name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}"
+                       value="{{ form.first_name.value|default:'' }}"
+                       class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:bg-white/10 transition outline-none {% if form.first_name.errors %}border-red-500 ring-2 ring-red-500/20{% endif %}"
+                       placeholder="{% trans 'Ex: Jean' %}">
+                {% if form.first_name.errors %}
+                    <div class="flex items-center gap-2 text-red-400 text-sm mt-1.5">
+                        <i class="fas fa-exclamation-circle text-xs"></i>
+                        <span>{{ form.first_name.errors.0 }}</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- Nom -->
+            <!-- ========================================================== -->
+            <div class="mb-4">
+                <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1.5">
+                    <i class="fas fa-user text-cyan-400 mr-1"></i>
+                    {% trans "Nom" %} <span class="text-red-400">*</span>
+                </label>
+                <input type="text" name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}"
+                       value="{{ form.last_name.value|default:'' }}"
+                       class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:bg-white/10 transition outline-none {% if form.last_name.errors %}border-red-500 ring-2 ring-red-500/20{% endif %}"
+                       placeholder="{% trans 'Ex: Dupont' %}">
+                {% if form.last_name.errors %}
+                    <div class="flex items-center gap-2 text-red-400 text-sm mt-1.5">
+                        <i class="fas fa-exclamation-circle text-xs"></i>
+                        <span>{{ form.last_name.errors.0 }}</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- Email -->
+            <!-- ========================================================== -->
+            <div class="mb-4">
+                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1.5">
+                    <i class="fas fa-envelope text-purple-400 mr-1"></i>
+                    {% trans "Email" %}
+                    <span class="text-gray-500 font-normal text-xs">({% trans "optionnel" %})</span>
+                </label>
+                <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}"
+                       value="{{ form.email.value|default:'' }}"
+                       class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:bg-white/10 transition outline-none {% if form.email.errors %}border-red-500 ring-2 ring-red-500/20{% endif %}"
+                       placeholder="{% trans 'Ex: jean@email.com' %}">
+                {% if form.email.errors %}
+                    <div class="flex items-center gap-2 text-red-400 text-sm mt-1.5">
+                        <i class="fas fa-exclamation-circle text-xs"></i>
+                        <span>{{ form.email.errors.0 }}</span>
+                    </div>
+                {% endif %}
+                <p class="text-xs text-gray-500 mt-1.5">
+                    <i class="fas fa-info-circle mr-1 text-cyan-400"></i>
+                    {% trans "L'email permet de vérifier automatiquement l'invité lors de son RSVP." %}
+                </p>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- Téléphone -->
+            <!-- ========================================================== -->
+            <div class="mb-4">
+                <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1.5">
+                    <i class="fas fa-phone text-cyan-400 mr-1"></i>
+                    {% trans "Téléphone" %}
+                    <span class="text-gray-500 font-normal text-xs">({% trans "optionnel" %})</span>
+                </label>
+                <input type="tel" name="{{ form.phone.name }}" id="{{ form.phone.id_for_label }}"
+                       value="{{ form.phone.value|default:'' }}"
+                       class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:bg-white/10 transition outline-none {% if form.phone.errors %}border-red-500 ring-2 ring-red-500/20{% endif %}"
+                       placeholder="{% trans 'Ex: +243 812 345 678' %}">
+                {% if form.phone.errors %}
+                    <div class="flex items-center gap-2 text-red-400 text-sm mt-1.5">
+                        <i class="fas fa-exclamation-circle text-xs"></i>
+                        <span>{{ form.phone.errors.0 }}</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- TABLE (visible uniquement si has_tables = True) -->
+            <!-- ========================================================== -->
+            {% if event.has_tables %}
+                <div class="mb-6" id="table-field">
+                    <label for="{{ form.table.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-1.5">
+                        <i class="fas fa-chair text-yellow-400 mr-1"></i>
+                        {% trans "Table" %}
+                        <span class="text-gray-500 font-normal text-xs">({% trans "optionnel" %})</span>
+                    </label>
+                    <select name="{{ form.table.name }}" id="{{ form.table.id_for_label }}"
+                            class="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:bg-white/10 transition outline-none appearance-none cursor-pointer {% if form.table.errors %}border-red-500 ring-2 ring-red-500/20{% endif %}">
+                        <option value="">{% trans "-- Aucune table --" %}</option>
+                        {% for table in tables %}
+                            <option value="{{ table.id }}" {% if form.table.value == table.id %}selected{% endif %}>
+                                {% trans "Table" %} {{ table.number }}{% if table.name %} - {{ table.name }}{% endif %} ({{ table.capacity }} {% trans "places" %})
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {% if form.table.errors %}
+                        <div class="flex items-center gap-2 text-red-400 text-sm mt-1.5">
+                            <i class="fas fa-exclamation-circle text-xs"></i>
+                            <span>{{ form.table.errors.0 }}</span>
+                        </div>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1.5">
+                        <i class="fas fa-info-circle mr-1 text-cyan-400"></i>
+                        {% trans "L'invité sera automatiquement assigné à cette table." %}
+                    </p>
+                </div>
+            {% endif %}
+
+            <!-- ========================================================== -->
+            <!-- BOUTONS -->
+            <!-- ========================================================== -->
+            <div class="flex flex-wrap gap-2 sm:gap-3 pt-4 sm:pt-6 border-t border-white/10">
+                <button type="submit" class="btn-primary flex-1 sm:flex-none text-sm" id="submit-btn">
+                    <i class="fas fa-user-plus"></i> {% trans "Ajouter l'invité" %}
+                </button>
+                <a href="{% url 'guests:invited_list' event.id %}" class="btn-secondary flex-1 sm:flex-none text-sm">
+                    <i class="fas fa-times"></i> {% trans "Annuler" %}
+                </a>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- INFO -->
+    <!-- ============================================================ -->
+    <div class="mt-4 p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/10 text-xs text-gray-400">
+        <i class="fas fa-info-circle text-cyan-400 mr-1"></i>
+        {% trans "L'invité sera vérifié automatiquement lorsqu'il remplira le formulaire RSVP avec le même email." %}
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- STYLES (classes manquantes) -->
+<!-- ============================================================ -->
+<style>
+    /* ============================================================ */
+    /* FORMULAIRE */
+    /* ============================================================ */
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    select {
+        width: 100%;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        color: #e5e7eb;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        outline: none;
+        font-family: 'Inter', sans-serif;
+    }
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="tel"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+        border-color: #8B5CF6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+        background: rgba(255, 255, 255, 0.08);
+    }
+    input[type="text"]::placeholder,
+    input[type="email"]::placeholder,
+    input[type="tel"]::placeholder,
+    input[type="number"]::placeholder {
+        color: rgba(255, 255, 255, 0.3);
+    }
+    select {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 36px;
+        cursor: pointer;
+    }
+    select option {
+        background: #1a1a2e;
+        color: #e5e7eb;
+    }
+
+    /* ============================================================ */
+    /* ÉTAT ERREUR */
+    /* ============================================================ */
+    input.error,
+    select.error {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+        background: rgba(239, 68, 68, 0.05) !important;
+    }
+
+    /* ============================================================ */
+    /* FORM LABELS */
+    /* ============================================================ */
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 4px;
+    }
+    .form-label .required {
+        color: #EF4444;
+        margin-left: 2px;
+    }
+    .form-label .optional {
+        color: rgba(255, 255, 255, 0.3);
+        font-weight: 400;
+        font-size: 11px;
+    }
+
+    /* ============================================================ */
+    /* ERRORS */
+    /* ============================================================ */
+    .form-error {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #F87171;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+    .form-error i {
+        font-size: 14px;
+    }
+    .form-errors-global {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 16px;
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: 8px;
+        color: #F87171;
+        font-size: 13px;
+    }
+    .form-errors-global i {
+        margin-top: 2px;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+    .form-errors-global ul {
+        margin: 0;
+        padding-left: 16px;
+    }
+</style>
+
+<!-- ============================================================ -->
+<!-- SCRIPTS -->
+<!-- ============================================================ -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // ============================================
+        // 1. GESTION DU CHAMP TABLE
+        // ============================================
+        const tableField = document.getElementById('table-field');
+        if (tableField) {
+            const select = tableField.querySelector('select');
+            if (select) {
+                const options = select.querySelectorAll('option');
+                // Si seulement l'option vide existe, on masque le champ
+                if (options.length <= 1) {
+                    tableField.style.display = 'none';
+                }
+            }
+        }
+
+        // ============================================
+        // 2. VALIDATION EMAIL EN TEMPS RÉEL
+        // ============================================
+        const emailInput = document.querySelector('input[name="email"]');
+        const emailError = document.getElementById('email-error');
+        
+        if (emailInput) {
+            emailInput.addEventListener('blur', function() {
+                const value = this.value.trim();
+                const existingError = this.parentElement.querySelector('.email-error-msg');
+                
+                // Supprimer l'ancien message d'erreur
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                if (value && !isValidEmail(value)) {
+                    this.classList.add('error');
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'email-error-msg flex items-center gap-2 text-red-400 text-sm mt-1.5';
+                    errorDiv.innerHTML = '<i class="fas fa-exclamation-circle text-xs"></i> Veuillez saisir une adresse email valide (ex: nom@domaine.com)';
+                    this.parentElement.appendChild(errorDiv);
+                } else {
+                    this.classList.remove('error');
+                }
+            });
+        }
+
+        function isValidEmail(email) {
+            const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            return re.test(email);
+        }
+
+        // ============================================
+        // 3. VALIDATION FORMULAIRE
+        // ============================================
+        const form = document.getElementById('guest-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const email = document.querySelector('input[name="email"]');
+                if (email) {
+                    const value = email.value.trim();
+                    if (value && !isValidEmail(value)) {
+                        e.preventDefault();
+                        email.focus();
+                        showToast('Veuillez saisir une adresse email valide.', 'error');
+                        return false;
+                    }
+                }
+                return true;
+            });
+        }
+
+        // ============================================
+        // 4. TOAST (si showToast n'existe pas)
+        // ============================================
+        if (typeof showToast === 'undefined') {
+            window.showToast = function(message, type) {
+                const container = document.getElementById('toast-container');
+                if (container) {
+                    const toast = document.createElement('div');
+                    toast.className = 'toast toast-' + type;
+                    toast.innerHTML = `
+                        <div class="toast-icon"><i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i></div>
+                        <div class="toast-content"><div class="toast-message">${message}</div></div>
+                        <button class="toast-close" onclick="this.closest('.toast').remove()"><i class="fas fa-times"></i></button>
+                    `;
+                    container.appendChild(toast);
+                    setTimeout(() => toast.remove(), 5000);
+                } else {
+                    alert(message);
+                }
+            };
+        }
+
+    });
+</script>
+{% endblock %}

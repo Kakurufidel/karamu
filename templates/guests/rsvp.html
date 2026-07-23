@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSVP - {{ event.name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        /* ============================================================ */
+        /* BASE */
+        /* ============================================================ */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .rsvp-card {
+            max-width: 520px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 24px 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+        .event-badge {
+            display: inline-block;
+            background: #e9d8fd;
+            color: #7c3aed;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 12px;
+            border-radius: 12px;
+        }
+        .event-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin: 6px 0 2px;
+        }
+        .event-subtitle {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 14px;
+        }
+        .event-details {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 8px 14px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 16px;
+            font-size: 12px;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
+        }
+        .event-details i { width: 14px; color: #7c3aed; font-size: 12px; }
+
+        /* ============================================================ */
+        /* FORMULAIRES */
+        /* ============================================================ */
+        .form-group { margin-bottom: 10px; }
+        .form-label { display: block; font-size: 12px; font-weight: 500; color: #1f2937; margin-bottom: 3px; }
+        .form-label .required { color: #dc2626; margin-left: 2px; }
+        .form-input {
+            width: 100%;
+            padding: 7px 12px;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            color: #1f2937;
+            font-size: 13px;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+        .form-input:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.08); }
+        .form-input.input-error { border-color: #dc2626; background: #fef2f2; }
+        .form-input.input-error:focus { border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.15); }
+        .form-select {
+            width: 100%;
+            padding: 7px 12px;
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            color: #1f2937;
+            font-size: 13px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            cursor: pointer;
+            outline: none;
+        }
+        .form-select:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.08); }
+        .form-select.select-error { border-color: #dc2626; background: #fef2f2; }
+        .form-select.select-error:focus { border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.15); }
+
+        .form-radio-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+        .form-radio-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 14px;
+            background: #f9fafb;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+            color: #4b5563;
+        }
+        .form-radio-option:hover { background: #f3f4f6; }
+        .form-radio-option input[type="radio"] { accent-color: #7c3aed; width: 14px; height: 14px; margin: 0; }
+        .form-radio-option:has(input:checked) { border-color: #7c3aed; background: #ede9fe; color: #1f2937; }
+        .form-radio-option.radio-error { border-color: #dc2626; background: #fef2f2; }
+        .form-radio-option.radio-error:has(input:checked) { border-color: #dc2626; background: #fef2f2; }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #1f2937;
+            padding: 2px 0;
+        }
+        .form-checkbox input[type="checkbox"] { width: 15px; height: 15px; accent-color: #7c3aed; cursor: pointer; }
+
+        .form-error {
+            color: #dc2626;
+            font-size: 11px;
+            margin-top: 3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #fef2f2;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border-left: 3px solid #dc2626;
+            animation: shake 0.3s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+        .form-error i { font-size: 12px; }
+
+        .form-divider { border: none; border-top: 1px solid #e5e7eb; margin: 12px 0; }
+
+        /* ============================================================ */
+        /* BOUTONS */
+        /* ============================================================ */
+        .btn-primary {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover { transform: scale(1.01); box-shadow: 0 4px 12px rgba(124,58,237,0.25); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .btn-secondary {
+            display: inline-block;
+            padding: 8px 18px;
+            background: transparent;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            color: #6b7280;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            text-align: center;
+        }
+        .btn-secondary:hover { background: #f9fafb; color: #1f2937; }
+
+        /* ============================================================ */
+        /* ALERTES */
+        /* ============================================================ */
+        .alert-error {
+            padding: 8px 12px;
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            border-radius: 6px;
+            color: #991b1b;
+            font-size: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .alert-error i { font-size: 14px; }
+
+        .form-errors-list {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            border-radius: 6px;
+            padding: 6px 12px;
+            margin-bottom: 12px;
+        }
+        .form-errors-list ul { list-style: none; margin: 0; padding: 0; color: #991b1b; font-size: 12px; }
+        .form-errors-list ul li { margin: 2px 0; display: flex; align-items: center; gap: 4px; }
+        .form-errors-list ul li i { font-size: 12px; }
+
+        .input-success { border-color: #10b981; background: #f0fdf4; }
+        .input-success:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+
+        /* ============================================================ */
+        /* UTILITAIRES */
+        /* ============================================================ */
+        .hidden { display: none !important; }
+        .mt-2 { margin-top: 8px; }
+        .text-center { text-align: center; }
+        .flex-row { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+        .flex-1 { flex: 1; min-width: 100px; }
+
+        /* ============================================================ */
+        /* RESPONSIVE */
+        /* ============================================================ */
+        @media (max-width: 480px) {
+            .rsvp-card { padding: 16px 12px; }
+            .event-title { font-size: 18px; }
+            .form-radio-option { padding: 4px 10px; font-size: 11px; }
+            .event-details { font-size: 11px; gap: 4px 12px; }
+            .flex-row { flex-direction: column; gap: 4px; }
+            .flex-1 { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="rsvp-card">
+        <!-- ============================================================ -->
+        <!-- EN-TÊTE -->
+        <!-- ============================================================ -->
+        <div class="event-badge"><i class="fas fa-envelope mr-1"></i> Confirmation</div>
+        <h1 class="event-title">{{ event.name }}</h1>
+        <p class="event-subtitle">Merci de confirmer votre présence</p>
+
+        <div class="event-details">
+            <span><i class="fas fa-calendar-alt"></i> {{ event.date|date:"d F Y" }}</span>
+            <span><i class="fas fa-clock"></i> {{ event.time|time:"H:i" }}</span>
+            <span><i class="fas fa-map-marker-alt"></i> {{ event.location }}</span>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- MESSAGES -->
+        <!-- ============================================================ -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if form.non_field_errors %}
+            <div class="form-errors-list">
+                <ul>
+                    {% for error in form.non_field_errors %}
+                        <li><i class="fas fa-exclamation-circle"></i> {{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <!-- ============================================================ -->
+        <!-- FORMULAIRE -->
+        <!-- ============================================================ -->
+        <form method="post" novalidate id="rsvp-form">
+            {% csrf_token %}
+
+            <!-- Prénom + Nom -->
+            <div class="flex-row">
+                <div class="flex-1 form-group">
+                    <label class="form-label">Prénom <span class="required">*</span></label>
+                    <input type="text" name="first_name" value="{{ form.first_name.value|default:'' }}"
+                           class="form-input {% if form.first_name.errors %}input-error{% endif %}"
+                           placeholder="Prénom" required>
+                    {% if form.first_name.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.first_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="flex-1 form-group">
+                    <label class="form-label">Nom <span class="required">*</span></label>
+                    <input type="text" name="last_name" value="{{ form.last_name.value|default:'' }}"
+                           class="form-input {% if form.last_name.errors %}input-error{% endif %}"
+                           placeholder="Nom" required>
+                    {% if form.last_name.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.last_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Email + Téléphone -->
+            <div class="flex-row">
+                <div class="flex-1 form-group">
+                    <label class="form-label">Email <span class="required">*</span></label>
+                    <input type="email" name="email" value="{{ form.email.value|default:'' }}"
+                           class="form-input {% if form.email.errors %}input-error{% endif %}"
+                           placeholder="votre@email.com" required>
+                    {% if form.email.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.email.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="flex-1 form-group">
+                    <label class="form-label">Téléphone</label>
+                    <input type="tel" name="phone" value="{{ form.phone.value|default:'' }}"
+                           class="form-input {% if form.phone.errors %}input-error{% endif %}"
+                           placeholder="+243 XX XXX">
+                    {% if form.phone.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.phone.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <hr class="form-divider">
+
+            <!-- Présence -->
+            <div class="form-group">
+                <label class="form-label">Souhaitez-vous participer ? <span class="required">*</span></label>
+                <div class="form-radio-group">
+                    <label class="form-radio-option {% if form.will_attend.errors %}radio-error{% endif %}">
+                        <input type="radio" name="will_attend" value="True" id="attend-yes">
+                        <span>Oui</span>
+                    </label>
+                    <label class="form-radio-option {% if form.will_attend.errors %}radio-error{% endif %}">
+                        <input type="radio" name="will_attend" value="False" id="attend-no">
+                        <span>Non</span>
+                    </label>
+                </div>
+                {% if form.will_attend.errors %}
+                    <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.will_attend.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Champs si Oui -->
+            <div id="attending-fields" style="display:none;">
+
+                <!-- Boisson -->
+                <div class="form-group">
+                    <label class="form-label">Votre boisson <span class="required">*</span></label>
+                    <select name="drink_choice" id="drink_choice" class="form-select {% if form.drink_choice.errors %}select-error{% endif %}">
+                        <option value="">Sélectionnez</option>
+                        {% for drink in event.drink_options %}
+                            <option value="{{ drink }}" {% if form.drink_choice.value == drink %}selected{% endif %}>{{ drink }}</option>
+                        {% endfor %}
+                        {% if event.allow_other_drinks %}
+                            <option value="other" {% if form.drink_choice.value == 'other' %}selected{% endif %}>Autre</option>
+                        {% endif %}
+                    </select>
+                    {% if form.drink_choice.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.drink_choice.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Autre boisson (conditionné par allow_other_drinks) -->
+                {% if event.allow_other_drinks %}
+                    <div class="form-group hidden" id="other-drink-field">
+                        <input type="text" name="drink_other" value="{{ form.drink_other.value|default:'' }}"
+                               class="form-input {% if form.drink_other.errors %}input-error{% endif %}"
+                               placeholder="Précisez votre boisson">
+                        {% if form.drink_other.errors %}
+                            <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.drink_other.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <hr class="form-divider">
+
+                <!-- Accompagnement -->
+                <div class="form-group">
+                    <div class="form-checkbox">
+                        <input type="checkbox" name="is_accompanied" id="is_accompanied" {% if form.is_accompanied.value %}checked{% endif %}>
+                        <label for="is_accompanied">Je serai accompagné(e)</label>
+                    </div>
+                    {% if form.is_accompanied.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.is_accompanied.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Nombre de personnes (valeur par défaut 1) -->
+                <input type="hidden" name="number_of_guests" value="1">
+
+                <!-- Boisson accompagnant -->
+                <div class="form-group hidden" id="companion-fields">
+                    <div class="form-group" style="margin-bottom:6px;">
+                        <label class="form-label">Boisson de l'accompagnant <span class="required">*</span></label>
+                        <select name="companion_drink_choice" id="companion_drink_choice" class="form-select {% if form.companion_drink_choice.errors %}select-error{% endif %}">
+                            <option value="">Sélectionnez</option>
+                            {% for drink in event.drink_options %}
+                                <option value="{{ drink }}" {% if form.companion_drink_choice.value == drink %}selected{% endif %}>{{ drink }}</option>
+                            {% endfor %}
+                            {% if event.allow_other_drinks %}
+                                <option value="other" {% if form.companion_drink_choice.value == 'other' %}selected{% endif %}>Autre</option>
+                            {% endif %}
+                        </select>
+                        {% if form.companion_drink_choice.errors %}
+                            <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.companion_drink_choice.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    {% if event.allow_other_drinks %}
+                        <div class="form-group hidden" id="other-companion-drink-field" style="margin-bottom:0;">
+                            <input type="text" name="companion_drink_other" value="{{ form.companion_drink_other.value|default:'' }}"
+                                   class="form-input {% if form.companion_drink_other.errors %}input-error{% endif %}"
+                                   placeholder="Précisez la boisson">
+                            {% if form.companion_drink_other.errors %}
+                                <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.companion_drink_other.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <hr class="form-divider">
+
+                <!-- Végétarien -->
+                <div class="form-group">
+                    <div class="form-checkbox">
+                        <input type="checkbox" name="is_vegan" id="id_is_vegan" {% if form.is_vegan.value %}checked{% endif %}>
+                        <label for="id_is_vegan">Option végétarienne</label>
+                    </div>
+                    {% if form.is_vegan.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.is_vegan.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Notes -->
+                <div class="form-group" style="margin-bottom:0;">
+                    <textarea name="special_notes" rows="2" class="form-input {% if form.special_notes.errors %}input-error{% endif %}"
+                              placeholder="Allergies, besoins...">{{ form.special_notes.value|default:'' }}</textarea>
+                    {% if form.special_notes.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.special_notes.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <hr class="form-divider">
+
+            <button type="submit" class="btn-primary" id="submit-btn">
+                <i class="fas fa-check mr-2"></i> Confirmer
+            </button>
+
+            <div class="text-center mt-2">
+                <a href="{% url 'authentication:home' %}" class="btn-secondary">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SCRIPTS -->
+    <!-- ============================================================ -->
+    <script>
+        (function() {
+            'use strict';
+
+            // ============================================================
+            // ÉLÉMENTS
+            // ============================================================
+            const attendYes = document.getElementById('attend-yes');
+            const attendNo = document.getElementById('attend-no');
+            const attendingFields = document.getElementById('attending-fields');
+            const isAccompanied = document.getElementById('is_accompanied');
+            const companionFields = document.getElementById('companion-fields');
+            const drinkSelect = document.getElementById('drink_choice');
+            const otherDrinkField = document.getElementById('other-drink-field');
+            const companionDrinkSelect = document.getElementById('companion_drink_choice');
+            const otherCompanionDrinkField = document.getElementById('other-companion-drink-field');
+            const submitBtn = document.getElementById('submit-btn');
+            const form = document.getElementById('rsvp-form');
+
+            // ============================================================
+            // FONCTIONS
+            // ============================================================
+            function toggleAll() {
+                // 1. Champs "présence" - Si Oui
+                if (attendYes && attendYes.checked) {
+                    attendingFields.style.display = 'block';
+                } else {
+                    attendingFields.style.display = 'none';
+                }
+
+                // 2. Accompagnement - boisson de l'accompagnant
+                if (isAccompanied && isAccompanied.checked) {
+                    companionFields.classList.remove('hidden');
+                } else {
+                    companionFields.classList.add('hidden');
+                }
+
+                // 3. Autre boisson
+                if (drinkSelect && drinkSelect.value === 'other') {
+                    otherDrinkField.classList.remove('hidden');
+                } else {
+                    otherDrinkField.classList.add('hidden');
+                }
+
+                // 4. Autre boisson accompagnant
+                if (companionDrinkSelect && companionDrinkSelect.value === 'other') {
+                    otherCompanionDrinkField.classList.remove('hidden');
+                } else {
+                    otherCompanionDrinkField.classList.add('hidden');
+                }
+            }
+
+            // ============================================================
+            // ÉVÉNEMENTS
+            // ============================================================
+            if (attendYes) attendYes.addEventListener('change', toggleAll);
+            if (attendNo) attendNo.addEventListener('change', toggleAll);
+            if (isAccompanied) isAccompanied.addEventListener('change', toggleAll);
+            if (drinkSelect) drinkSelect.addEventListener('change', toggleAll);
+            if (companionDrinkSelect) companionDrinkSelect.addEventListener('change', toggleAll);
+
+            // État initial
+            toggleAll();
+
+            // ============================================================
+            // VALIDATION DE L'EMAIL
+            // ============================================================
+            const emailInput = document.querySelector('input[name="email"]');
+            if (emailInput) {
+                emailInput.addEventListener('blur', function() {
+                    const value = this.value.trim();
+                    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                    
+                    if (value && !emailPattern.test(value)) {
+                        // Ajouter une classe d'erreur
+                        this.classList.add('input-error');
+                        
+                        // Vérifier si l'erreur existe déjà
+                        let errorDiv = this.parentElement.querySelector('.form-error.custom-email-error');
+                        if (!errorDiv) {
+                            errorDiv = document.createElement('div');
+                            errorDiv.className = 'form-error custom-email-error';
+                            errorDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> Veuillez saisir une adresse email valide (ex: nom@domaine.com)';
+                            this.parentElement.appendChild(errorDiv);
+                        }
+                    } else {
+                        this.classList.remove('input-error');
+                        const errorDiv = this.parentElement.querySelector('.form-error.custom-email-error');
+                        if (errorDiv) errorDiv.remove();
+                    }
+                });
+            }
+
+            // ============================================================
+            // SOUMISSION - DÉSACTIVER LE BOUTON
+            // ============================================================
+            if (form) {
+                form.addEventListener('submit', function() {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Envoi en cours...';
+                });
+            }
+
+        })();
+    </script>
+</body>
+</html>

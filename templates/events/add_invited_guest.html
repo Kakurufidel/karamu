@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Ajouter un invité" %} - KaramuManage{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+    <!-- En-tête -->
+    <div class="text-center mb-8">
+        <div class="inline-flex items-center gap-2 bg-purple-500/10 rounded-full px-4 py-1.5 text-sm text-purple-400 mb-3">
+            <i class="fas fa-user-plus"></i>
+            <span>{% trans "Ajout manuel" %}</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold">{% trans "Ajouter un invité" %}</h1>
+        <p class="text-gray-400 text-sm mt-1">
+            {% trans "Ajoutez manuellement un invité à votre événement" %}
+        </p>
+    </div>
+
+    <!-- Formulaire -->
+    <div class="glass-card p-6 md:p-8">
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Erreurs globales -->
+            {% if form.non_field_errors %}
+                <div class="form-errors-global">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <ul>
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <!-- Prénom -->
+            <div class="mb-4">
+                <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                    <i class="fas fa-user text-purple-400 mr-1"></i>
+                    {% trans "Prénom" %} <span class="text-red-400">*</span>
+                </label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                    <div class="form-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ form.first_name.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Nom -->
+            <div class="mb-4">
+                <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                    <i class="fas fa-user text-cyan-400 mr-1"></i>
+                    {% trans "Nom" %} <span class="text-red-400">*</span>
+                </label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                    <div class="form-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ form.last_name.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Email -->
+            <div class="mb-4">
+                <label for="{{ form.email.id_for_label }}" class="form-label">
+                    <i class="fas fa-envelope text-purple-400 mr-1"></i>
+                    {% trans "Email" %}
+                    <span class="text-xs text-gray-500 font-normal">({% trans "optionnel" %})</span>
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="form-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ form.email.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Téléphone -->
+            <div class="mb-4">
+                <label for="{{ form.phone.id_for_label }}" class="form-label">
+                    <i class="fas fa-phone text-cyan-400 mr-1"></i>
+                    {% trans "Téléphone" %}
+                    <span class="text-xs text-gray-500 font-normal">({% trans "optionnel" %})</span>
+                </label>
+                {{ form.phone }}
+                {% if form.phone.errors %}
+                    <div class="form-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ form.phone.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Table -->
+            <div class="mb-6">
+                <label for="{{ form.table.id_for_label }}" class="form-label">
+                    <i class="fas fa-chair text-yellow-400 mr-1"></i>
+                    {% trans "Table" %}
+                    <span class="text-xs text-gray-500 font-normal">({% trans "optionnel" %})</span>
+                </label>
+                {{ form.table }}
+                {% if form.table.errors %}
+                    <div class="form-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ form.table.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Boutons -->
+            <div class="flex flex-wrap gap-3 pt-6 border-t border-white/10">
+                <button type="submit" class="btn-primary flex-1 sm:flex-none">
+                    <i class="fas fa-user-plus"></i>
+                    {% trans "Ajouter l'invité" %}
+                </button>
+                <a href="{% url 'events:event_detail' event.slug %}" class="btn-secondary flex-1 sm:flex-none">
+                    <i class="fas fa-times"></i> {% trans "Annuler" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

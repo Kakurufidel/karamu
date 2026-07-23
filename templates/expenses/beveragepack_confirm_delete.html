@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Supprimer le pack" %} - {{ object.drink_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto px-4 sm:px-6 py-12">
+    <div class="glass-card text-center">
+        <i class="fas fa-exclamation-triangle text-5xl text-yellow-400 mb-4"></i>
+        <h1 class="text-2xl font-bold mb-2">{% trans "Supprimer le pack" %}</h1>
+        <p class="text-gray-400 mb-4">
+            {% trans "Êtes-vous sûr de vouloir supprimer le pack" %}
+            <strong class="text-white">{{ object.drink_name }}</strong> ?
+        </p>
+        <p class="text-sm text-gray-500 mb-6">
+            {% trans "Cette action est irréversible" %}
+        </p>
+
+        <form method="post" class="flex justify-center gap-3">
+            {% csrf_token %}
+            <a href="{% url 'expenses:beveragepack_list' object.event.id %}" class="btn-secondary">
+                {% trans "Annuler" %}
+            </a>
+            <button type="submit" class="btn-danger">
+                <i class="fas fa-trash"></i> {% trans "Supprimer" %}
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

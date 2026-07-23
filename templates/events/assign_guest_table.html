@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Assigner une table" %} - {{ event.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <div class="flex items-center gap-2 mb-6">
+        <a href="{% url 'events:table_list' event.id %}" class="text-purple-400 hover:text-purple-300 transition">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h1 class="text-2xl font-bold">{% trans "Assigner un invité à une table" %}</h1>
+    </div>
+
+    <div class="glass-card p-6 md:p-8">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Sélection de l'invité -->
+                <div>
+                    <label class="form-label">{% trans "Invité" %} <span class="text-red-400">*</span></label>
+                    <select name="guest_id" class="w-full p-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:border-purple-400" required>
+                        <option value="">{% trans "Sélectionnez un invité" %}</option>
+                        {% for guest in guests %}
+                            <option value="{{ guest.id }}" {% if selected_guest_id == guest.id|stringformat:'s' %}selected{% endif %}>
+                                {{ guest.get_full_name }} 
+                                {% if guest.table %}
+                                    (Table {{ guest.table.number }})
+                                {% else %}
+                                    ({% trans "Sans table" %})
+                                {% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {% if not guests %}
+                        <p class="text-yellow-400 text-xs mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            {% trans "Aucun invité ayant confirmé sa présence." %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Sélection de la table -->
+                <div>
+                    <label class="form-label">{% trans "Table" %} <span class="text-red-400">*</span></label>
+                    <select name="table_id" class="w-full p-3 rounded-xl bg-white/10 border border-white/20 focus:outline-none focus:border-purple-400" required>
+                        <option value="">{% trans "Sélectionnez une table" %}</option>
+                        {% for table in tables %}
+                            <option value="{{ table.id }}">
+                                {% trans "Table" %} {{ table.number }} 
+                                ({{ table.guests.count }}/{{ table.capacity }})
+                                {% if table.name %}- {{ table.name }}{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {% if not tables %}
+                        <p class="text-yellow-400 text-xs mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            {% trans "Aucune table créée." %}
+                            <a href="{% url 'events:table_create' event.id %}" class="text-purple-400 hover:underline">
+                                {% trans "Créer une table" %}
+                            </a>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Retirer l'assignation -->
+            <div class="mt-4 flex items-center gap-2">
+                <input type="checkbox" name="remove_assignment" id="remove_assignment" class="accent-purple-500 w-4 h-4">
+                <label for="remove_assignment" class="text-sm text-gray-400">
+                    <i class="fas fa-times-circle mr-1 text-red-400"></i>
+                    {% trans "Retirer l'assignation (aucune table)" %}
+                </label>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button type="submit" class="btn-primary" {% if not guests or not tables %}disabled{% endif %}>
+                    <i class="fas fa-save mr-2"></i> {% trans "Assigner" %}
+                </button>
+                <a href="{% url 'events:table_list' event.id %}" class="btn-secondary">
+                    <i class="fas fa-times mr-2"></i> {% trans "Annuler" %}
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Récapitulatif des tables -->
+    <div class="mt-6 glass-card p-4">
+        <h3 class="text-sm font-semibold mb-3">{% trans "Récapitulatif des tables" %}</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+            {% for table in tables %}
+                <div class="bg-white/5 rounded-lg p-2 text-center text-sm">
+                    <span class="font-semibold">{% trans "Table" %} {{ table.number }}</span>
+                    <span class="text-xs text-gray-400 block">{{ table.guests.count }}/{{ table.capacity }}</span>
+                </div>
+            {% empty %}
+                <p class="text-gray-400 text-sm col-span-full">{% trans "Aucune table" %}</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

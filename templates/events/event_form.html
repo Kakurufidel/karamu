@@ -1,0 +1,887 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        {% trans "Modifier l'événement" %} - KaramuManage
+    {% else %}
+        {% trans "Créer un événement" %} - KaramuManage
+    {% endif %}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* ============================================================ */
+    /* VARIABLES - Mode clair/sombre */
+    /* ============================================================ */
+    :root {
+        --text-primary: #e5e7eb;
+        --text-secondary: #9ca3af;
+        --text-muted: rgba(255,255,255,0.5);
+        --input-bg: rgba(255,255,255,0.05);
+        --input-border: rgba(255,255,255,0.08);
+        --input-text: #e5e7eb;
+        --input-placeholder: rgba(255,255,255,0.3);
+        --card-bg: rgba(255,255,255,0.04);
+        --border-color: rgba(255,255,255,0.06);
+        --label-color: rgba(255,255,255,0.6);
+    }
+
+    /* ✅ Mode clair - textes renforcés */
+    html.light {
+        --text-primary: #0f172a;
+        --text-secondary: #1e293b;
+        --text-muted: #475569;
+        --input-bg: rgba(0,0,0,0.04);
+        --input-border: rgba(0,0,0,0.12);
+        --input-text: #0f172a;
+        --input-placeholder: rgba(0,0,0,0.35);
+        --card-bg: rgba(255,255,255,0.7);
+        --border-color: rgba(0,0,0,0.08);
+        --label-color: #334155;
+    }
+
+    /* ============================================================ */
+    /* PROGRESS BAR */
+    /* ============================================================ */
+    .progress-bar {
+        width: 100%;
+        height: 4px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    html.light .progress-bar {
+        background: rgba(0,0,0,0.08);
+    }
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #8B5CF6, #06B6D4);
+        border-radius: 2px;
+        transition: width 0.4s ease;
+        width: 0%;
+    }
+
+    /* ============================================================ */
+    /* FORMULAIRES - ✅ Textes plus lisibles */
+    /* ============================================================ */
+    .form-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--label-color);
+        margin-bottom: 3px;
+    }
+    .form-label .required {
+        color: #EF4444;
+    }
+    .form-label .optional {
+        color: var(--text-muted);
+        font-weight: 400;
+        font-size: 10px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 8px 12px;
+        background: var(--input-bg);
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        color: var(--input-text);
+        font-size: 13px;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+    .form-input:focus {
+        border-color: #8B5CF6;
+        box-shadow: 0 0 0 3px rgba(139,92,246,0.12);
+        background: rgba(255,255,255,0.08);
+    }
+    .form-input::placeholder {
+        color: var(--input-placeholder);
+    }
+    .form-input.error {
+        border-color: #EF4444;
+        box-shadow: 0 0 0 3px rgba(239,68,68,0.12);
+    }
+    textarea.form-input {
+        resize: vertical;
+        min-height: 50px;
+    }
+    select.form-input {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 30px;
+        cursor: pointer;
+    }
+    select.form-input option {
+        background: var(--input-bg);
+        color: var(--input-text);
+    }
+    html.light select.form-input option {
+        background: #ffffff;
+        color: #0f172a;
+    }
+
+    .form-checkbox {
+        width: 16px;
+        height: 16px;
+        accent-color: #8B5CF6;
+        cursor: pointer;
+        flex-shrink: 0;
+        border-radius: 4px;
+    }
+
+    .form-error {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: #F87171;
+        font-size: 11px;
+        margin-top: 3px;
+    }
+    .form-error i {
+        font-size: 12px;
+    }
+
+    .form-errors-global {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 14px;
+        background: rgba(239,68,68,0.08);
+        border: 1px solid rgba(239,68,68,0.15);
+        border-radius: 8px;
+        color: #F87171;
+        font-size: 12px;
+        margin-bottom: 12px;
+    }
+    .form-errors-global ul {
+        margin: 0;
+        padding-left: 14px;
+    }
+
+    .glass-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 20px 24px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+        color: white;
+        padding: 8px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: center;
+    }
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(139,92,246,0.25);
+    }
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-secondary {
+        background: var(--input-bg);
+        color: var(--text-primary);
+        padding: 8px 20px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: center;
+    }
+    .btn-secondary:hover {
+        background: rgba(255,255,255,0.08);
+    }
+    html.light .btn-secondary:hover {
+        background: rgba(0,0,0,0.06);
+    }
+
+    input[type="color"] {
+        padding: 2px;
+        height: 38px;
+        cursor: pointer;
+        border-radius: 6px;
+        background: var(--input-bg);
+        border: 1px solid var(--input-border);
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    .step {
+        animation: fadeInUp 0.3s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-indicator {
+        transition: color 0.3s ease;
+        font-size: 9px;
+    }
+    html.light .step-indicator.text-gray-500 {
+        color: #94a3b8;
+    }
+    html.light .step-indicator.text-purple-400 {
+        color: #7c3aed;
+    }
+    html.light .step-indicator.text-green-400 {
+        color: #16a34a;
+    }
+
+    .toggle-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .toggle-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: var(--input-bg);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 12px;
+        color: var(--text-secondary);
+    }
+    .toggle-item:hover {
+        background: rgba(255,255,255,0.06);
+    }
+    html.light .toggle-item:hover {
+        background: rgba(0,0,0,0.04);
+    }
+    .toggle-item input[type="checkbox"] {
+        accent-color: #8B5CF6;
+        width: 14px;
+        height: 14px;
+        cursor: pointer;
+    }
+
+    @media (max-width: 640px) {
+        .glass-card { padding: 14px 16px; }
+        .form-input { padding: 6px 10px; font-size: 12px; }
+        .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+        .form-label { font-size: 11px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+
+    <!-- ============================================================ -->
+    <!-- EN-TÊTE -->
+    <!-- ============================================================ -->
+    <div class="text-center mb-6">
+        <div class="inline-flex items-center gap-2 bg-purple-500/10 rounded-full px-3 py-1 text-xs text-purple-400 mb-2">
+            <i class="fas fa-calendar-plus"></i>
+            <span>{% if form.instance.pk %}{% trans "Modification" %}{% else %}{% trans "Nouvel événement" %}{% endif %}</span>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-bold text-primary">
+            {% if form.instance.pk %}{% trans "Modifier l'événement" %}{% else %}{% trans "Créer un événement" %}{% endif %}
+        </h1>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PROGRESSION (3 étapes) -->
+    <!-- ============================================================ -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[10px] text-muted">
+                <i class="fas fa-arrow-right mr-1 text-purple-400"></i>
+                {% trans "Étape" %} <span id="current-step-display">1</span>/3
+            </span>
+            <span class="text-[10px] text-muted" id="step-name-display">{% trans "Informations" %}</span>
+        </div>
+        <div class="progress-bar">
+            <div id="progress-bar" class="progress-fill" style="width: 33%"></div>
+        </div>
+        <div class="flex justify-between mt-1.5 px-0.5">
+            <span class="text-[8px] text-gray-500 step-indicator" data-step="1">1. {% trans "Infos" %}</span>
+            <span class="text-[8px] text-gray-500 step-indicator" data-step="2">2. {% trans "Date & Lieu" %}</span>
+            <span class="text-[8px] text-gray-500 step-indicator" data-step="3">3. {% trans "Options" %}</span>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- FORMULAIRE -->
+    <!-- ============================================================ -->
+    <div class="glass-card">
+        <form method="post" id="multi-step-form" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <!-- Erreurs générales -->
+            {% if form.non_field_errors %}
+                <div class="form-errors-global">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <ul>
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <!-- ========================================================== -->
+            <!-- ÉTAPE 1 : Informations -->
+            <!-- ========================================================== -->
+            <div id="step-1" class="step space-y-4">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-7 h-7 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center text-white font-bold text-[10px]">1</span>
+                    <h2 class="text-sm font-semibold text-primary">{% trans "Informations" %}</h2>
+                </div>
+
+                <!-- Nom -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="form-label">
+                        {% trans "Nom de l'événement" %} <span class="required">*</span>
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Type (select) -->
+                <div>
+                    <label for="{{ form.event_type.id_for_label }}" class="form-label">
+                        {% trans "Type d'événement" %} <span class="required">*</span>
+                    </label>
+                    {{ form.event_type }}
+                    {% if form.event_type.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.event_type.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Autre type -->
+                <div id="other-type-field" class="hidden">
+                    <label for="{{ form.event_type_other.id_for_label }}" class="form-label">
+                        {% trans "Précisez le type" %} <span class="required">*</span>
+                    </label>
+                    {{ form.event_type_other }}
+                    {% if form.event_type_other.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.event_type_other.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Noms spécifiques (Mariage / Anniversaire) -->
+                <div id="wedding-fields" class="hidden">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="{{ form.groom_name.id_for_label }}" class="form-label">
+                                {% trans "Époux" %} <span class="required">*</span>
+                            </label>
+                            {{ form.groom_name }}
+                            {% if form.groom_name.errors %}
+                                <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.groom_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="{{ form.bride_name.id_for_label }}" class="form-label">
+                                {% trans "Épouse" %} <span class="required">*</span>
+                            </label>
+                            {{ form.bride_name }}
+                            {% if form.bride_name.errors %}
+                                <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.bride_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div id="birthday-fields" class="hidden">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="{{ form.celebrant_name.id_for_label }}" class="form-label">
+                                {% trans "Célébrant" %} <span class="required">*</span>
+                            </label>
+                            {{ form.celebrant_name }}
+                            {% if form.celebrant_name.errors %}
+                                <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.celebrant_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label for="{{ form.celebrant_title.id_for_label }}" class="form-label">
+                                {% trans "Titre" %} <span class="optional">({% trans "optionnel" %})</span>
+                            </label>
+                            {{ form.celebrant_title }}
+                            {% if form.celebrant_title.errors %}
+                                <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.celebrant_title.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Boissons (compact) -->
+                <div>
+                    <label for="{{ form.drink_options_text.id_for_label }}" class="form-label">
+                        <i class="fas fa-wine-bottle mr-1 text-purple-400"></i>
+                        {% trans "Boissons" %} <span class="optional">({% trans "optionnel" %})</span>
+                    </label>
+                    <div class="flex gap-2">
+                        {{ form.drink_options_text }}
+                    </div>
+                    <p class="text-[10px] text-muted mt-0.5">{% trans "Séparez par des virgules" %}</p>
+                    {% if form.drink_options_text.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.drink_options_text.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Toggles compact (✅ sans Publier) -->
+                <div class="toggle-group pt-1">
+                    <label class="toggle-item">
+                        <input type="checkbox" name="allow_other_drinks" {% if form.allow_other_drinks.value %}checked{% endif %}>
+                        {% trans "Autoriser 'Autre' boison" %}
+                    </label>
+                    <label class="toggle-item">
+                        <input type="checkbox" name="has_tables" {% if form.has_tables.value %}checked{% endif %}>
+                        {% trans "Gestion des tables" %}
+                    </label>
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- ÉTAPE 2 : Date et Lieu -->
+            <!-- ========================================================== -->
+            <div id="step-2" class="step space-y-4 hidden">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-7 h-7 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center text-white font-bold text-[10px]">2</span>
+                    <h2 class="text-sm font-semibold text-primary">{% trans "Date & Lieu" %}</h2>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="{{ form.date.id_for_label }}" class="form-label">
+                            {% trans "Date" %} <span class="required">*</span>
+                        </label>
+                        {{ form.date }}
+                        {% if form.date.errors %}
+                            <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.time.id_for_label }}" class="form-label">
+                            {% trans "Heure" %} <span class="required">*</span>
+                        </label>
+                        {{ form.time }}
+                        {% if form.time.errors %}
+                            <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.time.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div>
+                    <label for="{{ form.location.id_for_label }}" class="form-label">
+                        {% trans "Lieu" %} <span class="required">*</span>
+                    </label>
+                    {{ form.location }}
+                    {% if form.location.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.location.errors.0 }}</div>
+                    {% endif %}
+                    <p class="text-[10px] text-muted mt-0.5">{% trans "Adresse complète" %}</p>
+                </div>
+
+                <div>
+                    <label for="{{ form.google_maps_link.id_for_label }}" class="form-label">
+                        <i class="fas fa-map-marked-alt mr-1 text-cyan-400"></i>
+                        {% trans "Google Maps" %} <span class="optional">({% trans "optionnel" %})</span>
+                    </label>
+                    {{ form.google_maps_link }}
+                    {% if form.google_maps_link.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.google_maps_link.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- ÉTAPE 3 : Options -->
+            <!-- ========================================================== -->
+            <div id="step-3" class="step space-y-4 hidden">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="w-7 h-7 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center text-white font-bold text-[10px]">3</span>
+                    <h2 class="text-sm font-semibold text-primary">{% trans "Options" %}</h2>
+                </div>
+
+                <!-- Code vestimentaire -->
+                <div>
+                    <label for="{{ form.dress_code.id_for_label }}" class="form-label">
+                        <i class="fas fa-tshirt mr-1 text-pink-400"></i>
+                        {% trans "Code vestimentaire" %} <span class="optional">({% trans "optionnel" %})</span>
+                    </label>
+                    {{ form.dress_code }}
+                    {% if form.dress_code.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.dress_code.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Message d'invitation -->
+                <div>
+                    <label for="{{ form.invitation_message.id_for_label }}" class="form-label">
+                        <i class="fas fa-envelope-open-text mr-1 text-purple-400"></i>
+                        {% trans "Message d'invitation" %} <span class="optional">({% trans "optionnel" %})</span>
+                    </label>
+                    {{ form.invitation_message }}
+                    {% if form.invitation_message.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.invitation_message.errors.0 }}</div>
+                    {% endif %}
+                    <p class="text-[10px] text-muted mt-0.5">{% trans "Personnalisez le message" %}</p>
+                </div>
+
+                <!-- Photo -->
+                <div>
+                    <label for="{{ form.event_photo.id_for_label }}" class="form-label">
+                        <i class="fas fa-image mr-1 text-purple-400"></i>
+                        {% trans "Photo" %} <span class="optional">({% trans "optionnel" %})</span>
+                    </label>
+                    {{ form.event_photo }}
+                    {% if form.instance.pk and form.instance.event_photo %}
+                        <div class="mt-1 flex items-center gap-2">
+                            <img src="{{ form.instance.event_photo.url }}" alt="Photo" class="w-12 h-12 object-cover rounded-lg border border-border">
+                            <span class="text-[10px] text-muted"><i class="fas fa-check-circle text-green-400 mr-1"></i>{% trans "Photo actuelle" %}</span>
+                        </div>
+                    {% endif %}
+                    {% if form.event_photo.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.event_photo.errors.0 }}</div>
+                    {% endif %}
+                    <div class="text-[10px] text-muted mt-0.5">
+                        <span>{% trans "Formats : JPG, PNG, WEBP (max 5 MB)" %}</span>
+                    </div>
+                </div>
+
+                <!-- Couleur -->
+                <div>
+                    <label for="{{ form.event_color.id_for_label }}" class="form-label">
+                        <i class="fas fa-palette mr-1 text-purple-400"></i>
+                        {% trans "Couleur" %} <span class="optional">({% trans "optionnel" %})</span>
+                    </label>
+                    {{ form.event_color }}
+                    <p class="text-[10px] text-muted mt-0.5">{% trans "Couleur de fond de l'invitation" %}</p>
+                </div>
+
+                <!-- Email expéditeur -->
+                <div>
+                    <label for="{{ form.sender_email.id_for_label }}" class="form-label">
+                        <i class="fas fa-envelope mr-1 text-cyan-400"></i>
+                        {% trans "Email expéditeur" %} <span class="optional">({% trans "optionnel" %})</span>
+                    </label>
+                    {{ form.sender_email }}
+                    {% if form.sender_email.errors %}
+                        <div class="form-error"><i class="fas fa-exclamation-circle"></i> {{ form.sender_email.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- BOUTONS -->
+            <!-- ========================================================== -->
+            <div class="flex flex-wrap gap-2 pt-4 border-t border-border mt-5">
+                <button type="button" id="prev-btn" class="btn-secondary flex-1 sm:flex-none hidden text-xs">
+                    <i class="fas fa-arrow-left"></i> {% trans "Précédent" %}
+                </button>
+                <button type="button" id="next-btn" class="btn-primary flex-1 sm:flex-none text-xs">
+                    {% trans "Suivant" %} <i class="fas fa-arrow-right"></i>
+                </button>
+                <button type="submit" id="submit-btn" class="btn-primary flex-1 sm:flex-none hidden text-xs">
+                    <i class="fas fa-check"></i>
+                    {% if form.instance.pk %}{% trans "Enregistrer" %}{% else %}{% trans "Créer" %}{% endif %}
+                </button>
+                <a href="{% url 'events:event_list' %}" class="btn-secondary flex-1 sm:flex-none text-xs">
+                    <i class="fas fa-times"></i> {% trans "Annuler" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCRIPTS -->
+<!-- ============================================================ -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        'use strict';
+
+        // ============================================
+        // 1. Gestion des champs dynamiques
+        // ============================================
+        const eventTypeSelect = document.querySelector('select[name="event_type"]');
+        const otherTypeField = document.getElementById('other-type-field');
+        const otherTypeInput = document.querySelector('input[name="event_type_other"]');
+        const weddingFields = document.getElementById('wedding-fields');
+        const birthdayFields = document.getElementById('birthday-fields');
+
+        function toggleSpecificFields() {
+            const selectedValue = eventTypeSelect.value;
+
+            // Masquer tout
+            if (otherTypeField) otherTypeField.classList.add('hidden');
+            if (weddingFields) weddingFields.classList.add('hidden');
+            if (birthdayFields) birthdayFields.classList.add('hidden');
+
+            // Afficher selon le type
+            if (selectedValue === 'other') {
+                if (otherTypeField) otherTypeField.classList.remove('hidden');
+                if (otherTypeInput) {
+                    otherTypeInput.required = true;
+                    otherTypeInput.disabled = false;
+                }
+            } else if (selectedValue === 'wedding' || selectedValue === 'wedding_anniversary') {
+                if (weddingFields) weddingFields.classList.remove('hidden');
+            } else if (selectedValue === 'birthday') {
+                if (birthdayFields) birthdayFields.classList.remove('hidden');
+            } else {
+                if (otherTypeInput) {
+                    otherTypeInput.required = false;
+                    otherTypeInput.disabled = true;
+                }
+            }
+        }
+
+        eventTypeSelect.addEventListener('change', toggleSpecificFields);
+        toggleSpecificFields();
+
+        // ============================================
+        // 2. Multi-step form (3 étapes)
+        // ============================================
+        let currentStep = 1;
+        const totalSteps = 3;
+
+        const step1 = document.getElementById('step-1');
+        const step2 = document.getElementById('step-2');
+        const step3 = document.getElementById('step-3');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const progressBar = document.getElementById('progress-bar');
+        const currentStepDisplay = document.getElementById('current-step-display');
+        const stepNameDisplay = document.getElementById('step-name-display');
+        const stepIndicators = document.querySelectorAll('.step-indicator');
+
+        const stepNames = {
+            1: 'Informations',
+            2: 'Date & Lieu',
+            3: 'Options'
+        };
+
+        function updateUI() {
+            step1.classList.add('hidden');
+            step2.classList.add('hidden');
+            step3.classList.add('hidden');
+
+            if (currentStep === 1) step1.classList.remove('hidden');
+            if (currentStep === 2) step2.classList.remove('hidden');
+            if (currentStep === 3) step3.classList.remove('hidden');
+
+            const progress = (currentStep / totalSteps) * 100;
+            progressBar.style.width = progress + '%';
+
+            currentStepDisplay.textContent = currentStep;
+            stepNameDisplay.textContent = stepNames[currentStep];
+
+            stepIndicators.forEach(ind => {
+                const step = parseInt(ind.dataset.step);
+                ind.classList.remove('text-purple-400', 'text-green-400', 'text-gray-500');
+                if (step === currentStep) {
+                    ind.classList.add('text-purple-400');
+                } else if (step < currentStep) {
+                    ind.classList.add('text-green-400');
+                } else {
+                    ind.classList.add('text-gray-500');
+                }
+            });
+
+            if (currentStep === 1) {
+                prevBtn.classList.add('hidden');
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            } else if (currentStep === totalSteps) {
+                prevBtn.classList.remove('hidden');
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                prevBtn.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function validateStep(step) {
+            if (step === 1) {
+                const name = document.querySelector('input[name="name"]');
+                const eventType = document.querySelector('select[name="event_type"]');
+
+                if (!name || !name.value.trim()) {
+                    alert('Veuillez saisir le nom de l\'événement');
+                    name?.focus();
+                    return false;
+                }
+                if (!eventType || !eventType.value) {
+                    alert('Veuillez sélectionner le type d\'événement');
+                    return false;
+                }
+                if (eventType.value === 'other') {
+                    if (!otherTypeInput || !otherTypeInput.value.trim()) {
+                        alert('Veuillez préciser le type d\'événement');
+                        otherTypeInput?.focus();
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            if (step === 2) {
+                const date = document.querySelector('input[name="date"]');
+                const time = document.querySelector('input[name="time"]');
+                const location = document.querySelector('input[name="location"]');
+
+                if (!date || !date.value) {
+                    alert('Veuillez sélectionner la date');
+                    date?.focus();
+                    return false;
+                }
+                if (!time || !time.value) {
+                    alert('Veuillez sélectionner l\'heure');
+                    time?.focus();
+                    return false;
+                }
+                if (!location || !location.value.trim()) {
+                    alert('Veuillez saisir l\'adresse');
+                    location?.focus();
+                    return false;
+                }
+                return true;
+            }
+
+            if (step === 3) {
+                const senderEmail = document.querySelector('input[name="sender_email"]');
+                if (senderEmail && senderEmail.value.trim()) {
+                    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                    if (!emailPattern.test(senderEmail.value.trim())) {
+                        alert('Veuillez saisir un email valide');
+                        senderEmail?.focus();
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            return true;
+        }
+
+        // ============================================
+        // 3. Événements des boutons
+        // ============================================
+        if (nextBtn) {
+            nextBtn.addEventListener('click', function() {
+                if (validateStep(currentStep)) {
+                    if (currentStep < totalSteps) {
+                        currentStep++;
+                        updateUI();
+                    }
+                }
+            });
+        }
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', function() {
+                if (currentStep > 1) {
+                    currentStep--;
+                    updateUI();
+                }
+            });
+        }
+
+        // ============================================
+        // 4. Validation de la photo
+        // ============================================
+        const photoInput = document.querySelector('input[type="file"][name="event_photo"]');
+        if (photoInput) {
+            photoInput.addEventListener('change', function(e) {
+                const file = this.files[0];
+                if (file) {
+                    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                    if (!allowedTypes.includes(file.type)) {
+                        alert('Format non supporté. Utilisez JPG, PNG ou WEBP.');
+                        this.value = '';
+                        return;
+                    }
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('L\'image est trop volumineuse (max 5 MB)');
+                        this.value = '';
+                        return;
+                    }
+                }
+            });
+        }
+
+        // ============================================
+        // 5. Soumission
+        // ============================================
+        const form = document.getElementById('multi-step-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                for (let step = 1; step <= totalSteps; step++) {
+                    if (!validateStep(step)) {
+                        e.preventDefault();
+                        currentStep = step;
+                        updateUI();
+                        return false;
+                    }
+                }
+                const btn = document.getElementById('submit-btn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> En cours...';
+                }
+                return true;
+            });
+        }
+
+        // ============================================
+        // 6. Initialisation
+        // ============================================
+        updateUI();
+
+        // ============================================
+        // 7. Raccourcis clavier
+        // ============================================
+        document.addEventListener('keydown', function(e) {
+            if (e.altKey && e.key === 'ArrowRight') {
+                e.preventDefault();
+                if (nextBtn && !nextBtn.classList.contains('hidden')) nextBtn.click();
+            }
+            if (e.altKey && e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (prevBtn && !prevBtn.classList.contains('hidden')) prevBtn.click();
+            }
+        });
+    });
+</script>
+{% endblock %}

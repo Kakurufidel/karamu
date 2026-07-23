@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Conditionnements" %} - {{ event.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6">
+
+    <!-- En-tête -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+        <div>
+            <a href="{% url 'expenses:estimation' event.id %}" class="text-purple-400 hover:text-purple-300 text-sm">
+                <i class="fas fa-arrow-left mr-1"></i> {% trans "Retour" %}
+            </a>
+            <h1 class="text-2xl font-bold mt-1">{% trans "Conditionnements" %}</h1>
+            <p class="text-sm text-gray-400">{{ event.name }}</p>
+        </div>
+        <button onclick="toggleBulkForm()" class="btn-primary">
+            <i class="fas fa-edit"></i> {% trans "Configurer en masse" %}
+        </button>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+        <div class="stat-card text-center">
+            <div class="stat-number text-purple-400">{{ packagings|length }}</div>
+            <div class="stat-label text-xs">{% trans "Configurés" %}</div>
+        </div>
+        <div class="stat-card text-center">
+            <div class="stat-number text-green-400">{{ total_active }}</div>
+            <div class="stat-label text-xs">{% trans "Actifs" %}</div>
+        </div>
+        <div class="stat-card text-center">
+            <div class="stat-number text-yellow-400">{{ unconfigured_drinks|length }}</div>
+            <div class="stat-label text-xs">{% trans "Non configurés" %}</div>
+        </div>
+        <div class="stat-card text-center">
+            <div class="stat-number text-cyan-400">{{ event.drink_options|length }}</div>
+            <div class="stat-label text-xs">{% trans "Total boissons" %}</div>
+        </div>
+    </div>
+
+    <!-- Formulaire en masse -->
+    <div id="bulk-form" class="glass-card p-4 mb-6 hidden">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold">{% trans "Configuration en masse" %}</h2>
+            <button onclick="toggleBulkForm()" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <p class="text-sm text-gray-400 mb-4">{% trans "Configurez toutes les boissons en une seule fois." %}</p>
+
+        <form method="post" action="{% url 'expenses:packaging_bulk_create' event.id %}" class="overflow-x-auto">
+            {% csrf_token %}
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-white/10">
+                        <th class="text-left py-2 px-2 text-gray-400">{% trans "Boisson" %}</th>
+                        <th class="text-center py-2 px-2 text-gray-400">{% trans "Pièces/casier" %}</th>
+                        <th class="text-center py-2 px-2 text-gray-400">{% trans "Prix/casier" %}</th>
+                        <th class="text-center py-2 px-2 text-gray-400">{% trans "Actif" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for drink in event.drink_options %}
+                        <tr class="border-b border-white/5">
+                            <td class="py-2 px-2 font-medium">
+                                {{ drink }}
+                                <input type="hidden" name="drink_names[]" value="{{ drink }}">
+                            </td>
+                            <td class="py-2 px-2 text-center">
+                                <input type="number" name="pieces_per_case[]" 
+                                       class="form-input text-center w-20 py-1"
+                                       min="1" value="12">
+                            </td>
+                            <td class="py-2 px-2 text-center">
+                                <input type="number" name="price_per_case[]" 
+                                       class="form-input text-center w-24 py-1"
+                                       min="0" step="0.01" placeholder="0.00" value="0">
+                            </td>
+                            <td class="py-2 px-2 text-center">
+                                <input type="checkbox" name="is_active[]" checked class="form-checkbox">
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-gray-400">
+                                {% trans "Aucune boisson configurée dans l'événement." %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button" onclick="setAllPieces(12)" class="btn-secondary btn-sm">
+                    <i class="fas fa-box"></i> 12 pièces
+                </button>
+                <button type="button" onclick="setAllPieces(24)" class="btn-secondary btn-sm">
+                    <i class="fas fa-box"></i> 24 pièces
+                </button>
+                <button type="submit" class="btn-primary btn-sm">
+                    <i class="fas fa-save"></i> {% trans "Enregistrer tout" %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Liste existante -->
+    <div class="glass-card p-4">
+        <h2 class="text-lg font-semibold mb-4">{% trans "Conditionnements existants" %}</h2>
+
+        {% if packagings %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-white/10">
+                            <th class="text-left py-2 px-2 text-gray-400">{% trans "Boisson" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-400">{% trans "Pièces/casier" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-400">{% trans "Prix/casier" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-400">{% trans "Statut" %}</th>
+                            <th class="text-right py-2 px-2 text-gray-400">{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for packaging in packagings %}
+                            <tr class="border-b border-white/5 hover:bg-white/5">
+                                <td class="py-2 px-2 font-medium">{{ packaging.drink_name }}</td>
+                                <td class="text-center py-2 px-2">{{ packaging.pieces_per_case }}</td>
+                                <td class="text-center py-2 px-2">{{ packaging.price_per_case }}</td>
+                                <td class="text-center py-2 px-2">
+                                    {% if packaging.is_active %}
+                                        <span class="badge badge-green">{% trans "Actif" %}</span>
+                                    {% else %}
+                                        <span class="badge badge-gray">{% trans "Inactif" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-right py-2 px-2">
+                                    <a href="{% url 'expenses:packaging_update' packaging.id %}" class="text-blue-400 hover:text-blue-300 mr-2">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'expenses:packaging_delete' packaging.id %}" class="text-red-400 hover:text-red-300">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-8 text-gray-400">
+                <i class="fas fa-box-open text-3xl mb-3 block"></i>
+                <p>{% trans "Aucun conditionnement configuré." %}</p>
+                <p class="text-sm mt-1">{% trans "Cliquez sur 'Configurer en masse' pour commencer." %}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Boissons non configurées -->
+    {% if unconfigured_drinks %}
+        <div class="mt-4 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+            <p class="text-sm text-yellow-400">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                {% trans "Boissons non configurées :" %}
+                {% for drink in unconfigured_drinks %}
+                    <span class="badge badge-yellow ml-1">{{ drink }}</span>
+                {% endfor %}
+            </p>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    function toggleBulkForm() {
+        const form = document.getElementById('bulk-form');
+        form.classList.toggle('hidden');
+        if (!form.classList.contains('hidden')) {
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    function setAllPieces(value) {
+        const inputs = document.querySelectorAll('input[name="pieces_per_case[]"]');
+        inputs.forEach(input => input.value = value);
+    }
+</script>
+{% endblock %}

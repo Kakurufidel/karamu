@@ -1,0 +1,599 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Estimation des boissons" %} - {{ event.name }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    /* ============================================================ */
+    /* SECTIONS PLIABLES */
+    /* ============================================================ */
+    .section-toggle {
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.2s ease;
+        padding: 4px 0;
+    }
+    .section-toggle:hover {
+        color: #8B5CF6;
+    }
+    .section-toggle .chevron {
+        transition: transform 0.3s ease;
+    }
+    .section-toggle.active .chevron {
+        transform: rotate(180deg);
+    }
+    .section-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease;
+        opacity: 0;
+        padding: 0 2px;
+    }
+    .section-content.open {
+        max-height: 3000px;
+        opacity: 1;
+        padding: 12px 2px 2px 2px;
+    }
+    @media (min-width: 640px) {
+        .section-content.open {
+            padding: 16px 4px 4px 4px;
+        }
+    }
+
+    /* ============================================================ */
+    /* STATISTIQUES */
+    /* ============================================================ */
+    .stat-compare {
+        padding: 10px 14px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.06);
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+    .stat-compare:hover {
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(139,92,246,0.2);
+    }
+    .stat-compare .number {
+        font-size: 20px;
+        font-weight: 700;
+    }
+    .stat-compare .label {
+        font-size: 9px;
+        color: rgba(255,255,255,0.35);
+        margin-top: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    @media (max-width: 640px) {
+        .stat-compare .number { font-size: 16px; }
+        .stat-compare { padding: 6px 8px; }
+    }
+
+    /* ============================================================ */
+    /* TABLEAU DE COMPARAISON */
+    /* ============================================================ */
+    .table-compare {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+    .table-compare thead th {
+        padding: 8px 8px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgba(255,255,255,0.35);
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .table-compare thead th:first-child {
+        text-align: left;
+    }
+    .table-compare tbody td {
+        padding: 6px 8px;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+        vertical-align: middle;
+    }
+    .table-compare tbody tr:hover {
+        background: rgba(255,255,255,0.03);
+    }
+    .table-compare .drink-name {
+        font-weight: 600;
+        color: #e5e7eb;
+        font-size: 13px;
+    }
+    .table-compare .drink-name .badge-drink {
+        display: inline-block;
+        width: 3px;
+        height: 22px;
+        border-radius: 3px;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+    .table-compare .text-center { text-align: center; }
+    .table-compare .text-right { text-align: right; }
+    .table-compare .font-bold { font-weight: 700; }
+    .table-compare .text-purple { color: #A78BFA; }
+    .table-compare .text-cyan { color: #67E8F9; }
+    .table-compare .text-green { color: #34D399; }
+    .table-compare .text-amber { color: #FBBF24; }
+    .table-compare .text-red { color: #F87171; }
+    .table-compare .text-gray { color: rgba(255,255,255,0.3); }
+
+    .table-compare tfoot td {
+        padding: 8px 8px;
+        border-top: 2px solid rgba(255,255,255,0.08);
+        font-weight: 700;
+        font-size: 13px;
+    }
+    .table-compare .sub-text {
+        font-size: 9px;
+        color: rgba(255,255,255,0.3);
+        display: block;
+    }
+    .table-compare .pieces-big {
+        font-size: 18px;
+        font-weight: 700;
+    }
+    .table-compare .cases-small {
+        font-size: 10px;
+        color: rgba(255,255,255,0.35);
+        display: block;
+    }
+
+    /* ============================================================ */
+    /* BADGES DE STATUT */
+    /* ============================================================ */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 9px;
+        font-weight: 600;
+    }
+    .status-badge.match {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34D399;
+    }
+    .status-badge.over {
+        background: rgba(245, 158, 11, 0.15);
+        color: #FBBF24;
+    }
+    .status-badge.under {
+        background: rgba(239, 68, 68, 0.15);
+        color: #F87171;
+    }
+    .status-badge.none {
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.3);
+    }
+
+    /* ============================================================ */
+    /* BOUTONS DE FILTRE */
+    /* ============================================================ */
+    .filter-btn {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 600;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: transparent;
+        color: rgba(255,255,255,0.5);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .filter-btn:hover {
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(255,255,255,0.2);
+    }
+    .filter-btn.active {
+        background: rgba(139,92,246,0.15);
+        border-color: #8B5CF6;
+        color: #A78BFA;
+    }
+    .filter-btn .count {
+        font-size: 8px;
+        background: rgba(255,255,255,0.1);
+        padding: 0 6px;
+        border-radius: 10px;
+        margin-left: 4px;
+    }
+    .filter-btn.active .count {
+        background: rgba(139,92,246,0.3);
+    }
+    .filter-btn.match { border-color: rgba(52,211,153,0.3); color: #34D399; }
+    .filter-btn.match.active { background: rgba(52,211,153,0.15); border-color: #34D399; }
+    .filter-btn.over { border-color: rgba(251,191,36,0.3); color: #FBBF24; }
+    .filter-btn.over.active { background: rgba(251,191,36,0.15); border-color: #FBBF24; }
+    .filter-btn.under { border-color: rgba(248,113,113,0.3); color: #F87171; }
+    .filter-btn.under.active { background: rgba(248,113,113,0.15); border-color: #F87171; }
+
+    /* ============================================================ */
+    /* BOUTON PRÉVISIONS */
+    /* ============================================================ */
+    .btn-forecast {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.375rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+        color: white;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .btn-forecast:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    .btn-forecast.btn-sm {
+        padding: 0.25rem 0.6rem;
+        font-size: 0.7rem;
+    }
+
+    /* ============================================================ */
+    /* RÉSUMÉ COÛTS FILTRÉ */
+    /* ============================================================ */
+    .cost-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .cost-item {
+        text-align: center;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.04);
+    }
+    .cost-item .value {
+        font-size: 16px;
+        font-weight: 700;
+    }
+    .cost-item .label {
+        font-size: 8px;
+        color: rgba(255,255,255,0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-top: 1px;
+    }
+    @media (max-width: 640px) {
+        .cost-item .value { font-size: 14px; }
+        .cost-summary { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
+
+    <!-- ============================================================ -->
+    <!-- EN-TÊTE -->
+    <!-- ============================================================ -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+        <div>
+            <a href="{% url 'events:event_detail' event.slug %}" class="text-purple-400 hover:text-purple-300 transition text-xs sm:text-sm">
+                <i class="fas fa-arrow-left mr-1"></i> {% trans "Retour" %}
+            </a>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mt-0.5">{% trans "Estimation des boissons" %}</h1>
+            <p class="text-xs sm:text-sm text-gray-400 truncate max-w-[200px] sm:max-w-none">{{ event.name }}</p>
+        </div>
+        <div class="flex gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto">
+            <a href="{% url 'expenses:forecast' event.id %}" class="btn-forecast btn-sm text-xs sm:text-sm">
+                <i class="fas fa-chart-line"></i> {% trans "Prévisions" %}
+            </a>
+            <a href="{% url 'expenses:export_devis' event.id %}" class="btn-primary btn-sm text-xs sm:text-sm">
+                <i class="fas fa-file-pdf"></i> {% trans "Devis PDF" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STATISTIQUES RAPIDES -->
+    <!-- ============================================================ -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
+        <div class="stat-compare">
+            <div class="number text-purple-400">{{ stats.total_invited|default:0 }}</div>
+            <div class="label">{% trans "Invités" %}</div>
+        </div>
+        <div class="stat-compare">
+            <div class="number text-cyan-400">{{ stats.total_responses|default:0 }}</div>
+            <div class="label">{% trans "Réponses" %}</div>
+        </div>
+        <div class="stat-compare">
+            <div class="number text-green-400">{{ stats.response_rate|default:0 }}%</div>
+            <div class="label">{% trans "Taux réponse" %}</div>
+        </div>
+        <div class="stat-compare">
+            <div class="number text-yellow-400">{{ stats.attending|default:0 }}</div>
+            <div class="label">{% trans "Présents" %}</div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION UNIQUE : PRÉVISIONS VS RÉALITÉ (PLIABLE) -->
+    <!-- ============================================================ -->
+    <div class="glass-card p-3 sm:p-4 border-2 border-purple-500/30">
+        <div class="section-toggle flex justify-between items-center" onclick="toggleSection('main-section')">
+            <div class="flex flex-wrap items-center gap-2">
+                <h2 class="text-base sm:text-lg font-semibold flex items-center gap-2">
+                    <i class="fas fa-balance-scale text-purple-400"></i>
+                    {% trans "Prévisions vs Réalité" %}
+                    <span class="badge badge-gray text-[8px] sm:text-[10px]" id="total-count">{{ comparison|length|default:0 }}</span>
+                </h2>
+                <div class="flex flex-wrap gap-1 text-[9px]">
+                    <span class="status-badge match"><i class="fas fa-check-circle"></i> {% trans "Équilibré" %}</span>
+                    <span class="status-badge over"><i class="fas fa-exclamation-triangle"></i> {% trans "Surabondance" %}</span>
+                    <span class="status-badge under"><i class="fas fa-exclamation-circle"></i> {% trans "Manque" %}</span>
+                </div>
+            </div>
+            <i class="fas fa-chevron-down chevron text-gray-400 text-xs transition-transform"></i>
+        </div>
+        
+        <div id="main-section" class="section-content open">
+            
+            <!-- Filtres -->
+            <div class="flex flex-wrap gap-2 mb-3">
+                <button class="filter-btn active" data-filter="all" onclick="filterTable('all')">
+                    {% trans "Tous" %}
+                    <span class="count">{{ comparison|length|default:0 }}</span>
+                </button>
+                <button class="filter-btn match" data-filter="match" onclick="filterTable('match')">
+                    <i class="fas fa-check-circle"></i> {% trans "Équilibré" %}
+                    <span class="count" id="count-match">0</span>
+                </button>
+                <button class="filter-btn over" data-filter="over" onclick="filterTable('over')">
+                    <i class="fas fa-exclamation-triangle"></i> {% trans "Surabondance" %}
+                    <span class="count" id="count-over">0</span>
+                </button>
+                <button class="filter-btn under" data-filter="under" onclick="filterTable('under')">
+                    <i class="fas fa-exclamation-circle"></i> {% trans "Manque" %}
+                    <span class="count" id="count-under">0</span>
+                </button>
+            </div>
+
+            {% if forecast_has_data and comparison %}
+                <!-- Tableau -->
+                <div class="overflow-x-auto -mx-3 sm:-mx-4">
+                    <table class="table-compare" id="comparison-table">
+                        <thead>
+                            <tr>
+                                <th class="min-w-[120px] text-left">{% trans "Boisson" %}</th>
+                                <th class="min-w-[80px]">{% trans "Prévu" %}</th>
+                                <th class="min-w-[80px]">{% trans "Réel" %}</th>
+                                <th class="min-w-[70px]">{% trans "Écart" %}</th>
+                                <th class="min-w-[90px] status-column">{% trans "Statut" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in comparison %}
+                                <tr data-status="{{ item.status }}">
+                                    <td>
+                                        <span class="drink-name">
+                                            <span class="badge-drink" style="background: {% cycle '#8B5CF6' '#06B6D4' '#F59E0B' '#10B981' '#EC4899' '#6366F1' '#F97316' '#14B8A6' '#22D3EE' '#A78BFA' %}"></span>
+                                            {{ item.drink }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="pieces-big text-cyan">{{ item.forecast_pieces|default:0 }}</span>
+                                        <span class="cases-small">{{ item.forecast_cases }} {% trans "casiers" %}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="pieces-big text-green">{{ item.real_pieces|default:0 }}</span>
+                                        <span class="cases-small">{{ item.real_cases }} {% trans "casiers" %}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if item.diff_pieces > 0 %}
+                                            <span class="pieces-big text-amber">+{{ item.diff_pieces }}</span>
+                                        {% elif item.diff_pieces < 0 %}
+                                            <span class="pieces-big text-red">{{ item.diff_pieces }}</span>
+                                        {% else %}
+                                            <span class="pieces-big text-green">0</span>
+                                        {% endif %}
+                                        <span class="cases-small">
+                                            {% if item.diff_cases > 0 %}+{% endif %}{{ item.diff_cases }} {% trans "casiers" %}
+                                        </span>
+                                    </td>
+                                    <td class="text-center status-column">
+                                        {% if item.status == 'over' %}
+                                            <span class="status-badge over"><i class="fas fa-arrow-up"></i> {{ item.status_label }}</span>
+                                        {% elif item.status == 'under' %}
+                                            <span class="status-badge under"><i class="fas fa-arrow-down"></i> {{ item.status_label }}</span>
+                                        {% elif item.status == 'match' %}
+                                            <span class="status-badge match"><i class="fas fa-check"></i> {{ item.status_label }}</span>
+                                        {% else %}
+                                            <span class="status-badge none"><i class="fas fa-minus"></i> {{ item.status_label }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Résumé des coûts -->
+                <div class="cost-summary" id="cost-summary">
+                    <div class="cost-item">
+                        <div class="value text-cyan" id="filtered-forecast-cost">0</div>
+                        <div class="label">{% trans "Coût prévu" %}</div>
+                    </div>
+                    <div class="cost-item">
+                        <div class="value text-green" id="filtered-real-cost">0</div>
+                        <div class="label">{% trans "Coût réel" %}</div>
+                    </div>
+                    <div class="cost-item">
+                        <div class="value" id="filtered-diff-cost">0</div>
+                        <div class="label">{% trans "Écart coût" %}</div>
+                    </div>
+                    <div class="cost-item">
+                        <div class="value" id="filtered-diff-percent">0%</div>
+                        <div class="label">{% trans "Écart %" %}</div>
+                    </div>
+                    <div class="cost-item">
+                        <div class="value text-cyan" id="filtered-forecast-cases">0</div>
+                        <div class="label">{% trans "Casiers prévus" %}</div>
+                    </div>
+                    <div class="cost-item">
+                        <div class="value text-green" id="filtered-real-cases">0</div>
+                        <div class="label">{% trans "Casiers réels" %}</div>
+                    </div>
+                </div>
+
+                <!-- Info -->
+                <div class="mt-3 p-2 rounded-xl bg-cyan-500/5 border border-cyan-500/10 text-[9px] sm:text-[10px] text-gray-400">
+                    <i class="fas fa-info-circle text-cyan-400 mr-1"></i>
+                    {% trans "Prévu = pièces × prix unitaire | Réel = basé sur les réponses des invités" %}
+                    <span class="block text-[8px] text-gray-500 mt-0.5">
+                        {% trans "Tournées appliquées :" %} {{ form.number_of_services.value|default:1 }}
+                    </span>
+                </div>
+
+            {% else %}
+                <div class="text-center py-6 text-gray-400">
+                    <i class="fas fa-chart-bar text-2xl mb-2 block"></i>
+                    <p class="text-sm">{% trans "Aucune donnée de comparaison disponible." %}</p>
+                    <p class="text-xs text-gray-500 mt-1">
+                        {% if not forecast_has_data %}
+                            {% trans "Créez d'abord des prévisions dans la page dédiée." %}
+                        {% else %}
+                            {% trans "En attente des réponses des invités." %}
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'expenses:forecast' event.id %}" class="btn-forecast btn-sm mt-3 inline-block text-xs">
+                        <i class="fas fa-chart-line"></i> {% trans "Aller aux prévisions" %}
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- SCRIPTS -->
+<!-- ============================================================ -->
+<script>
+    // ============================================================
+    // TOGGLE SECTIONS
+    // ============================================================
+    function toggleSection(sectionId) {
+        const content = document.getElementById(sectionId);
+        const toggle = content.closest('.glass-card').querySelector('.section-toggle');
+        content.classList.toggle('open');
+        if (toggle) toggle.classList.toggle('active');
+    }
+
+    // ============================================================
+    // FILTRE TABLEAU AVEC MISE À JOUR DES COÛTS
+    // ============================================================
+    function filterTable(status) {
+        const rows = document.querySelectorAll('#comparison-table tbody tr');
+        const buttons = document.querySelectorAll('.filter-btn');
+        const statusColumn = document.querySelectorAll('.status-column');
+        const currency = '{{ form.currency.value|default:"CDF" }}';
+        
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.filter === status) {
+                btn.classList.add('active');
+            }
+        });
+        
+        let countMatch = 0, countOver = 0, countUnder = 0;
+        let visibleCount = 0;
+        let filteredForecastCost = 0;
+        let filteredRealCost = 0;
+        let filteredForecastCases = 0;
+        let filteredRealCases = 0;
+        
+        rows.forEach(row => {
+            const rowStatus = row.dataset.status;
+            if (rowStatus === 'match') countMatch++;
+            else if (rowStatus === 'over') countOver++;
+            else if (rowStatus === 'under') countUnder++;
+            
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 4) {
+                const forecastText = cells[1]?.textContent?.trim() || '0';
+                const forecastCost = parseFloat(forecastText.replace(/[^0-9.]/g, '')) || 0;
+                
+                const realText = cells[2]?.textContent?.trim() || '0';
+                const realCost = parseFloat(realText.replace(/[^0-9.]/g, '')) || 0;
+                
+                const forecastCasesText = cells[1]?.querySelector('.cases-small')?.textContent?.trim() || '0';
+                const forecastCases = parseInt(forecastCasesText.replace(/[^0-9]/g, '')) || 0;
+                
+                const realCasesText = cells[2]?.querySelector('.cases-small')?.textContent?.trim() || '0';
+                const realCases = parseInt(realCasesText.replace(/[^0-9]/g, '')) || 0;
+                
+                if (status === 'all' || rowStatus === status) {
+                    row.style.display = '';
+                    visibleCount++;
+                    filteredForecastCost += forecastCost;
+                    filteredRealCost += realCost;
+                    filteredForecastCases += forecastCases;
+                    filteredRealCases += realCases;
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+        
+        statusColumn.forEach(col => {
+            col.style.display = (status === 'all') ? '' : 'none';
+        });
+        
+        document.getElementById('count-match').textContent = countMatch;
+        document.getElementById('count-over').textContent = countOver;
+        document.getElementById('count-under').textContent = countUnder;
+        document.getElementById('total-count').textContent = visibleCount;
+        
+        const diffCost = filteredForecastCost - filteredRealCost;
+        const diffPercent = filteredForecastCost > 0 ? (diffCost / filteredForecastCost) * 100 : 0;
+        
+        const costColor = diffCost > 0 ? 'text-amber' : (diffCost < 0 ? 'text-red' : 'text-green');
+        
+        document.getElementById('filtered-forecast-cost').textContent = filteredForecastCost.toFixed(0) + ' ' + currency;
+        document.getElementById('filtered-forecast-cost').className = 'value text-cyan';
+        
+        document.getElementById('filtered-real-cost').textContent = filteredRealCost.toFixed(0) + ' ' + currency;
+        document.getElementById('filtered-real-cost').className = 'value text-green';
+        
+        document.getElementById('filtered-diff-cost').textContent = (diffCost > 0 ? '+' : '') + diffCost.toFixed(0) + ' ' + currency;
+        document.getElementById('filtered-diff-cost').className = 'value ' + costColor;
+        
+        document.getElementById('filtered-diff-percent').textContent = (diffPercent > 0 ? '+' : '') + diffPercent.toFixed(1) + '%';
+        document.getElementById('filtered-diff-percent').className = 'value ' + costColor;
+        
+        document.getElementById('filtered-forecast-cases').textContent = filteredForecastCases;
+        document.getElementById('filtered-forecast-cases').className = 'value text-cyan';
+        
+        document.getElementById('filtered-real-cases').textContent = filteredRealCases;
+        document.getElementById('filtered-real-cases').className = 'value text-green';
+    }
+
+    // ============================================================
+    // INITIALISATION
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        filterTable('all');
+    });
+</script>
+{% endblock %}

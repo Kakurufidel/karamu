@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Connexion" %} - KaramuManage{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 mb-4">
+                <i class="fas fa-calendar-alt text-3xl text-purple-400"></i>
+            </div>
+            <h1 class="text-2xl font-bold">KaramuManage</h1>
+            <p class="text-gray-400 text-sm mt-1">{% trans "Connectez-vous à votre espace de gestion" %}</p>
+        </div>
+
+        <!-- Carte de connexion -->
+        <div class="glass-card p-6 md:p-8">
+            <form method="post" action="{% url 'authentication:login' %}" novalidate>
+                {% csrf_token %}
+
+                <!-- Erreurs globales -->
+                {% if form.non_field_errors %}
+                    <div class="form-errors-global">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <ul>
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <!-- Email -->
+                <div class="mb-5">
+                    <label for="{{ form.username.id_for_label }}" class="form-label">
+                        <i class="fas fa-envelope text-purple-400 mr-1"></i>
+                        {% trans "Adresse email" %}
+                    </label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.username.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Mot de passe -->
+                <div class="mb-5">
+                    <label for="{{ form.password.id_for_label }}" class="form-label">
+                        <i class="fas fa-lock text-cyan-400 mr-1"></i>
+                        {% trans "Mot de passe" %}
+                    </label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.password.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Options -->
+                <div class="flex items-center justify-between mb-6">
+                    <label class="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+                        <input type="checkbox" name="remember" class="accent-purple-500 w-4 h-4 rounded">
+                        {% trans "Se souvenir de moi" %}
+                    </label>
+                    <a href="#" class="text-sm text-purple-400 hover:text-purple-300 transition">
+                        {% trans "Mot de passe oublié ?" %}
+                    </a>
+                </div>
+
+                <!-- Bouton -->
+                <button type="submit" class="btn-primary w-full justify-center py-3">
+                    <i class="fas fa-sign-in-alt"></i>
+                    {% trans "Se connecter" %}
+                </button>
+
+                <!-- Lien d'inscription -->
+                <div class="text-center mt-5 text-sm text-gray-400">
+                    {% trans "Vous n'avez pas de compte ?" %}
+                    <a href="{% url 'authentication:register' %}" class="text-purple-400 hover:text-purple-300 transition font-semibold">
+                        {% trans "Créer un compte" %}
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-6 text-xs text-gray-500">
+            <p>&copy; {% now "Y" %} KaramuManage. {% trans "Tous droits réservés." %}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

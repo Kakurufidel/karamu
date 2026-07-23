@@ -1,0 +1,684 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Scanner QR Code" %} - {{ event.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* ============================================
+       SCANNER
+       ============================================ */
+    #reader {
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
+        border-radius: 16px;
+        overflow: hidden;
+        min-height: 300px;
+        background: rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    #reader video {
+        border-radius: 16px;
+        width: 100%;
+        height: auto;
+    }
+    #reader .scanner-placeholder {
+        text-align: center;
+        color: rgba(255,255,255,0.5);
+        padding: 20px;
+    }
+    #reader .scanner-placeholder i {
+        font-size: 48px;
+        margin-bottom: 12px;
+        display: block;
+    }
+    
+    /* ============================================
+       SCANNER OVERLAY
+       ============================================ */
+    .scanner-container {
+        position: relative;
+    }
+    .scanner-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200px;
+        height: 200px;
+        border: 2px solid rgba(139,92,246,0.5);
+        border-radius: 12px;
+        pointer-events: none;
+        box-shadow: 0 0 0 4000px rgba(0,0,0,0.3);
+        z-index: 10;
+    }
+    .scanner-overlay .corner {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-color: #8B5CF6;
+        border-style: solid;
+    }
+    .scanner-overlay .corner-tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+    .scanner-overlay .corner-tr { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+    .scanner-overlay .corner-bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+    .scanner-overlay .corner-br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+    
+    /* ============================================
+       CODE COURT
+       ============================================ */
+    .scan-input {
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+        letter-spacing: 6px;
+        text-transform: uppercase;
+        font-family: 'Courier New', monospace;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.05);
+        border: 2px solid rgba(255,255,255,0.1);
+        color: #fff;
+        transition: all 0.3s ease;
+        outline: none;
+        width: 100%;
+        max-width: 220px;
+    }
+    .scan-input:focus {
+        border-color: #8B5CF6;
+        box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+        background: rgba(255,255,255,0.08);
+    }
+    .scan-input::placeholder {
+        letter-spacing: 2px;
+        font-size: 14px;
+        font-weight: 400;
+        color: rgba(255,255,255,0.3);
+    }
+    .scan-input.error {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239,68,68,0.15);
+        animation: shake 0.3s ease-in-out;
+    }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-6px); }
+        75% { transform: translateX(6px); }
+    }
+    
+    /* ============================================
+       BOUTONS
+       ============================================ */
+    .btn-start-scanner {
+        background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+        color: white;
+        padding: 12px 32px;
+        border-radius: 12px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+    }
+    .btn-start-scanner:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 20px rgba(139,92,246,0.3);
+    }
+    .btn-start-scanner:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    .btn-start-scanner.active {
+        background: #10b981;
+    }
+    
+    /* ============================================
+       TIMER MESSAGE
+       ============================================ */
+    .timeout-message {
+        background: rgba(239,68,68,0.1);
+        border: 1px solid rgba(239,68,68,0.2);
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+        color: #f87171;
+        margin-top: 12px;
+    }
+    
+    /* ============================================
+       GUEST INFO
+       ============================================ */
+    .guest-info-card {
+        background: rgba(255,255,255,0.05);
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 16px;
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    .guest-info-card .label {
+        color: #9ca3af;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .guest-info-card .value {
+        color: #fff;
+        font-weight: 500;
+        font-size: 15px;
+    }
+    .guest-info-card .value .badge-table {
+        background: rgba(139,92,246,0.2);
+        color: #8B5CF6;
+        padding: 2px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+    }
+    .badge-verified {
+        background: rgba(16,185,129,0.2);
+        color: #34d399;
+        padding: 2px 12px;
+        border-radius: 12px;
+        font-size: 11px;
+    }
+    .badge-unverified {
+        background: rgba(251,191,36,0.2);
+        color: #fbbf24;
+        padding: 2px 12px;
+        border-radius: 12px;
+        font-size: 11px;
+    }
+    
+    /* ============================================
+       MISE EN PAGE
+       ============================================ */
+    .method-tabs {
+        display: flex;
+        background: rgba(255,255,255,0.04);
+        border-radius: 12px;
+        padding: 4px;
+        gap: 4px;
+    }
+    .method-tab {
+        flex: 1;
+        padding: 10px 16px;
+        border-radius: 10px;
+        border: none;
+        background: transparent;
+        color: rgba(255,255,255,0.5);
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 13px;
+        transition: all 0.3s ease;
+    }
+    .method-tab:hover {
+        color: rgba(255,255,255,0.8);
+    }
+    .method-tab.active {
+        background: rgba(139,92,246,0.2);
+        color: #fff;
+    }
+    .method-panel {
+        display: none;
+        animation: fadeIn 0.3s ease-out;
+    }
+    .method-panel.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @media (max-width: 480px) {
+        .scan-input { font-size: 20px; letter-spacing: 4px; max-width: 180px; }
+        .method-tab { font-size: 12px; padding: 8px 12px; }
+        .guest-info-card .value { font-size: 13px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-6">
+    <!-- En-tête -->
+    <div class="text-center mb-6">
+        <a href="{% url 'events:event_detail' event.slug %}" class="text-purple-400 hover:text-purple-300 transition text-sm">
+            <i class="fas fa-arrow-left mr-1"></i> {% trans "Retour à l'événement" %}
+        </a>
+        <h1 class="text-2xl md:text-3xl font-bold mt-2">{% trans "Scanner QR Code" %}</h1>
+        <p class="text-gray-400 text-sm mt-1">
+            {% trans "Scannez le QR code d'un invité ou saisissez son code court." %}
+        </p>
+    </div>
+
+    <div class="glass-card p-5 md:p-6">
+        
+        <!-- Onglets de méthode -->
+        <div class="method-tabs mb-6">
+            <button class="method-tab active" data-target="scan-method" onclick="switchMethod('scan-method')">
+                <i class="fas fa-camera mr-2"></i> {% trans "Scanner" %}
+            </button>
+            <button class="method-tab" data-target="manual-method" onclick="switchMethod('manual-method')">
+                <i class="fas fa-keyboard mr-2"></i> {% trans "Code court" %}
+            </button>
+        </div>
+
+        <!-- ============================================
+             PANEL 1 : SCAN
+             ============================================ -->
+        <div id="scan-method" class="method-panel active">
+            
+            <!-- Message d'information -->
+            <div class="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-sm text-cyan-400 mb-4 flex items-start gap-3">
+                <i class="fas fa-info-circle mt-0.5"></i>
+                <div>
+                    <p class="font-semibold">{% trans "Comment scanner ?" %}</p>
+                    <ul class="text-xs text-gray-400 mt-1 space-y-1">
+                        <li>1. {% trans "Placez le QR code devant la caméra" %}</li>
+                        <li>2. {% trans "Le scanner détectera automatiquement le code" %}</li>
+                        <li>3. {% trans "Validez l'entrée de l'invité" %}</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Scanner -->
+            <div class="scanner-container">
+                <div id="reader">
+                    <div class="scanner-placeholder" id="scanner-placeholder">
+                        <i class="fas fa-camera"></i>
+                        <p>{% trans "La caméra va démarrer..." %}</p>
+                        <p class="text-xs mt-2 text-gray-500">{% trans "Autorisez l'accès à la caméra si demandé." %}</p>
+                    </div>
+                </div>
+                <div class="scanner-overlay hidden" id="scanner-overlay">
+                    <div class="corner corner-tl"></div>
+                    <div class="corner corner-tr"></div>
+                    <div class="corner corner-bl"></div>
+                    <div class="corner corner-br"></div>
+                </div>
+            </div>
+
+            <!-- Timer et bouton -->
+            <div class="text-center mt-4">
+                <div id="timer-message" class="hidden timeout-message">
+                    <i class="fas fa-clock mr-2"></i>
+                    {% trans "Aucun QR code détecté. Veuillez réessayer." %}
+                    <br>
+                    <button onclick="location.reload()" class="mt-2 btn-secondary btn-sm">
+                        <i class="fas fa-sync"></i> {% trans "Réessayer" %}
+                    </button>
+                </div>
+                <button id="start-scanner-btn" class="btn-start-scanner mt-2">
+                    <i class="fas fa-play"></i> {% trans "Démarrer le scanner" %}
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================
+             PANEL 2 : CODE COURT
+             ============================================ -->
+        <div id="manual-method" class="method-panel">
+            <div class="text-center">
+                <p class="text-sm text-gray-400 mb-3">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    {% trans "Saisissez le code court de 5 caractères de l'invité." %}
+                </p>
+                
+                <form id="manual-form" method="get" action="{% url 'guests:checkin_manual' event.id %}" class="flex flex-col items-center gap-3">
+                    <div class="flex flex-col sm:flex-row items-center gap-3">
+                        <input type="text" name="code" id="manual-code-input" 
+                               class="scan-input" placeholder="A3F9Z" maxlength="12" required
+                               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <button type="submit" class="btn-primary px-6 py-3 flex items-center gap-2">
+                            <i class="fas fa-search"></i> {% trans "Valider" %}
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500">
+                        {% trans "Exemple: A3F9Z" %}
+                    </p>
+                </form>
+
+                <!-- Résultat du code court (affiché via messages) -->
+                <div id="manual-result" class="mt-4 hidden">
+                    <div id="manual-result-content" class="p-4 rounded-xl">
+                        <!-- Rempli par JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================
+             GUEST INFO (affiché après scan)
+             ============================================ -->
+        <div id="guest-info" class="hidden">
+            <hr class="border-white/10 my-4">
+            <h3 class="text-sm font-semibold text-gray-400 mb-3">{% trans "Informations de l'invité" %}</h3>
+            <div class="guest-info-card" id="guest-info-content">
+                <!-- Rempli par JS -->
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 mt-4">
+                <button id="validate-checkin" class="btn-primary flex-1 justify-center">
+                    <i class="fas fa-check"></i> {% trans "Valider l'entrée" %}
+                </button>
+                <button id="cancel-checkin" class="btn-secondary flex-1 justify-center">
+                    <i class="fas fa-times"></i> {% trans "Annuler" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+    // ============================================
+    // 1. SWITCH METHOD
+    // ============================================
+    function switchMethod(methodId) {
+        // Mettre à jour les onglets
+        document.querySelectorAll('.method-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.target === methodId);
+        });
+        // Mettre à jour les panneaux
+        document.querySelectorAll('.method-panel').forEach(panel => {
+            panel.classList.toggle('active', panel.id === methodId);
+        });
+    }
+
+    // ============================================
+    // 2. SCANNER
+    // ============================================
+    (function() {
+        'use strict';
+
+        let html5QrCode = null;
+        let isScanning = false;
+        let scanTimeout = null;
+        let currentGuestData = null;
+        
+        const readerElement = document.getElementById('reader');
+        const scannerOverlay = document.getElementById('scanner-overlay');
+        const startBtn = document.getElementById('start-scanner-btn');
+        const placeholder = document.getElementById('scanner-placeholder');
+        const guestInfo = document.getElementById('guest-info');
+        const guestInfoContent = document.getElementById('guest-info-content');
+        const timerMessage = document.getElementById('timer-message');
+
+        function displayGuestInfo(data) {
+            currentGuestData = data;
+            const verifiedBadge = data.verified ? 
+                '<span class="badge-verified"><i class="fas fa-check-circle"></i> Vérifié</span>' : 
+                '<span class="badge-unverified"><i class="fas fa-clock"></i> Non vérifié</span>';
+            
+            guestInfoContent.innerHTML = `
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <div class="label">{% trans "Nom" %}</div>
+                        <div class="value">${data.last_name} ${data.first_name}</div>
+                    </div>
+                    <div>
+                        <div class="label">{% trans "Table" %}</div>
+                        <div class="value"><span class="badge-table">${data.table || 'Non assignée'}</span></div>
+                    </div>
+                    <div>
+                        <div class="label">{% trans "Boisson" %}</div>
+                        <div class="value">${data.drink || '-'}</div>
+                    </div>
+                    <div>
+                        <div class="label">{% trans "Statut" %}</div>
+                        <div class="value">${verifiedBadge}</div>
+                    </div>
+                </div>
+            `;
+            guestInfo.classList.remove('hidden');
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            try {
+                const data = JSON.parse(decodedText);
+                displayGuestInfo(data);
+                if (html5QrCode) {
+                    html5QrCode.stop().then(() => {
+                        isScanning = false;
+                    }).catch(() => {});
+                }
+                timerMessage.classList.add('hidden');
+                clearTimeout(scanTimeout);
+                startBtn.innerHTML = '<i class="fas fa-sync"></i> {% trans "Scanner actif" %}';
+                startBtn.classList.add('active');
+            } catch (e) {
+                console.warn('QR code non reconnu:', e);
+                if (decodedText.length <= 12) {
+                    window.location.href = `/guests/checkin/${decodedText}/`;
+                }
+            }
+        }
+
+        function onScanError(errorMessage) {
+            // Ignorer
+        }
+
+        function startScanner() {
+            if (isScanning) return;
+            
+            startBtn.disabled = true;
+            startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> {% trans "Démarrage..." %}';
+            timerMessage.classList.add('hidden');
+            guestInfo.classList.add('hidden');
+            
+            placeholder.innerHTML = '<i class="fas fa-spinner fa-spin"></i><p>{% trans "Connexion à la caméra..." %}</p>';
+
+            html5QrCode = new Html5Qrcode("reader");
+            
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                placeholder.innerHTML = `
+                    <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                    <p class="text-gray-300">{% trans "Votre navigateur ne supporte pas la caméra." %}</p>
+                    <p class="text-xs mt-2 text-gray-500">{% trans "Utilisez Chrome, Firefox ou Safari sur mobile." %}</p>
+                    <button onclick="location.reload()" class="mt-3 btn-secondary btn-sm">
+                        <i class="fas fa-sync"></i> {% trans "Réessayer" %}
+                    </button>
+                `;
+                startBtn.innerHTML = '<i class="fas fa-play"></i> {% trans "Réessayer" %}';
+                startBtn.disabled = false;
+                return;
+            }
+
+            const config = { fps: 15, qrbox: { width: 250, height: 250 } };
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                onScanSuccess,
+                onScanError
+            ).then(() => {
+                isScanning = true;
+                scannerOverlay.classList.remove('hidden');
+                startBtn.innerHTML = '<i class="fas fa-sync"></i> {% trans "Scanner actif" %}';
+                startBtn.classList.add('active');
+                startBtn.disabled = false;
+                
+                clearTimeout(scanTimeout);
+                scanTimeout = setTimeout(() => {
+                    if (isScanning && !guestInfo.classList.contains('hidden') === false) {
+                        timerMessage.classList.remove('hidden');
+                    }
+                }, 5000);
+                
+            }).catch(err => {
+                console.warn("Erreur caméra arrière:", err);
+                html5QrCode.start(
+                    { facingMode: "user" },
+                    config,
+                    onScanSuccess,
+                    onScanError
+                ).then(() => {
+                    isScanning = true;
+                    scannerOverlay.classList.remove('hidden');
+                    startBtn.innerHTML = '<i class="fas fa-sync"></i> {% trans "Scanner actif" %}';
+                    startBtn.classList.add('active');
+                    startBtn.disabled = false;
+                }).catch(err2 => {
+                    console.warn("Erreur caméra avant:", err2);
+                    if (err2.message && err2.message.includes('Permission denied')) {
+                        placeholder.innerHTML = `
+                            <i class="fas fa-lock text-yellow-400"></i>
+                            <p class="text-gray-300">{% trans "Accès à la caméra refusé." %}</p>
+                            <p class="text-xs mt-2 text-gray-500">
+                                {% trans "Autorisez l'accès à la caméra dans les paramètres de votre navigateur." %}
+                            </p>
+                            <button onclick="location.reload()" class="mt-3 btn-secondary btn-sm">
+                                <i class="fas fa-sync"></i> {% trans "Réessayer" %}
+                            </button>
+                        `;
+                    } else {
+                        placeholder.innerHTML = `
+                            <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                            <p class="text-gray-300">{% trans "Impossible d'accéder à la caméra." %}</p>
+                            <p class="text-xs mt-2 text-gray-500">{% trans "Assurez-vous d'avoir autorisé l'accès à la caméra." %}</p>
+                            <button onclick="location.reload()" class="mt-3 btn-secondary btn-sm">
+                                <i class="fas fa-sync"></i> {% trans "Réessayer" %}
+                            </button>
+                        `;
+                    }
+                    startBtn.innerHTML = '<i class="fas fa-play"></i> {% trans "Réessayer" %}';
+                    startBtn.classList.remove('active');
+                    startBtn.disabled = false;
+                });
+            });
+        }
+
+        setTimeout(() => { startScanner(); }, 500);
+
+        startBtn.addEventListener('click', function() {
+            if (isScanning) {
+                if (html5QrCode) {
+                    html5QrCode.stop().then(() => {
+                        isScanning = false;
+                        scannerOverlay.classList.add('hidden');
+                        startBtn.innerHTML = '<i class="fas fa-play"></i> {% trans "Démarrer le scanner" %}';
+                        startBtn.classList.remove('active');
+                        guestInfo.classList.add('hidden');
+                        startScanner();
+                    }).catch(() => { startScanner(); });
+                }
+            } else {
+                startScanner();
+            }
+        });
+
+        // ============================================
+        // 3. VALIDATION CHECK-IN
+        // ============================================
+        document.getElementById('validate-checkin').addEventListener('click', function() {
+            if (currentGuestData) {
+                const form = document.createElement('form');
+                form.method = 'post';
+                form.action = "{% url 'guests:checkin_qr' event.id %}";
+                
+                const csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = 'csrfmiddlewaretoken';
+                csrf.value = '{{ csrf_token }}';
+                form.appendChild(csrf);
+                
+                const data = document.createElement('input');
+                data.type = 'hidden';
+                data.name = 'data';
+                data.value = JSON.stringify(currentGuestData);
+                form.appendChild(data);
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+
+        document.getElementById('cancel-checkin').addEventListener('click', function() {
+            guestInfo.classList.add('hidden');
+            currentGuestData = null;
+            startScanner();
+        });
+
+        window.addEventListener('beforeunload', function() {
+            if (html5QrCode) {
+                html5QrCode.stop().catch(() => {});
+            }
+            clearTimeout(scanTimeout);
+        });
+
+        // ============================================
+        // 4. CODE COURT - VALIDATION AMÉLIORÉE
+        // ============================================
+        const manualForm = document.getElementById('manual-form');
+        const manualInput = document.getElementById('manual-code-input');
+        const manualResult = document.getElementById('manual-result');
+        const manualResultContent = document.getElementById('manual-result-content');
+
+        if (manualForm) {
+            manualForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const code = manualInput.value.trim().toUpperCase();
+                
+                if (!code || code.length < 3) {
+                    manualInput.classList.add('error');
+                    manualResult.classList.remove('hidden');
+                    manualResultContent.innerHTML = `
+                        <div class="text-red-400 flex items-center gap-2">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {% trans "Veuillez saisir un code valide (3 à 12 caractères)." %}
+                        </div>
+                    `;
+                    setTimeout(() => { manualInput.classList.remove('error'); }, 2000);
+                    return;
+                }
+
+                // Rediriger vers la page de check-in avec le code
+                const url = "{% url 'guests:checkin' token='CODE_PLACEHOLDER' %}".replace('CODE_PLACEHOLDER', code);
+                window.location.href = url;
+            });
+        }
+
+        // Nettoyer l'erreur sur saisie
+        if (manualInput) {
+            manualInput.addEventListener('input', function() {
+                this.classList.remove('error');
+                manualResult.classList.add('hidden');
+                this.value = this.value.toUpperCase();
+            });
+        }
+
+        // ============================================
+        // 5. AFFICHER LES MESSAGES FLASH
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const messages = document.querySelectorAll('.flash-message');
+            messages.forEach(function(msg) {
+                const type = msg.classList.contains('flash-success') ? 'success' :
+                             msg.classList.contains('flash-error') ? 'error' :
+                             msg.classList.contains('flash-warning') ? 'warning' : 'info';
+                const text = msg.textContent.trim();
+                
+                if (type === 'error' || type === 'warning') {
+                    manualResult.classList.remove('hidden');
+                    manualResultContent.innerHTML = `
+                        <div class="${type === 'error' ? 'text-red-400' : 'text-yellow-400'} flex items-center gap-2">
+                            <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-triangle-exclamation'}"></i>
+                            ${text}
+                        </div>
+                    `;
+                }
+                msg.style.display = 'none';
+            });
+        });
+
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Réponses des invités" %} - {{ event.name }} - KaramuManage{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
+
+    <!-- ============================================================ -->
+    <!-- EN-TÊTE -->
+    <!-- ============================================================ -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+        <div>
+            <a href="{% url 'events:event_detail' event.slug %}" class="text-purple-400 hover:text-purple-300 transition text-xs sm:text-sm">
+                <i class="fas fa-arrow-left mr-1"></i> {% trans "Retour" %}
+            </a>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mt-0.5">{{ event.name }}</h1>
+            <p class="text-xs sm:text-sm text-gray-400">
+                {% trans "Réponses des invités" %}
+                <span class="badge badge-purple ml-1 text-[10px] sm:text-xs">{{ stats.total }}</span>
+            </p>
+        </div>
+        <div class="flex gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto">
+            <a href="{% url 'guests:export_csv' event.id %}" class="btn-secondary btn-sm text-xs sm:text-sm">
+                <i class="fas fa-file-csv"></i> CSV
+            </a>
+            <a href="{% url 'guests:export_excel' event.id %}" class="btn-secondary btn-sm text-xs sm:text-sm">
+                <i class="fas fa-file-excel"></i> Excel
+            </a>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STATISTIQUES -->
+    <!-- ============================================================ -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
+        <div class="stat-card text-center p-2 sm:p-3">
+            <div class="stat-number text-purple-400 text-lg sm:text-xl">{{ stats.total }}</div>
+            <div class="stat-label text-[10px] sm:text-xs">{% trans "Total" %}</div>
+        </div>
+        <div class="stat-card text-center p-2 sm:p-3">
+            <div class="stat-number text-green-400 text-lg sm:text-xl">{{ stats.attending }}</div>
+            <div class="stat-label text-[10px] sm:text-xs">{% trans "Présents" %}</div>
+        </div>
+        <div class="stat-card text-center p-2 sm:p-3">
+            <div class="stat-number text-red-400 text-lg sm:text-xl">{{ stats.not_attending }}</div>
+            <div class="stat-label text-[10px] sm:text-xs">{% trans "Absents" %}</div>
+        </div>
+        <div class="stat-card text-center p-2 sm:p-3">
+            <div class="stat-number text-cyan-400 text-lg sm:text-xl">{{ stats.verified }}</div>
+            <div class="stat-label text-[10px] sm:text-xs">{% trans "Vérifiés" %}</div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- BARRE DE RECHERCHE -->
+    <!-- ============================================================ -->
+    <div class="flex flex-col sm:flex-row justify-between gap-3 mb-4">
+        <form method="get" class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <input type="text" name="q" value="{{ search_query }}" 
+                   placeholder="{% trans 'Rechercher...' %}" 
+                   class="form-input py-1.5 text-xs sm:text-sm min-w-[120px] sm:min-w-[200px]">
+            <select name="status" class="form-input py-1.5 text-xs sm:text-sm">
+                <option value="">{% trans "Tous" %}</option>
+                <option value="attending" {% if status_filter == 'attending' %}selected{% endif %}>{% trans "Présents" %}</option>
+                <option value="not_attending" {% if status_filter == 'not_attending' %}selected{% endif %}>{% trans "Absents" %}</option>
+                <option value="verified" {% if status_filter == 'verified' %}selected{% endif %}>{% trans "Vérifiés" %}</option>
+                <option value="unverified" {% if status_filter == 'unverified' %}selected{% endif %}>{% trans "Non vérifiés" %}</option>
+            </select>
+            <button type="submit" class="btn-primary btn-sm text-xs sm:text-sm">
+                <i class="fas fa-search"></i>
+            </button>
+            {% if search_query or status_filter %}
+                <a href="?" class="text-[10px] sm:text-xs text-gray-400 hover:text-white transition">{% trans "Réinitialiser" %}</a>
+            {% endif %}
+        </form>
+
+        <form method="get" class="flex items-center gap-1.5 sm:gap-2">
+            <label for="per_page" class="text-[10px] sm:text-xs text-gray-400">{% trans "Afficher" %}</label>
+            <select name="per_page" id="per_page" onchange="this.form.submit()" class="form-input py-1 text-xs sm:text-sm">
+                <option value="15" {% if current_per_page == 15 %}selected{% endif %}>15</option>
+                <option value="20" {% if current_per_page == 20 %}selected{% endif %}>20</option>
+                <option value="50" {% if current_per_page == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if current_per_page == 100 %}selected{% endif %}>100</option>
+            </select>
+        </form>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TABLEAU -->
+    <!-- ============================================================ -->
+    <div class="glass-card p-3 sm:p-4 overflow-x-auto">
+        {% if guests %}
+            <div class="-mx-3 sm:-mx-4">
+                <table class="w-full text-[10px] sm:text-xs">
+                    <thead>
+                        <tr class="border-b border-white/10">
+                            <th class="text-left py-2 px-2 text-gray-400 font-medium">{% trans "Invité" %}</th>
+                            <th class="text-left py-2 px-2 text-gray-400 font-medium hidden sm:table-cell">{% trans "Email" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-400 font-medium">{% trans "Présence" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-400 font-medium hidden md:table-cell">{% trans "Boisson" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-400 font-medium hidden lg:table-cell">{% trans "Vérifié" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-400 font-medium">{% trans "Table" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-400 font-medium hidden xl:table-cell">{% trans "Check-in" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for guest in guests %}
+                            <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                                <td class="py-2 px-2">
+                                    <div class="font-medium">{{ guest.first_name }} {{ guest.last_name }}</div>
+                                    <div class="text-[8px] sm:text-[10px] text-gray-500 sm:hidden">{{ guest.email|default:"-" }}</div>
+                                </td>
+                                <td class="py-2 px-2 hidden sm:table-cell text-gray-400">{{ guest.email|default:"-" }}</td>
+                                <td class="text-center py-2 px-2">
+                                    {% if guest.will_attend %}
+                                        <span class="badge badge-green text-[8px] sm:text-[10px]">{% trans "Oui" %}</span>
+                                        {% if guest.number_of_guests > 1 %}
+                                            <span class="text-[8px] sm:text-[10px] text-gray-400">+{{ guest.number_of_guests|add:-1 }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge badge-red text-[8px] sm:text-[10px]">{% trans "Non" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center py-2 px-2 hidden md:table-cell">{{ guest.drink_display|default:"-" }}</td>
+                                <td class="text-center py-2 px-2 hidden lg:table-cell">
+                                    {% if guest.is_verified %}
+                                        <span class="badge badge-green text-[8px] sm:text-[10px]"><i class="fas fa-check"></i></span>
+                                    {% else %}
+                                        <span class="badge badge-yellow text-[8px] sm:text-[10px]"><i class="fas fa-clock"></i></span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center py-2 px-2">
+                                    {% if guest.table %}
+                                        <span class="badge badge-purple text-[8px] sm:text-[10px]">{{ guest.table.number }}</span>
+                                    {% else %}
+                                        <span class="text-gray-500 text-[8px] sm:text-[10px]">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center py-2 px-2 hidden xl:table-cell">
+                                    {% if guest.checkin_time %}
+                                        <span class="text-cyan-400 text-[10px]">{{ guest.checkin_time|date:"H:i" }}</span>
+                                    {% else %}
+                                        <span class="text-gray-500">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <div class="flex flex-wrap justify-center gap-1.5 sm:gap-2 mt-4 pt-3 border-t border-white/10">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1&per_page={{ current_per_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn-secondary btn-sm text-xs">&laquo;</a>
+                        <a href="?page={{ page_obj.previous_page_number }}&per_page={{ current_per_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn-secondary btn-sm text-xs">&lsaquo;</a>
+                    {% endif %}
+                    <span class="flex items-center px-3 text-[10px] sm:text-xs text-gray-400">
+                        {% blocktrans with current=page_obj.number total=page_obj.paginator.num_pages %}
+                            Page {{ current }}/{{ total }}
+                        {% endblocktrans %}
+                    </span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&per_page={{ current_per_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn-secondary btn-sm text-xs">&rsaquo;</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}&per_page={{ current_per_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn-secondary btn-sm text-xs">&raquo;</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+        {% else %}
+            <div class="text-center py-8 sm:py-12 text-gray-400">
+                <i class="fas fa-inbox text-3xl sm:text-4xl mb-3 block"></i>
+                <p class="text-sm">{% trans "Aucune réponse pour le moment." %}</p>
+                <p class="text-xs text-gray-500 mt-1">{% trans "Les invités commenceront à répondre dès que vous partagerez le lien RSVP." %}</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ACTIONS -->
+    <!-- ============================================================ -->
+    <div class="mt-4 flex flex-wrap gap-2">
+        <a href="{% url 'events:event_detail' event.slug %}" class="btn-secondary btn-sm text-xs">
+            <i class="fas fa-arrow-left"></i> {% trans "Retour" %}
+        </a>
+        <a href="{% url 'guests:invited_list' event.id %}" class="btn-secondary btn-sm text-xs">
+            <i class="fas fa-list"></i> {% trans "Pré-enregistrés" %}
+        </a>
+    </div>
+</div>
+
+<style>
+    .stat-card {
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 10px;
+        display: block;
+        text-decoration: none;
+    }
+    .stat-card:hover {
+        border-color: rgba(139, 92, 246, 0.3);
+        background: rgba(255,255,255,0.03);
+    }
+    .stat-card .stat-number {
+        font-size: 22px;
+        font-weight: 700;
+    }
+    .stat-card .stat-label {
+        font-size: 10px;
+        color: rgba(255,255,255,0.4);
+        margin-top: 2px;
+    }
+    @media (min-width: 640px) {
+        .stat-card .stat-number { font-size: 28px; }
+        .stat-card .stat-label { font-size: 12px; }
+    }
+</style>
+{% endblock %}

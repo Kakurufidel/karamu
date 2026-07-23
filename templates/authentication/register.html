@@ -1,0 +1,476 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Inscription" %} - KaramuManage{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center px-4 py-12">
+    <div class="w-full max-w-md">
+
+        <!-- ============================================================ -->
+        <!-- EN-TÊTE -->
+        <!-- ============================================================ -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 mb-4">
+                <i class="fas fa-user-plus text-3xl text-cyan-400"></i>
+            </div>
+            <h1 class="text-2xl font-bold">{% trans "Créer un compte" %}</h1>
+            <p class="text-gray-400 text-sm mt-1">{% trans "Rejoignez KaramuManage et gérez vos événements en toute simplicité" %}</p>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- CARTE D'INSCRIPTION -->
+        <!-- ============================================================ -->
+        <div class="glass-card p-6 md:p-8">
+            <form method="post" action="{% url 'authentication:register' %}" novalidate>
+                {% csrf_token %}
+
+                <!-- Erreurs globales -->
+                {% if form.non_field_errors %}
+                    <div class="form-errors-global">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <ul>
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
+                <!-- ========================================================== -->
+                <!-- PRÉNOM -->
+                <!-- ========================================================== -->
+                <div class="mb-4">
+                    <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                        <i class="fas fa-user text-purple-400 mr-1"></i>
+                        {% trans "Prénom" %} <span class="required">*</span>
+                    </label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                        <div class="form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.first_name.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- ========================================================== -->
+                <!-- NOM -->
+                <!-- ========================================================== -->
+                <div class="mb-4">
+                    <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                        <i class="fas fa-user text-cyan-400 mr-1"></i>
+                        {% trans "Nom" %} <span class="required">*</span>
+                    </label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                        <div class="form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.last_name.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- ========================================================== -->
+                <!-- EMAIL -->
+                <!-- ========================================================== -->
+                <div class="mb-4">
+                    <label for="{{ form.email.id_for_label }}" class="form-label">
+                        <i class="fas fa-envelope text-purple-400 mr-1"></i>
+                        {% trans "Adresse email" %} <span class="required">*</span>
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.email.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- ========================================================== -->
+                <!-- TÉLÉPHONE -->
+                <!-- ========================================================== -->
+                <div class="mb-4">
+                    <label for="{{ form.phone.id_for_label }}" class="form-label">
+                        <i class="fas fa-phone text-cyan-400 mr-1"></i>
+                        {% trans "Téléphone" %}
+                        <span class="optional">({% trans "optionnel" %})</span>
+                    </label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}
+                        <div class="form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.phone.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- ========================================================== -->
+                <!-- MOT DE PASSE -->
+                <!-- ========================================================== -->
+                <div class="mb-4">
+                    <label for="{{ form.password1.id_for_label }}" class="form-label">
+                        <i class="fas fa-lock text-purple-400 mr-1"></i>
+                        {% trans "Mot de passe" %} <span class="required">*</span>
+                    </label>
+                    <div class="password-wrapper">
+                        {{ form.password1 }}
+                        <button type="button" class="toggle-password" onclick="togglePassword('id_password1', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    {% if form.password1.errors %}
+                        <div class="form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.password1.errors.0 }}
+                        </div>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        {% trans "Minimum 8 caractères" %}
+                    </p>
+                </div>
+
+                <!-- ========================================================== -->
+                <!-- CONFIRMATION MOT DE PASSE -->
+                <!-- ========================================================== -->
+                <div class="mb-4">
+                    <label for="{{ form.password2.id_for_label }}" class="form-label">
+                        <i class="fas fa-check-circle text-cyan-400 mr-1"></i>
+                        {% trans "Confirmer le mot de passe" %} <span class="required">*</span>
+                    </label>
+                    <div class="password-wrapper">
+                        {{ form.password2 }}
+                        <button type="button" class="toggle-password" onclick="togglePassword('id_password2', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    {% if form.password2.errors %}
+                        <div class="form-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.password2.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- ========================================================== -->
+                <!-- CODE CO-ORGANISATEUR  -->
+                <!-- ========================================================== -->
+                <div class="mb-6 pt-2 border-t border-white/10">
+                    <div class="flex items-center justify-between cursor-pointer" onclick="toggleCoorgCode()">
+                        <label class="form-label cursor-pointer">
+                            <i class="fas fa-users-cog text-purple-400 mr-1"></i>
+                            {% trans "Code co-organisateur" %}
+                            <span class="optional">({% trans "optionnel" %})</span>
+                        </label>
+                        <span id="coorg-toggle-icon" class="text-gray-400 transition-transform duration-300">
+                            <i class="fas fa-chevron-down"></i>
+                        </span>
+                    </div>
+                    
+                    <!-- Champ caché par défaut -->
+                    <div id="coorg-code-field" class="hidden mt-2">
+                        <input type="text" name="coorganizer_code" id="id_coorganizer_code" 
+                               value="{{ form.coorganizer_code.value|default:'' }}"
+                               class="form-input" 
+                               placeholder="Ex: A3F9Z7" maxlength="6">
+                        {% if form.coorganizer_code.errors %}
+                            <div class="form-error">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.coorganizer_code.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            {% trans "Si vous avez reçu un code, saisissez-le ici pour rejoindre un événement en tant que co-organisateur." %}
+                        </p>
+                    </div>
+                    
+                    <!-- Afficher automatiquement si un code est déjà saisi -->
+                    {% if form.coorganizer_code.value %}
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                document.getElementById('coorg-code-field').classList.remove('hidden');
+                                document.getElementById('coorg-toggle-icon').innerHTML = '<i class="fas fa-chevron-up"></i>';
+                            });
+                        </script>
+                    {% endif %}
+                </div>
+
+                <!-- ========================================================== -->
+                <!-- CONDITIONS -->
+                <!-- ========================================================== -->
+                <div class="flex items-start gap-2 mb-6">
+                    <input type="checkbox" name="terms" id="terms" required class="form-checkbox mt-0.5">
+                    <label for="terms" class="text-sm text-gray-400">
+                        {% trans "J'accepte les" %}
+                        <a href="#" class="text-purple-400 hover:text-purple-300 transition">
+                            {% trans "conditions d'utilisation" %}
+                        </a>
+                        {% trans "et la" %}
+                        <a href="#" class="text-purple-400 hover:text-purple-300 transition">
+                            {% trans "politique de confidentialité" %}
+                        </a>
+                    </label>
+                </div>
+
+                <!-- ========================================================== -->
+                <!-- BOUTON -->
+                <!-- ========================================================== -->
+                <button type="submit" class="btn-primary w-full justify-center py-3">
+                    <i class="fas fa-user-plus"></i>
+                    {% trans "Créer mon compte" %}
+                </button>
+
+                <!-- ========================================================== -->
+                <!-- LIEN CONNEXION -->
+                <!-- ========================================================== -->
+                <div class="text-center mt-5 text-sm text-gray-400">
+                    {% trans "Vous avez déjà un compte ?" %}
+                    <a href="{% url 'authentication:login' %}" class="text-purple-400 hover:text-purple-300 transition font-semibold">
+                        {% trans "Se connecter" %}
+                    </a>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- FOOTER -->
+        <!-- ============================================================ -->
+        <div class="text-center mt-6 text-xs text-gray-500">
+            <p>&copy; {% now "Y" %} KaramuManage. {% trans "Tous droits réservés." %}</p>
+        </div>
+
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- STYLES -->
+<!-- ============================================================ -->
+<style>
+    /* ============================================================ */
+    /* FORM LABELS */
+    /* ============================================================ */
+    .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        color: rgba(255,255,255,0.7);
+        margin-bottom: 4px;
+    }
+    .form-label .required {
+        color: #EF4444;
+        margin-left: 2px;
+    }
+    .form-label .optional {
+        color: rgba(255,255,255,0.3);
+        font-weight: 400;
+        font-size: 11px;
+        margin-left: 4px;
+    }
+
+    /* ============================================================ */
+    /* FORM INPUTS */
+    /* ============================================================ */
+    .form-input {
+        width: 100%;
+        padding: 10px 14px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px;
+        color: #e5e7eb;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        outline: none;
+        font-family: 'Inter', sans-serif;
+        box-sizing: border-box;
+    }
+    .form-input:focus {
+        border-color: #8B5CF6;
+        box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+        background: rgba(255,255,255,0.08);
+    }
+    .form-input::placeholder {
+        color: rgba(255,255,255,0.3);
+    }
+    .form-input.error {
+        border-color: #EF4444 !important;
+        box-shadow: 0 0 0 3px rgba(239,68,68,0.15) !important;
+    }
+
+    /* ============================================================ */
+    /* PASSWORD WRAPPER - les inputs password héritent du même style */
+    /* ============================================================ */
+    .password-wrapper {
+        position: relative;
+        width: 100%;
+    }
+    .password-wrapper .form-input {
+        padding-right: 48px;
+    }
+    .toggle-password {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: rgba(255,255,255,0.4);
+        cursor: pointer;
+        font-size: 16px;
+        padding: 4px;
+        transition: color 0.2s ease;
+        z-index: 5;
+        line-height: 1;
+    }
+    .toggle-password:hover {
+        color: rgba(255,255,255,0.8);
+    }
+    .toggle-password:focus {
+        outline: none;
+    }
+
+    /* ============================================================ */
+    /* CHECKBOX */
+    /* ============================================================ */
+    .form-checkbox {
+        width: 18px;
+        height: 18px;
+        accent-color: #8B5CF6;
+        cursor: pointer;
+        flex-shrink: 0;
+        border-radius: 4px;
+    }
+
+    /* ============================================================ */
+    /* ERRORS */
+    /* ============================================================ */
+    .form-error {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #F87171;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+    .form-error i {
+        font-size: 14px;
+    }
+
+    .form-errors-global {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 16px;
+        background: rgba(239,68,68,0.1);
+        border: 1px solid rgba(239,68,68,0.2);
+        border-radius: 8px;
+        color: #F87171;
+        font-size: 13px;
+        margin-bottom: 16px;
+    }
+    .form-errors-global i {
+        margin-top: 2px;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+    .form-errors-global ul {
+        margin: 0;
+        padding-left: 16px;
+    }
+
+    /* ============================================================ */
+    /* TOGGLE CODE CO-ORGANISATEUR */
+    /* ============================================================ */
+    #coorg-code-field {
+        animation: slideDown 0.3s ease forwards;
+    }
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<!-- ============================================================ -->
+<!-- SCRIPTS -->
+<!-- ============================================================ -->
+<script>
+    // ============================================================
+    // TOGGLE MOT DE PASSE (OEIL) - Œil = visible, barre = caché
+    // ============================================================
+    function togglePassword(fieldId, button) {
+        const field = document.getElementById(fieldId);
+        if (!field) return;
+
+        const icon = button.querySelector('i');
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.className = 'fas fa-eye-slash'
+        } else {
+            field.type = 'password';
+            icon.className = 'fas fa-eye';
+        }
+    }
+
+    // ============================================================
+    // TOGGLE CODE CO-ORGANISATEUR
+    // ============================================================
+    function toggleCoorgCode() {
+        const field = document.getElementById('coorg-code-field');
+        const icon = document.getElementById('coorg-toggle-icon');
+        
+        if (field.classList.contains('hidden')) {
+            field.classList.remove('hidden');
+            icon.innerHTML = '<i class="fas fa-chevron-up"></i>';
+        } else {
+            field.classList.add('hidden');
+            icon.innerHTML = '<i class="fas fa-chevron-down"></i>';
+        }
+    }
+
+    // ============================================================
+    // SI UN CODE EST PRÉ-REMPLI, OUVRIR AUTOMATIQUEMENT
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const codeInput = document.getElementById('id_coorganizer_code');
+        if (codeInput && codeInput.value.trim() !== '') {
+            const field = document.getElementById('coorg-code-field');
+            const icon = document.getElementById('coorg-toggle-icon');
+            if (field && icon) {
+                field.classList.remove('hidden');
+                icon.innerHTML = '<i class="fas fa-chevron-up"></i>';
+            }
+        }
+    });
+
+    // ============================================================
+    // VALIDATION CONDITIONS (checkbox obligatoire)
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const termsCheckbox = document.getElementById('terms');
+        
+        if (form && termsCheckbox) {
+            form.addEventListener('submit', function(e) {
+                if (!termsCheckbox.checked) {
+                    e.preventDefault();
+                    termsCheckbox.classList.add('error');
+                    alert('Veuillez accepter les conditions d\'utilisation.');
+                }
+            });
+            
+            termsCheckbox.addEventListener('change', function() {
+                this.classList.remove('error');
+            });
+        }
+    });
+</script>
+{% endblock %}

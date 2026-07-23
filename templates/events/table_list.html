@@ -1,0 +1,571 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Tables" %} - {{ event.name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* ============================================================ */
+    /* STYLES DES TABLES */
+    /* ============================================================ */
+    .table-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+    .table-card:hover {
+        border-color: rgba(139,92,246,0.3);
+        background: rgba(255,255,255,0.06);
+        transform: translateY(-2px);
+    }
+    .table-card.deleted {
+        opacity: 0.5;
+        border-color: rgba(239,68,68,0.3);
+        background: rgba(239,68,68,0.05);
+    }
+    .table-card.deleted:hover {
+        border-color: rgba(239,68,68,0.5);
+    }
+
+    /* ============================================================ */
+    /* STATUTS */
+    /* ============================================================ */
+    .status-badge {
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 500;
+        display: inline-block;
+    }
+    .status-confirmed { background: rgba(16,185,129,0.2); color: #34d399; }
+    .status-pending { background: rgba(251,191,36,0.2); color: #fbbf24; }
+    .status-declined { background: rgba(239,68,68,0.2); color: #f87171; }
+
+    /* ============================================================ */
+    /* INVITÉS DANS LE MODAL */
+    /* ============================================================ */
+    .guest-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 3px 0;
+        font-size: 13px;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .guest-item:last-child { border-bottom: none; }
+    .guest-item .drink {
+        font-size: 11px;
+        color: #9ca3af;
+        background: rgba(255,255,255,0.05);
+        padding: 0 8px;
+        border-radius: 10px;
+    }
+
+    /* ============================================================ */
+    /* MODAL */
+    /* ============================================================ */
+    .modal-overlay {
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(8px);
+    }
+    .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+        transform: scale(0.95);
+        transition: transform 0.2s ease;
+    }
+    .modal-content.active {
+        transform: scale(1);
+    }
+    .table-guests-scroll {
+        max-height: 350px;
+        overflow-y: auto;
+    }
+    .table-guests-scroll::-webkit-scrollbar { width: 4px; }
+    .table-guests-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 4px; }
+    .table-guests-scroll::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.4); border-radius: 4px; }
+    .table-guests-scroll::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,0.6); }
+
+    /* ============================================================ */
+    /* STATISTIQUES */
+    /* ============================================================ */
+    .stat-card {
+        transition: all 0.2s ease;
+        padding: 8px 12px;
+        border-radius: 10px;
+        text-align: center;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.06);
+    }
+    .stat-card:hover {
+        background: rgba(255,255,255,0.07);
+        transform: translateY(-1px);
+    }
+    .stat-value {
+        font-size: 20px;
+        font-weight: 700;
+    }
+    @media (min-width: 640px) {
+        .stat-value { font-size: 24px; }
+    }
+
+    /* ============================================================ */
+    /* RESPONSIVE */
+    /* ============================================================ */
+    @media (max-width: 640px) {
+        .table-card { padding: 10px 12px; }
+        .table-card h3 { font-size: 14px; }
+        .guest-item { font-size: 12px; }
+        .stat-card { padding: 6px 10px; }
+        .stat-value { font-size: 16px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+
+    <!-- ============================================================ -->
+    <!-- EN-TÊTE -->
+    <!-- ============================================================ -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+        <div>
+            <a href="{% url 'events:event_detail' event.slug %}" class="text-purple-400 hover:underline text-xs">
+                <i class="fas fa-arrow-left mr-1"></i>{% trans "Retour" %}
+            </a>
+            <h1 class="text-xl md:text-2xl font-bold mt-0.5">{% trans "Tables" %}</h1>
+            <p class="text-xs text-gray-400">{{ event.name }}</p>
+        </div>
+        <div class="flex gap-2 flex-wrap no-print">
+            {% comment %} <a href="{% url 'events:export_tables_excel' event.id %}" 
+               class="btn-secondary text-xs py-1.5 px-3" 
+               title="{% trans 'Exporter en Excel' %}">
+                <i class="fas fa-file-excel"></i> Excel
+            </a> {% endcomment %}
+            <a href="{% url 'events:tables_pdf' event.id %}" 
+               class="btn-secondary text-xs py-1.5 px-3" 
+               title="{% trans 'Exporter en PDF' %}">
+                <i class="fas fa-file-pdf"></i> PDF
+            </a>
+            <a href="{% url 'events:table_create' event.id %}" 
+               class="btn-primary text-xs py-1.5 px-3">
+                <i class="fas fa-plus mr-1"></i>{% trans "Ajouter" %}
+            </a>
+            <a href="{% url 'events:assign_guest_table' event.id %}" 
+               class="btn-primary text-xs py-1.5 px-3">
+                <i class="fas fa-users-cog mr-1"></i> {% trans "Assigner" %}
+        </a>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STATISTIQUES -->
+    <!-- ============================================================ -->
+    <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-4" id="stats-container">
+        <div class="stat-card">
+            <div class="stat-value text-purple-400">{{ tables|length }}</div>
+            <div class="text-[10px] text-gray-400">{% trans "Tables" %}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value text-green-400">{{ total_guests }}</div>
+            <div class="text-[10px] text-gray-400">{% trans "Invités" %}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value text-cyan-400">{{ total_capacity }}</div>
+            <div class="text-[10px] text-gray-400">{% trans "Capacité" %}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value text-yellow-400">{{ total_remaining }}</div>
+            <div class="text-[10px] text-gray-400">{% trans "Libres" %}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value text-orange-400">{{ unassigned_count }}</div>
+            <div class="text-[10px] text-gray-400">{% trans "Sans table" %}</div>
+        </div>
+    </div>
+
+    {% comment %} <!-- ============================================================ -->
+    <!-- BARRE DE RECHERCHE -->
+    <!-- ============================================================ -->
+    <div class="flex flex-col sm:flex-row justify-between gap-2 mb-4 no-print">
+        <div class="flex flex-wrap items-center gap-2 flex-1">
+            <div class="relative flex-1 max-w-xs">
+                <input type="text" id="search-input" 
+                       placeholder="{% trans 'Rechercher...' %}" 
+                       class="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 pl-8 text-sm focus:outline-none focus:border-purple-400">
+                <i class="fas fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                <div id="search-loading" class="absolute right-2 top-1/2 -translate-y-1/2 hidden">
+                    <i class="fas fa-spinner fa-spin text-purple-400 text-xs"></i>
+                </div>
+            </div>
+            <span id="result-count" class="text-xs text-gray-400"></span>
+        </div>
+        <select id="per-page-select" class="bg-white/10 border border-white/20 rounded-lg px-2 py-1.5 text-xs">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+        </select>
+    </div> {% endcomment %}
+
+    <!-- ============================================================ -->
+    <!-- LISTE DES TABLES -->
+    <!-- ============================================================ -->
+    <div class="glass-card p-3 md:p-4">
+        <div id="tables-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+            {% for table in tables %}
+                <div class="table-card {% if table.is_deleted %}deleted{% endif %}" 
+                     data-table-id="{{ table.id }}" 
+                     onclick="openModal('{{ table.id }}')">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-sm font-semibold">
+                                {% if table.name %}
+                                    {{ table.name }}
+                                {% else %}
+                                    {% trans "Table" %} {{ table.id }}
+                                {% endif %}
+                                {% if table.is_deleted %}
+                                    <span class="text-xs text-red-400 ml-1">({% trans "Supprimée" %})</span>
+                                {% endif %}
+                            </h3>
+                            <div class="text-xs text-gray-400">
+                                {{ table.current_guests_count }}/{{ table.capacity }}
+                                <span class="text-[10px] text-gray-500 ml-1">{% trans "occupée" %}</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-1 no-print" onclick="event.stopPropagation();">
+                            {% if not table.is_deleted %}
+                                <a href="{% url 'events:table_update' table.id %}" 
+                                   class="text-gray-400 hover:text-purple-400 text-xs" 
+                                   title="{% trans 'Modifier' %}">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button onclick="event.stopPropagation(); confirmDelete('{{ table.id }}')" 
+                                        class="text-gray-400 hover:text-red-400 text-xs"
+                                        title="{% trans 'Supprimer' %}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            {% else %}
+                                <span class="text-gray-500 text-xs">{% trans "Supprimée" %}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Aperçu des invités -->
+                    <div class="mt-1 space-y-0.5">
+                        {% for guest in table.guests.all|slice:":2" %}
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-300 truncate">
+                                    {% if guest.will_attend %}
+                                        <span class="text-green-400">✓</span>
+                                    {% else %}
+                                        <span class="text-red-400">✗</span>
+                                    {% endif %}
+                                    {{ guest.first_name|slice:":1" }}. {{ guest.last_name }}
+                                </span>
+                                <span class="text-gray-500">{{ guest.drink_display|default:"-" }}</span>
+                            </div>
+                        {% endfor %}
+                        {% for invited in table.invited_guests.all|slice:":2" %}
+                            {% if forloop.counter <= 2 and table.guests.all|length < 2 %}
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-gray-400">
+                                        <span class="text-yellow-400">⏳</span>
+                                        {{ invited.first_name|slice:":1" }}. {{ invited.last_name }}
+                                    </span>
+                                    <span class="text-gray-500">-</span>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        {% if table.guests.count|add:table.invited_guests.count > 2 %}
+                            <div class="text-xs text-gray-500">
+                                +{{ table.guests.count|add:table.invited_guests.count|add:"-2" }} {% trans "autres" %}
+                            </div>
+                        {% endif %}
+                        {% if table.guests.count == 0 and table.invited_guests.count == 0 %}
+                            <div class="text-xs text-gray-500 italic">{% trans "Vide" %}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-span-full text-center py-6 text-gray-400">
+                    <i class="fas fa-chair text-3xl mb-2 block"></i>
+                    <p class="text-sm">{% trans "Aucune table" %}</p>
+                    <a href="{% url 'events:table_create' event.id %}" 
+                       class="btn-primary text-xs mt-2 inline-block no-print">
+                        <i class="fas fa-plus mr-1"></i>{% trans "Créer" %}
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated and tables|length > 10 %}
+            <div class="flex flex-wrap justify-center gap-1 mt-4 no-print">
+                {% if page_obj.has_previous %}
+                    <a href="#" data-page="1" class="page-link btn-outline text-xs px-2 py-1">&laquo;</a>
+                    <a href="#" data-page="{{ page_obj.previous_page_number }}" class="page-link btn-outline text-xs px-2 py-1">&lsaquo;</a>
+                {% endif %}
+                <span class="text-xs text-gray-400 py-1 px-2">
+                    {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}
+                </span>
+                {% if page_obj.has_next %}
+                    <a href="#" data-page="{{ page_obj.next_page_number }}" class="page-link btn-outline text-xs px-2 py-1">&rsaquo;</a>
+                    <a href="#" data-page="{{ page_obj.paginator.num_pages }}" class="page-link btn-outline text-xs px-2 py-1">&raquo;</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL DÉTAILS TABLE -->
+<!-- ============================================================ -->
+<div id="table-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay no-print">
+    <div class="modal-content glass-card p-5 max-w-lg w-full mx-3 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation();">
+        <div class="flex justify-between items-center border-b border-white/10 pb-2">
+            <h2 id="modal-title" class="text-lg font-bold">{% trans "Table" %} <span id="modal-table-number"></span></h2>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-white text-lg">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="modal-body" class="mt-3">
+            <div id="modal-loading" class="text-center py-6">
+                <i class="fas fa-spinner fa-spin text-2xl text-purple-400"></i>
+            </div>
+            <div id="modal-content" class="hidden">
+                <div class="flex gap-3 mb-3 flex-wrap text-sm">
+                    <span class="bg-white/5 px-3 py-1 rounded-lg">
+                        <span class="text-gray-400">{% trans "Capacité" %} :</span> 
+                        <span id="modal-capacity" class="font-semibold"></span>
+                    </span>
+                    <span class="bg-white/5 px-3 py-1 rounded-lg">
+                        <span class="text-gray-400">{% trans "Occupée" %} :</span> 
+                        <span id="modal-occupied" class="font-semibold"></span>
+                    </span>
+                    <span class="bg-white/5 px-3 py-1 rounded-lg">
+                        <span class="text-gray-400">{% trans "Libres" %} :</span> 
+                        <span id="modal-remaining" class="font-semibold"></span>
+                    </span>
+                </div>
+                <div id="modal-guests-list" class="table-guests-scroll space-y-0.5"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL SUPPRESSION -->
+<!-- ============================================================ -->
+<div id="delete-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm no-print">
+    <div class="glass-card p-5 max-w-sm w-full mx-3">
+        <div class="text-center">
+            <i class="fas fa-exclamation-triangle text-3xl text-red-400 mb-3 block"></i>
+            <h2 class="text-lg font-bold mb-2">{% trans "Supprimer la table" %}</h2>
+            <p class="text-sm text-gray-300 mb-4">{% trans "Cette action est irréversible." %}</p>
+            <div class="flex gap-3">
+                <form id="delete-form" method="post" class="flex-1" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full bg-red-500/20 hover:bg-red-500/30 py-2 rounded-lg text-sm transition">
+                        {% trans "Supprimer" %}
+                    </button>
+                </form>
+                <button onclick="closeDeleteModal()" class="flex-1 bg-white/10 hover:bg-white/20 py-2 rounded-lg text-sm transition">
+                    {% trans "Annuler" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SCRIPTS -->
+<!-- ============================================================ -->
+<script>
+    (function() {
+        'use strict';
+
+        // ============================================================
+        // RECHERCHE EN TEMPS RÉEL
+        // ============================================================
+        let searchTimeout = null;
+        const searchInput = document.getElementById('search-input');
+        const perPageSelect = document.getElementById('per-page-select');
+        const tablesContainer = document.getElementById('tables-container');
+        const searchLoading = document.getElementById('search-loading');
+
+        function performSearch() {
+            const query = searchInput.value.trim();
+            const perPage = perPageSelect.value;
+            
+            searchLoading.classList.remove('hidden');
+            
+            const url = new URL(window.location.href);
+            url.searchParams.set('q', query);
+            url.searchParams.set('per_page', perPage);
+            url.searchParams.set('ajax', '1');
+            
+            fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                tablesContainer.innerHTML = data.html;
+                document.querySelectorAll('.table-card').forEach(card => {
+                    card.addEventListener('click', function() {
+                        openModal(this.dataset.tableId);
+                    });
+                });
+                if (data.total_guests !== undefined) {
+                    document.querySelector('.stat-value.text-green-400').textContent = data.total_guests;
+                    document.querySelector('.stat-value.text-cyan-400').textContent = data.total_capacity;
+                    document.querySelector('.stat-value.text-yellow-400').textContent = data.total_remaining;
+                    document.querySelector('.stat-value.text-orange-400').textContent = data.unassigned_count;
+                    document.querySelector('.stat-value.text-purple-400').textContent = data.count || 0;
+                }
+            })
+            .catch(error => console.error('Erreur:', error))
+            .finally(() => searchLoading.classList.add('hidden'));
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(performSearch, 300);
+            });
+        }
+        if (perPageSelect) perPageSelect.addEventListener('change', performSearch);
+
+        // ============================================================
+        // PAGINATION AJAX
+        // ============================================================
+        document.querySelectorAll('.page-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.dataset.page;
+                const url = new URL(window.location.href);
+                url.searchParams.set('page', page);
+                url.searchParams.set('ajax', '1');
+                
+                tablesContainer.innerHTML = '<div class="col-span-full text-center py-6"><i class="fas fa-spinner fa-spin text-2xl text-purple-400"></i></div>';
+                
+                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => response.json())
+                .then(data => {
+                    tablesContainer.innerHTML = data.html;
+                    document.querySelectorAll('.table-card').forEach(card => {
+                        card.addEventListener('click', function() {
+                            openModal(this.dataset.tableId);
+                        });
+                    });
+                })
+                .catch(error => console.error('Erreur:', error));
+            });
+        });
+
+        // ============================================================
+        // MODAL DÉTAILS TABLE
+        // ============================================================
+        function openModal(tableId) {
+            const modal = document.getElementById('table-modal');
+            const modalContent = document.getElementById('modal-content');
+            const modalLoading = document.getElementById('modal-loading');
+            
+            modalContent.classList.add('hidden');
+            modalLoading.classList.remove('hidden');
+            document.getElementById('modal-table-number').textContent = '';
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.querySelector('.modal-content').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            
+            fetch(`/events/tables/${tableId}/detail/`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('modal-table-number').textContent = data.number;
+                document.getElementById('modal-capacity').textContent = data.capacity;
+                document.getElementById('modal-occupied').textContent = data.occupied;
+                document.getElementById('modal-remaining').textContent = data.capacity - data.occupied;
+                
+                let guestsHtml = '';
+                if (data.guests.length > 0) {
+                    data.guests.forEach(guest => {
+                        const statusClass = guest.status === 'confirmed' ? 'status-confirmed' :
+                                           guest.status === 'declined' ? 'status-declined' : 'status-pending';
+                        const typeIcon = guest.type === 'invited' ? '📌' : '';
+                        const drinkDisplay = guest.drink_display || 'Non spécifié';
+                        guestsHtml += `
+                            <div class="guest-item">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-gray-300">${typeIcon} ${guest.first_name} ${guest.last_name}</span>
+                                    <span class="drink">🍷 ${drinkDisplay}</span>
+                                </div>
+                                <span class="status-badge ${statusClass}">${guest.status_display}</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    guestsHtml = `<div class="text-center text-gray-400 text-sm py-4">Aucun invité assigné</div>`;
+                }
+                document.getElementById('modal-guests-list').innerHTML = guestsHtml;
+                
+                modalLoading.classList.add('hidden');
+                modalContent.classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                modalLoading.innerHTML = `<div class="text-center text-red-400 text-sm py-4">Erreur de chargement</div>`;
+            });
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('table-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.querySelector('.modal-content').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        document.getElementById('table-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // ============================================================
+        // SUPPRESSION
+        // ============================================================
+        function confirmDelete(tableId) {
+            const form = document.getElementById('delete-form');
+            form.action = "{% url 'events:table_delete' 0 %}".replace('0', tableId);
+            document.getElementById('delete-modal').classList.remove('hidden');
+            document.getElementById('delete-modal').classList.add('flex');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            document.getElementById('delete-modal').classList.remove('flex');
+        }
+
+        // ============================================================
+        // FERMETURE AVEC TOUCHE ÉCHAP
+        // ============================================================
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeDeleteModal();
+            }
+        });
+
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.confirmDelete = confirmDelete;
+        window.closeDeleteModal = closeDeleteModal;
+
+    })();
+</script>
+{% endblock %}

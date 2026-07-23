@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ title }} - KaramuManage{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+    <!-- En-tête -->
+    <div class="text-center mb-8">
+        <div class="inline-flex items-center gap-2 bg-purple-500/10 rounded-full px-4 py-1.5 text-sm text-purple-400 mb-3">
+            <i class="fas fa-check-circle"></i>
+            <span>{% trans "Validation" %}</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold">{{ title }}</h1>
+        <p class="text-gray-400 text-sm mt-1">
+            {% trans "Examinez et traitez la demande de paiement" %}
+        </p>
+    </div>
+
+    <div class="glass-card p-6 md:p-8">
+        <!-- Informations du paiement -->
+        <div class="bg-white/5 p-4 rounded-xl mb-6">
+            <h3 class="text-sm font-semibold text-gray-400 mb-3">
+                <i class="fas fa-info-circle text-purple-400 mr-1"></i>
+                {% trans "Détails de la demande" %}
+            </h3>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                    <span class="text-gray-400">{% trans "Événement" %} :</span>
+                    <span class="text-white font-medium">{{ payment.event.name }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">{% trans "Utilisateur" %} :</span>
+                    <span class="text-white font-medium">{{ payment.user.email }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">{% trans "Plan" %} :</span>
+                    <span class="badge badge-purple">{{ payment.get_plan_display }}</span>
+                </div>
+                <div>
+                    <span class="text-gray-400">{% trans "Montant" %} :</span>
+                    <span class="text-white font-semibold text-green-400">{{ payment.amount|floatformat:2 }} $</span>
+                </div>
+                <div class="col-span-2">
+                    <span class="text-gray-400">{% trans "Capture d'écran" %} :</span>
+                    <a href="{{ payment.screenshot.url }}" target="_blank" class="text-cyan-400 hover:text-cyan-300 transition font-medium">
+                        <i class="fas fa-external-link-alt mr-1"></i>{% trans "Voir la capture" %}
+                    </a>
+                </div>
+                <div class="col-span-2">
+                    <span class="text-gray-400">{% trans "Statut actuel" %} :</span>
+                    {% if payment.status == 'pending' %}
+                        <span class="badge badge-yellow">{% trans "En attente" %}</span>
+                    {% elif payment.status == 'approved' %}
+                        <span class="badge badge-green">{% trans "Approuvé" %}</span>
+                    {% else %}
+                        <span class="badge badge-red">{% trans "Rejeté" %}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire de traitement -->
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <!-- Erreurs globales -->
+            {% if form.non_field_errors %}
+                <div class="form-errors-global">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <ul>
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <!-- Statut -->
+            <div class="mb-4">
+                <label for="{{ form.status.id_for_label }}" class="form-label">
+                    <i class="fas fa-toggle-on text-purple-400 mr-1"></i>
+                    {% trans "Statut" %} <span class="text-red-400">*</span>
+                </label>
+                {{ form.status }}
+                {% if form.status.errors %}
+                    <div class="form-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ form.status.errors.0 }}
+                    </div>
+                {% endif %}
+                <p class="text-xs text-gray-500 mt-1">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    {% trans "Sélectionnez le statut de la demande" %}
+                </p>
+            </div>
+
+            <!-- Notes admin -->
+            <div class="mb-6">
+                <label for="{{ form.admin_notes.id_for_label }}" class="form-label">
+                    <i class="fas fa-sticky-note text-cyan-400 mr-1"></i>
+                    {% trans "Notes de l'administrateur" %}
+                    <span class="text-xs text-gray-500 font-normal">({% trans "optionnel" %})</span>
+                </label>
+                {{ form.admin_notes }}
+                {% if form.admin_notes.errors %}
+                    <div class="form-error">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ form.admin_notes.errors.0 }}
+                    </div>
+                {% endif %}
+                <p class="text-xs text-gray-500 mt-1">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    {% trans "Ajoutez un commentaire pour l'utilisateur" %}
+                </p>
+            </div>
+
+            <!-- Boutons -->
+            <div class="flex flex-wrap gap-3 pt-6 border-t border-white/10">
+                <button type="submit" class="btn-primary flex-1 sm:flex-none">
+                    <i class="fas fa-check"></i>
+                    {% trans "Enregistrer" %}
+                </button>
+                <a href="{% url 'payments:admin_list' %}" class="btn-secondary flex-1 sm:flex-none">
+                    <i class="fas fa-times"></i> {% trans "Annuler" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

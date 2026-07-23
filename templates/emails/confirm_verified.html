@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation - {{ event.name }}</title>
+    <style>
+        /* ============================================
+           RESET & BASE
+           ============================================ */
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #0a0a0f;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border-radius: 16px;
+            padding: 0;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        
+        /* ============================================
+           HEADER
+           ============================================ */
+        .header {
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            padding: 40px 20px 30px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header-logo {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .header .subtitle {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+            font-weight: 400;
+        }
+        .header .event-name {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 6px 20px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        /* ============================================
+           CONTENT
+           ============================================ */
+        .content {
+            padding: 30px 25px;
+            color: #e5e5e5;
+        }
+        .content h2 {
+            color: #a78bfa;
+            font-size: 22px;
+            margin-top: 0;
+            font-weight: 600;
+        }
+        .content p {
+            color: #d1d5db;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+        .content strong {
+            color: #ffffff;
+        }
+        
+        /* ============================================
+           EVENT DETAILS
+           ============================================ */
+        .event-details {
+            background: rgba(255,255,255,0.04);
+            padding: 20px 24px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #7c3aed;
+        }
+        .event-details p {
+            margin: 6px 0;
+            color: #d1d5db;
+            font-size: 14px;
+        }
+        .event-details .label {
+            color: #9ca3af;
+            font-weight: 400;
+        }
+        .event-details .value {
+            color: #ffffff;
+            font-weight: 500;
+        }
+        
+        /* ============================================
+           TABLE INFO
+           ============================================ */
+        .table-info {
+            background: rgba(124, 58, 237, 0.15);
+            padding: 12px 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: #a78bfa;
+            margin: 15px 0;
+            border: 1px solid rgba(124, 58, 237, 0.2);
+        }
+        .table-info span {
+            font-size: 13px;
+            font-weight: 400;
+            color: #9ca3af;
+            display: block;
+            margin-top: 2px;
+        }
+        
+        /* ============================================
+           PREFERENCES
+           ============================================ */
+        .preferences {
+            background: rgba(255,255,255,0.03);
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .preferences h3 {
+            color: #67e8f9;
+            font-size: 15px;
+            margin: 0 0 10px 0;
+            font-weight: 600;
+        }
+        .preferences ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .preferences ul li {
+            padding: 4px 0;
+            color: #d1d5db;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .preferences ul li:last-child {
+            border-bottom: none;
+        }
+        .preferences ul li strong {
+            color: #fbbf24;
+        }
+        
+        /* ============================================
+           DIVIDER
+           ============================================ */
+        .divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            margin: 25px 0;
+        }
+        
+        /* ============================================
+           BUTTONS
+           ============================================ */
+        .button-group {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 4px 6px;
+            transition: all 0.2s;
+        }
+        .button-outline {
+            display: inline-block;
+            padding: 12px 28px;
+            background: transparent;
+            color: #a78bfa !important;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 14px;
+            border: 2px solid #7c3aed;
+            margin: 4px 6px;
+            transition: all 0.2s;
+        }
+        .button:hover,
+        .button-outline:hover {
+            transform: scale(1.02);
+            opacity: 0.9;
+        }
+        
+        /* ============================================
+           QR NOTE
+           ============================================ */
+        .qr-note {
+            text-align: center;
+            font-size: 13px;
+            color: #9ca3af;
+            margin-top: 20px;
+            padding: 16px 20px;
+            background: rgba(6, 182, 212, 0.06);
+            border-radius: 10px;
+            border: 1px solid rgba(6, 182, 212, 0.1);
+        }
+        .qr-note strong {
+            color: #67e8f9;
+        }
+        .qr-note .small {
+            font-size: 12px;
+            color: #6b7280;
+            display: block;
+            margin-top: 4px;
+        }
+        
+        /* ============================================
+           DOWNLOAD LINK
+           ============================================ */
+        .download-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .download-link a {
+            color: #a78bfa;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .download-link a:hover {
+            text-decoration: underline;
+        }
+        
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .footer {
+            background: rgba(255,255,255,0.03);
+            padding: 20px 25px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .footer p {
+            margin: 4px 0;
+            color: #6b7280;
+        }
+        .footer a {
+            color: #a78bfa;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .footer .brand {
+            font-weight: 700;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 480px) {
+            .button, .button-outline {
+                display: block;
+                margin: 6px 0;
+                text-align: center;
+            }
+            .header h1 {
+                font-size: 22px;
+            }
+            .content {
+                padding: 20px 16px;
+            }
+            .event-details {
+                padding: 16px;
+            }
+            .table-info {
+                font-size: 16px;
+                padding: 10px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ============================================
+        HEADER
+        ============================================ -->
+        <div class="header">
+            <div class="header-logo">✦ KaramuManage</div>
+            <h1>✨ Vous êtes invité(e) !</h1>
+            <div class="subtitle">Confirmation de présence pour</div>
+            <div class="event-name">{{ event.name }}</div>
+        </div>
+
+        <!-- ============================================
+        CONTENT
+        ============================================ -->
+        <div class="content">
+            <h2>Bonjour {{ guest_name }},</h2>
+
+            <p>
+                Nous sommes ravis de vous compter parmi nos invités pour 
+                <strong>{{ event.name }}</strong>.
+            </p>
+            <p>Veuillez trouver ci-dessous les détails de l'événement.</p>
+
+            <!-- Détails de l'événement -->
+            <div class="event-details">
+                <p>
+                    <span class="label">📅 Date :</span>
+                    <span class="value">{{ event.date|date:"l d F Y" }}</span>
+                </p>
+                <p>
+                    <span class="label">⏰ Heure :</span>
+                    <span class="value">{{ event.time|time:"H:i" }}</span>
+                </p>
+                <p>
+                    <span class="label">📍 Lieu :</span>
+                    <span class="value">{{ event.location }}</span>
+                </p>
+                {% if event.dress_code %}
+                    <p>
+                        <span class="label">👔 Code vestimentaire :</span>
+                        <span class="value">{{ event.dress_code }}</span>
+                    </p>
+                {% endif %}
+                {% if table_number %}
+                    <div class="table-info">
+                        🪑 Table {{ table_number }}
+                        <span>Votre table assignée</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Préférences -->
+            <div class="preferences">
+                <h3>🎯 Vos préférences</h3>
+                <ul>
+                    <li><strong>Boisson :</strong> {{ response.drink_display }}</li>
+                    {% if response.is_accompanied %}
+                        <li><strong>Accompagnant :</strong> {{ response.get_companion_full_name }}</li>
+                        <li><strong>Boisson accompagnant :</strong> {{ response.companion_drink_display }}</li>
+                    {% endif %}
+                    {% if response.is_vegan %}
+                        <li><strong>🌱 Option végétarienne/végétalienne</strong></li>
+                    {% endif %}
+                    {% if response.special_notes %}
+                        <li><strong>📝 Notes :</strong> {{ response.special_notes }}</li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Boutons d'action -->
+            <div class="button-group">
+                <a href="{{ google_calendar_link }}" class="button" target="_blank">
+                    📅 Ajouter à mon agenda
+                </a>
+                <a href="{{ google_maps_link }}" class="button-outline" target="_blank">
+                    🗺️ Voir sur Google Maps
+                </a>
+            </div>
+
+            <!-- Note PDF -->
+            <div class="qr-note">
+                <strong>📄 Invitation PDF</strong><br>
+                Vous trouverez votre invitation officielle en pièce jointe de cet email.
+                <span class="small">Merci de garder ce document précieusement.</span>
+            </div>
+
+            <!-- Lien de téléchargement -->
+            <div class="download-link">
+                <a href="{{ invitation_link }}" target="_blank">
+                    🔗 Télécharger l'invitation (PDF)
+                </a>
+            </div>
+        </div>
+
+        <!-- ============================================
+        FOOTER
+        ============================================ -->
+        <div class="footer">
+            <p>
+                &copy; {{ event.date|date:"Y" }} 
+                <span class="brand">KaramuManage</span> — Tous droits réservés
+            </p>
+            <p>
+                Cet email a été envoyé automatiquement. Merci de ne pas y répondre.
+            </p>
+            <p>
+                <a href="{{ invitation_link }}" target="_blank">Télécharger mon invitation</a>
+                &bull;
+                <a href="https://karamumanage.com" target="_blank">Visiter KaramuManage</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

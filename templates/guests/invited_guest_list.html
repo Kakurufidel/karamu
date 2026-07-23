@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Invités officiels" %} - {{ event.name }} - KaramuManage{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
+
+    <!-- ============================================================ -->
+    <!-- EN-TÊTE -->
+    <!-- ============================================================ -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+        <div>
+            <a href="{% url 'events:event_detail' event.slug %}" class="text-purple-400 hover:text-purple-300 transition text-xs sm:text-sm">
+                <i class="fas fa-arrow-left mr-1"></i> {% trans "Retour" %}
+            </a>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mt-0.5">{{ event.name }}</h1>
+            <p class="text-xs sm:text-sm text-gray-400">
+                {% trans "Invités pré-enregistrés" %}
+                <span class="badge badge-purple ml-1 text-[10px] sm:text-xs">{{ total }}</span>
+            </p>
+        </div>
+        <div class="flex gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto">
+            <a href="{% url 'guests:add_guest' event.id %}" class="btn-primary btn-sm text-xs sm:text-sm">
+                <i class="fas fa-user-plus"></i> {% trans "Ajouter" %}
+            </a>
+            <a href="{% url 'guests:export_invited_csv' event.id %}" class="btn-secondary btn-sm text-xs sm:text-sm">
+                <i class="fas fa-file-csv"></i> CSV
+            </a>
+            <a href="{% url 'guests:export_invited_excel' event.id %}" class="btn-secondary btn-sm text-xs sm:text-sm">
+                <i class="fas fa-file-excel"></i> Excel
+            </a>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- FILTRES (BOUTONS) -->
+    <!-- ============================================================ -->
+    <div class="flex flex-wrap gap-1.5 sm:gap-2 mb-4">
+        <a href="?filter=all" class="btn-filter {% if current_filter == 'all' or not current_filter %}active{% endif %} text-xs sm:text-sm">
+            <i class="fas fa-users mr-1"></i> {% trans "Tous" %}
+            <span class="badge badge-gray text-[8px] sm:text-[10px] ml-1">{{ total }}</span>
+        </a>
+        <a href="?filter=with_table" class="btn-filter {% if current_filter == 'with_table' %}active{% endif %} text-xs sm:text-sm">
+            <i class="fas fa-chair mr-1"></i> {% trans "Avec table" %}
+            <span class="badge badge-green text-[8px] sm:text-[10px] ml-1">{{ has_table }}</span>
+        </a>
+        <a href="?filter=without_table" class="btn-filter {% if current_filter == 'without_table' %}active{% endif %} text-xs sm:text-sm">
+            <i class="fas fa-chair mr-1"></i> {% trans "Sans table" %}
+            <span class="badge badge-yellow text-[8px] sm:text-[10px] ml-1">{{ no_table }}</span>
+        </a>
+        <a href="?filter=responded" class="btn-filter {% if current_filter == 'responded' %}active{% endif %} text-xs sm:text-sm">
+            <i class="fas fa-check-circle mr-1"></i> {% trans "Ont répondu" %}
+            <span class="badge badge-green text-[8px] sm:text-[10px] ml-1">{{ responded_count|default:0 }}</span>
+        </a>
+        <a href="?filter=pending" class="btn-filter {% if current_filter == 'pending' %}active{% endif %} text-xs sm:text-sm">
+            <i class="fas fa-clock mr-1"></i> {% trans "En attente" %}
+            <span class="badge badge-yellow text-[8px] sm:text-[10px] ml-1">{{ pending_count|default:0 }}</span>
+        </a>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TRI ET PAGINATION -->
+    <!-- ============================================================ -->
+    <div class="flex flex-col sm:flex-row justify-between gap-3 mb-4">
+        <div class="flex items-center gap-1.5 sm:gap-2">
+            <label class="text-[10px] sm:text-xs text-gray-400">{% trans "Trier par" %}</label>
+            <select name="sort" class="form-input py-1 text-xs sm:text-sm" onchange="window.location.href=this.value">
+                <option value="?sort=last_name{% if current_filter %}&filter={{ current_filter }}{% endif %}" {% if current_sort == 'last_name' %}selected{% endif %}>{% trans "Nom" %}</option>
+                <option value="?sort=first_name{% if current_filter %}&filter={{ current_filter }}{% endif %}" {% if current_sort == 'first_name' %}selected{% endif %}>{% trans "Prénom" %}</option>
+                <option value="?sort=email{% if current_filter %}&filter={{ current_filter }}{% endif %}" {% if current_sort == 'email' %}selected{% endif %}>{% trans "Email" %}</option>
+                <option value="?sort=created_at{% if current_filter %}&filter={{ current_filter }}{% endif %}" {% if current_sort == 'created_at' %}selected{% endif %}>{% trans "Date" %}</option>
+            </select>
+        </div>
+
+        <form method="get" class="flex items-center gap-1.5 sm:gap-2">
+            <label for="per_page" class="text-[10px] sm:text-xs text-gray-400">{% trans "Afficher" %}</label>
+            <select name="per_page" id="per_page" onchange="this.form.submit()" class="form-input py-1 text-xs sm:text-sm">
+                <option value="15" {% if current_per_page == 15 %}selected{% endif %}>15</option>
+                <option value="20" {% if current_per_page == 20 %}selected{% endif %}>20</option>
+                <option value="50" {% if current_per_page == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if current_per_page == 100 %}selected{% endif %}>100</option>
+            </select>
+            <input type="hidden" name="filter" value="{{ current_filter }}">
+            <input type="hidden" name="sort" value="{{ current_sort }}">
+        </form>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TABLEAU -->
+    <!-- ============================================================ -->
+    <div class="glass-card p-3 sm:p-4 overflow-x-auto">
+        {% if invited_guests %}
+            <div class="-mx-3 sm:-mx-4">
+                <table class="w-full text-[10px] sm:text-xs">
+                    <thead>
+                        <tr class="border-b border-white/10">
+                            <th class="text-left py-2 px-2 text-gray-400 font-medium min-w-[140px]">{% trans "Invité" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-400 font-medium min-w-[80px]">{% trans "Présence" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-400 font-medium min-w-[80px] hidden sm:table-cell">{% trans "Boisson" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-400 font-medium min-w-[70px] hidden md:table-cell">{% trans "Vérifié" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-400 font-medium min-w-[70px]">{% trans "Table" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-400 font-medium min-w-[80px] hidden lg:table-cell">{% trans "Check-in" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for guest in invited_guests %}
+                            <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                                <td class="py-2 px-2">
+                                    <div class="font-medium truncate max-w-[100px] sm:max-w-[150px]">{{ guest.first_name }} {{ guest.last_name }}</div>
+                                    <div class="text-[8px] sm:text-[10px] text-gray-500 truncate max-w-[100px] sm:max-w-[150px]">{{ guest.email|default:"-" }}</div>
+                                </td>
+                                <td class="text-center py-2 px-2">
+                                    {% if guest.has_responded %}
+                                        <span class="badge badge-green text-[8px] sm:text-[10px]">
+                                            <i class="fas fa-check mr-0.5"></i> {% trans "Oui" %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge badge-yellow text-[8px] sm:text-[10px]">
+                                            <i class="fas fa-clock mr-0.5"></i> {% trans "Attente" %}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center py-2 px-2 hidden sm:table-cell">
+                                    {% if guest.has_responded %}
+                                        {% with response=guest.email|stringformat:"s" %}
+                                            <span class="text-gray-300">{{ guest.drink_display|default:"-" }}</span>
+                                        {% endwith %}
+                                    {% else %}
+                                        <span class="text-gray-500">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center py-2 px-2 hidden md:table-cell">
+                                    {% if guest.is_verified %}
+                                        <span class="badge badge-green text-[8px] sm:text-[10px]"><i class="fas fa-check"></i></span>
+                                    {% else %}
+                                        <span class="badge badge-yellow text-[8px] sm:text-[10px]"><i class="fas fa-clock"></i></span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center py-2 px-2">
+                                    {% if guest.table %}
+                                        <span class="badge badge-purple text-[8px] sm:text-[10px]">{{ guest.table.number }}</span>
+                                    {% else %}
+                                        <span class="text-gray-500 text-[8px] sm:text-[10px]">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center py-2 px-2 hidden lg:table-cell">
+                                    {% if guest.checkin_time %}
+                                        <span class="text-cyan-400 text-[10px]">{{ guest.checkin_time|date:"H:i" }}</span>
+                                    {% else %}
+                                        <span class="text-gray-500">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <div class="flex flex-wrap justify-center gap-1.5 sm:gap-2 mt-4 pt-3 border-t border-white/10">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1&per_page={{ current_per_page }}&filter={{ current_filter }}&sort={{ current_sort }}" class="btn-secondary btn-sm text-xs">&laquo;</a>
+                        <a href="?page={{ page_obj.previous_page_number }}&per_page={{ current_per_page }}&filter={{ current_filter }}&sort={{ current_sort }}" class="btn-secondary btn-sm text-xs">&lsaquo;</a>
+                    {% endif %}
+                    <span class="flex items-center px-3 text-[10px] sm:text-xs text-gray-400">
+                        {% blocktrans with current=page_obj.number total=page_obj.paginator.num_pages %}
+                            Page {{ current }}/{{ total }}
+                        {% endblocktrans %}
+                    </span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&per_page={{ current_per_page }}&filter={{ current_filter }}&sort={{ current_sort }}" class="btn-secondary btn-sm text-xs">&rsaquo;</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}&per_page={{ current_per_page }}&filter={{ current_filter }}&sort={{ current_sort }}" class="btn-secondary btn-sm text-xs">&raquo;</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+        {% else %}
+            <div class="text-center py-8 sm:py-12 text-gray-400">
+                <i class="fas fa-users-slash text-3xl sm:text-4xl mb-3 block"></i>
+                <p class="text-sm">{% trans "Aucun invité pré-enregistré." %}</p>
+                <p class="text-xs text-gray-500 mt-1">{% trans "Importez un fichier Excel ou ajoutez manuellement." %}</p>
+                <div class="mt-4 flex flex-wrap justify-center gap-2">
+                    <a href="{% url 'guests:bulk_import' event.id %}" class="btn-primary btn-sm text-xs">
+                        <i class="fas fa-file-upload"></i> {% trans "Importer" %}
+                    </a>
+                    <a href="{% url 'guests:add_guest' event.id %}" class="btn-secondary btn-sm text-xs">
+                        <i class="fas fa-user-plus"></i> {% trans "Ajouter" %}
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ACTIONS -->
+    <!-- ============================================================ -->
+    <div class="mt-4 flex flex-wrap gap-2">
+        <a href="{% url 'events:event_detail' event.slug %}" class="btn-secondary btn-sm text-xs">
+            <i class="fas fa-arrow-left"></i> {% trans "Retour" %}
+        </a>
+        <a href="{% url 'guests:guest_list' event.id %}" class="btn-secondary btn-sm text-xs">
+            <i class="fas fa-list"></i> {% trans "Réponses" %}
+        </a>
+    </div>
+</div>
+
+<style>
+    /* ============================================================ */
+    /* STATS (FILTRES) */
+    /* ============================================================ */
+    .btn-filter {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.8rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        background: rgba(255,255,255,0.05);
+        color: rgba(255,255,255,0.6);
+        border: 1px solid rgba(255,255,255,0.06);
+        text-decoration: none;
+    }
+    .btn-filter:hover {
+        background: rgba(255,255,255,0.08);
+        color: rgba(255,255,255,0.8);
+        border-color: rgba(255,255,255,0.1);
+        text-decoration: none;
+    }
+    .btn-filter.active {
+        background: rgba(139, 92, 246, 0.15);
+        color: #A78BFA;
+        border-color: rgba(139, 92, 246, 0.3);
+    }
+    .btn-filter .badge {
+        background: rgba(255,255,255,0.08);
+        color: rgba(255,255,255,0.5);
+        padding: 1px 6px;
+        border-radius: 10px;
+        font-size: 9px;
+    }
+    .btn-filter.active .badge {
+        background: rgba(139, 92, 246, 0.2);
+        color: #A78BFA;
+    }
+</style>
+{% endblock %}

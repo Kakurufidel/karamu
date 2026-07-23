@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Gestion des packs" %} - {{ event.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+    <!-- En-tête -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+            <a href="{% url 'expenses:estimation' event.id %}" class="text-purple-400 hover:text-purple-300 transition text-sm">
+                <i class="fas fa-arrow-left mr-1"></i> {% trans "Retour à l'estimation" %}
+            </a>
+            <h1 class="text-2xl md:text-3xl font-bold mt-1">{% trans "Packs de boissons" %}</h1>
+            <p class="text-gray-400 text-sm">{{ event.name }}</p>
+        </div>
+        <a href="{% url 'expenses:beveragepack_create' event.id %}" class="btn-primary">
+            <i class="fas fa-plus"></i> {% trans "Ajouter un pack" %}
+        </a>
+    </div>
+
+    <!-- Liste des packs -->
+    <div class="glass-card">
+        {% if packs %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-white/10">
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">{% trans "Boisson" %}</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">{% trans "Quantité/pack" %}</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">{% trans "Prix/pack" %}</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">{% trans "Prix unitaire" %}</th>
+                        <th class="text-left py-3 px-4 text-sm font-semibold text-gray-400">{% trans "Statut" %}</th>
+                        <th class="text-right py-3 px-4 text-sm font-semibold text-gray-400">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pack in packs %}
+                    <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                        <td class="py-3 px-4 font-medium">{{ pack.drink_name }}</td>
+                        <td class="py-3 px-4">
+                            {{ pack.pack_quantity }}
+                            {% if pack.unit_type %}{{ pack.unit_type }}{% endif %}
+                        </td>
+                        <td class="py-3 px-4">{{ pack.pack_price }} €</td>
+                        <td class="py-3 px-4">{{ pack.unit_price }} €</td>
+                        <td class="py-3 px-4">
+                            {% if pack.is_active %}
+                            <span class="badge badge-green">{% trans "Actif" %}</span>
+                            {% else %}
+                            <span class="badge badge-yellow">{% trans "Inactif" %}</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            <div class="flex justify-end gap-2">
+                                <a href="{% url 'expenses:beveragepack_update' pack.id %}" class="text-blue-400 hover:text-blue-300 text-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'expenses:beveragepack_delete' pack.id %}" class="text-red-400 hover:text-red-300 text-sm">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-box-open text-4xl text-gray-600 mb-4"></i>
+            <p class="text-gray-400">{% trans "Aucun pack configuré" %}</p>
+            <p class="text-sm text-gray-500 mt-1">{% trans "Ajoutez des packs de boissons pour commencer l'estimation" %}</p>
+            <a href="{% url 'expenses:beveragepack_create' event.id %}" class="btn-primary mt-4 inline-block">
+                <i class="fas fa-plus"></i> {% trans "Ajouter un pack" %}
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

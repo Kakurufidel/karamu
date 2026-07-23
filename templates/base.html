@@ -1,0 +1,1206 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="fr" id="html-root">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>KaramuManage – {% block title %}{% trans "Gestion d'événements" %}{% endblock %}</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#7c3aed',
+                        secondary: '#06b6d4',
+                        dark: '#0a0a0f',
+                        card: 'rgba(255,255,255,0.03)',
+                        border: 'rgba(255,255,255,0.06)',
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+    
+    <!-- ✅ Script de thème exécuté immédiatement pour éviter le flash -->
+    <script>
+        (function() {
+            // Récupérer le thème sauvegardé
+            var savedTheme = localStorage.getItem('theme') || 'dark';
+            var html = document.documentElement;
+            
+            // Appliquer le thème avant le rendu
+            if (savedTheme === 'light') {
+                html.classList.remove('dark');
+                html.classList.add('light');
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+            }
+            
+            // Définir la classe pour le body
+            document.body.style.display = 'none';
+        })();
+    </script>
+    
+    <!-- CSS personnalisé -->
+    <style>
+        /* ============================================================ */
+        /* THEME - DARK / LIGHT */
+        /* ============================================================ */
+        :root {
+            /* Dark mode (défaut) */
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #1a1a2e;
+            --bg-card: rgba(255,255,255,0.04);
+            --bg-input: rgba(255,255,255,0.06);
+            --bg-hover: rgba(255,255,255,0.06);
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --text-light: #e2e8f0;
+            --border-color: rgba(255,255,255,0.08);
+            --border-light: rgba(255,255,255,0.12);
+            --shadow-color: rgba(0,0,0,0.4);
+            --glass-bg: rgba(255,255,255,0.04);
+            --input-text: #f1f5f9;
+            --input-placeholder: rgba(255,255,255,0.3);
+            --dropdown-bg: #1a1a2e;
+            --footer-text: #64748b;
+        }
+
+        /* ✅ Light mode - textes plus lisibles */
+        html.light {
+            --bg-primary: #f1f5f9;
+            --bg-secondary: #ffffff;
+            --bg-card: rgba(0,0,0,0.03);
+            --bg-input: rgba(0,0,0,0.05);
+            --bg-hover: rgba(0,0,0,0.05);
+            --text-primary: #0f172a;
+            --text-secondary: #1e293b;
+            --text-muted: #475569;
+            --text-light: #334155;
+            --border-color: rgba(0,0,0,0.08);
+            --border-light: rgba(0,0,0,0.12);
+            --shadow-color: rgba(0,0,0,0.08);
+            --glass-bg: rgba(255,255,255,0.8);
+            --input-text: #0f172a;
+            --input-placeholder: rgba(0,0,0,0.35);
+            --dropdown-bg: #ffffff;
+            --footer-text: #64748b;
+        }
+
+        /* ============================================================ */
+        /* BASE */
+        /* ============================================================ */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+        
+        /* ✅ Afficher le body après le chargement du thème */
+        body.loaded {
+            display: block !important;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            border-radius: 3px;
+        }
+        
+        /* ============================================================ */
+        /* GLASS CARD */
+        /* ============================================================ */
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(124,58,237,0.3);
+            box-shadow: 0 8px 32px var(--shadow-color);
+            transform: translateY(-2px);
+        }
+        
+        /* ============================================================ */
+        /* TEXTES - ✅ Renforcés en mode clair */
+        /* ============================================================ */
+        .text-gray-400 { color: var(--text-muted) !important; }
+        .text-gray-300 { color: var(--text-secondary) !important; }
+        .text-gray-200 { color: var(--text-primary) !important; }
+        .text-gray-100 { color: var(--text-light) !important; }
+        .text-white { color: var(--text-primary) !important; }
+        
+        /* ✅ Mode clair : textes plus foncés */
+        html.light .text-gray-400 { color: #475569 !important; }
+        html.light .text-gray-300 { color: #334155 !important; }
+        html.light .text-gray-200 { color: #1e293b !important; }
+        html.light .text-gray-100 { color: #0f172a !important; }
+        html.light .text-white { color: #0f172a !important; }
+        
+        /* ============================================================ */
+        /* BOUTONS */
+        /* ============================================================ */
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            color: #fff;
+            padding: 0.6rem 1.8rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            justify-content: center;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 24px rgba(124,58,237,0.3);
+            color: #fff;
+            text-decoration: none;
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-input);
+            color: var(--text-primary);
+            padding: 0.6rem 1.8rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            justify-content: center;
+        }
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline {
+            border: 2px solid rgba(124,58,237,0.4);
+            color: #a78bfa;
+            background: transparent;
+            padding: 0.6rem 1.8rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            justify-content: center;
+        }
+        .btn-outline:hover {
+            background: rgba(124,58,237,0.1);
+            border-color: #7c3aed;
+            color: #c4b5fd;
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: rgba(239,68,68,0.15);
+            color: #f87171;
+            padding: 0.6rem 1.8rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid rgba(239,68,68,0.2);
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            justify-content: center;
+        }
+        .btn-danger:hover {
+            background: rgba(239,68,68,0.25);
+            color: #fca5a5;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: rgba(34,197,94,0.15);
+            color: #4ade80;
+            padding: 0.6rem 1.8rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid rgba(34,197,94,0.2);
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            justify-content: center;
+        }
+        .btn-success:hover {
+            background: rgba(34,197,94,0.25);
+            color: #86efac;
+            transform: translateY(-2px);
+        }
+        
+        .btn-sm { padding: 0.4rem 1.2rem; font-size: 12px; }
+        .btn-lg { padding: 0.8rem 2.4rem; font-size: 16px; }
+        .btn-xs { padding: 0.2rem 0.8rem; font-size: 10px; }
+        
+        /* ============================================================ */
+        /* FORMULAIRES */
+        /* ============================================================ */
+        .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--input-text);
+            font-size: 14px;
+            transition: all 0.2s ease;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+        .form-input:focus {
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+            background: rgba(255,255,255,0.08);
+        }
+        .form-input::placeholder { color: var(--input-placeholder); }
+        .form-input.error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.15) !important;
+        }
+        
+        textarea.form-input { resize: vertical; min-height: 80px; }
+        select.form-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+            cursor: pointer;
+        }
+        select.form-input option { background: var(--bg-secondary); color: var(--text-primary); }
+        
+        .form-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #8B5CF6;
+            cursor: pointer;
+            flex-shrink: 0;
+            border-radius: 4px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        
+        .form-error {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #F87171;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        
+        .form-errors-global {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 16px;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 8px;
+            color: #F87171;
+            font-size: 13px;
+        }
+        .form-errors-global i { margin-top: 2px; font-size: 16px; flex-shrink: 0; }
+        .form-errors-global ul { margin: 0; padding-left: 16px; }
+        
+        /* ============================================================ */
+        /* BADGES */
+        /* ============================================================ */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .badge-purple { background: rgba(124,58,237,0.15); color: #a78bfa; }
+        .badge-cyan { background: rgba(6,182,212,0.15); color: #67e8f9; }
+        .badge-green { background: rgba(34,197,94,0.15); color: #4ade80; }
+        .badge-red { background: rgba(239,68,68,0.15); color: #f87171; }
+        .badge-yellow { background: rgba(234,179,8,0.15); color: #fbbf24; }
+        .badge-gray { background: var(--bg-input); color: var(--text-muted); border: 1px solid var(--border-color); }
+        .badge-pink { background: rgba(236,72,153,0.15); color: #f472b6; }
+        
+        /* ============================================================ */
+        /* STAT CARDS */
+        /* ============================================================ */
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 16px;
+            text-align: center;
+            transition: all 0.3s ease;
+            display: block;
+            text-decoration: none;
+        }
+        .stat-card:hover {
+            border-color: rgba(124,58,237,0.3);
+            background: var(--bg-hover);
+            transform: translateY(-2px);
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        /* ============================================================ */
+        /* TOAST */
+        /* ============================================================ */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 380px;
+            width: 100%;
+        }
+        .toast {
+            padding: 16px 20px;
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px var(--shadow-color);
+            animation: slideInRight 0.4s cubic-bezier(0.4,0,0.2,1);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .toast.hiding { animation: slideOutRight 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
+        .toast-error .toast-icon { background: rgba(239,68,68,0.15); color: #f87171; }
+        .toast-success .toast-icon { background: rgba(34,197,94,0.15); color: #4ade80; }
+        .toast-warning .toast-icon { background: rgba(234,179,8,0.15); color: #fbbf24; }
+        .toast-info .toast-icon { background: rgba(6,182,212,0.15); color: #67e8f9; }
+        .toast-content { flex: 1; }
+        .toast-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+        .toast-message { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+        .toast-close {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+        .toast-close:hover { color: var(--text-primary); }
+        .toast-progress {
+            height: 3px;
+            border-radius: 0 0 12px 12px;
+            margin: 12px -20px -16px -20px;
+            background: rgba(255,255,255,0.05);
+            overflow: hidden;
+        }
+        .toast-progress-bar {
+            height: 100%;
+            border-radius: 0 0 0 3px;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            animation: progressBar linear forwards;
+        }
+        .toast-error .toast-progress-bar { background: linear-gradient(135deg, #ef4444, #f87171); }
+        .toast-success .toast-progress-bar { background: linear-gradient(135deg, #22c55e, #4ade80); }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px) scale(0.9); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        @keyframes slideOutRight {
+            from { opacity: 1; transform: translateX(0) scale(1); }
+            to { opacity: 0; transform: translateX(100px) scale(0.9); }
+        }
+        @keyframes progressBar {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+        
+        /* ============================================================ */
+        /* POPUP */
+        /* ============================================================ */
+        .popup-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+            padding: 16px;
+        }
+        .popup-overlay.active { display: flex; }
+        .popup-content {
+            background: var(--bg-secondary);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 40px 32px 32px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            animation: popIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+        }
+        .popup-content .popup-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 28px;
+        }
+        .popup-content .popup-icon.success { background: rgba(34,197,94,0.15); color: #4ade80; }
+        .popup-content .popup-icon.error { background: rgba(239,68,68,0.15); color: #f87171; }
+        .popup-content .popup-icon.warning { background: rgba(234,179,8,0.15); color: #fbbf24; }
+        .popup-content .popup-icon.info { background: rgba(6,182,212,0.15); color: #67e8f9; }
+        .popup-content h3 { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+        .popup-content p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px; }
+        .popup-content .btn-popup {
+            padding: 10px 32px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            color: #fff;
+        }
+        .popup-content .btn-popup:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 24px rgba(124,58,237,0.3);
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.8) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        
+        /* ============================================================ */
+        /* SIDEBAR */
+        /* ============================================================ */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 300px;
+            height: 100%;
+            transition: left 0.3s cubic-bezier(0.4,0,0.2,1);
+            z-index: 50;
+            backdrop-filter: blur(24px);
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            border-right: 1px solid var(--border-color);
+        }
+        #sidebar.open { left: 0; }
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 40;
+            display: none;
+        }
+        .sidebar-overlay.active { display: block; }
+        
+        .dropdown-menu {
+            background: var(--dropdown-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 8px;
+            min-width: 200px;
+            box-shadow: 0 16px 48px var(--shadow-color);
+        }
+        .dropdown-item {
+            padding: 8px 14px;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            text-decoration: none;
+            background: transparent;
+            border: none;
+            width: 100%;
+        }
+        .dropdown-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .dropdown-item i { width: 18px; text-align: center; }
+        
+        /* ============================================================ */
+        /* LOGOUT MODAL */
+        /* ============================================================ */
+        #logout-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        #logout-modal.show { display: flex; }
+        
+        /* ============================================================ */
+        /* FOOTER */
+        /* ============================================================ */
+        .site-footer {
+            margin-top: auto;
+            padding-top: 32px;
+            border-top: 1px solid var(--border-color);
+        }
+        .footer-brand {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+        .footer-description {
+            font-size: 13px;
+            color: var(--footer-text);
+            line-height: 1.6;
+            max-width: 300px;
+        }
+        .footer-links { list-style: none; padding: 0; }
+        .footer-links li { margin-bottom: 6px; }
+        .footer-links a {
+            font-size: 13px;
+            color: var(--footer-text);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .footer-links a:hover { color: var(--text-primary); }
+        
+        /* ============================================================ */
+        /* NAVBAR - corrigé z-index */
+        /* ============================================================ */
+        nav.fixed {
+            z-index: 30;
+        }
+        
+        /* ============================================================ */
+        /* RESPONSIVE */
+        /* ============================================================ */
+        @media (max-width: 640px) {
+            .glass-card { padding: 16px; }
+            .btn-primary, .btn-secondary, .btn-outline, .btn-danger, .btn-success {
+                width: 100%;
+                justify-content: center;
+            }
+            .toast-container { bottom: 16px; right: 16px; left: 16px; max-width: none; }
+            #sidebar { width: 280px; left: -280px; padding: 1rem; }
+            .stat-number { font-size: 20px; }
+        }
+        
+        /* ============================================================ */
+        /* UTILITY */
+        /* ============================================================ */
+        .text-purple { color: #a78bfa; }
+        .text-cyan { color: #67e8f9; }
+        .text-green { color: #4ade80; }
+        .text-amber { color: #fbbf24; }
+        .text-red { color: #f87171; }
+        .text-gray { color: var(--text-muted); }
+        
+        .bg-purple\/10 { background: rgba(124,58,237,0.1); }
+        .bg-cyan\/10 { background: rgba(6,182,212,0.1); }
+        
+        .border-purple\/20 { border-color: rgba(124,58,237,0.2); }
+        .border-cyan\/20 { border-color: rgba(6,182,212,0.2); }
+        
+        .hidden { display: none !important; }
+        .block { display: block !important; }
+        
+        /* Animations */
+        .animate-fade-in-up {
+            animation: fadeInUp 0.4s ease forwards;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    
+    <!-- Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Le body s'affichera après le chargement du thème -->
+    
+    <!-- ============================================ -->
+    <!-- TOAST CONTAINER -->
+    <!-- ============================================ -->
+    <div id="toast-container" class="toast-container"></div>
+    
+    <!-- ============================================ -->
+    <!-- POPUP -->
+    <!-- ============================================ -->
+    <div id="popup-overlay" class="popup-overlay">
+        <div class="popup-content">
+            <div class="popup-icon success" id="popup-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 id="popup-title">Succès</h3>
+            <p id="popup-message">Opération effectuée avec succès.</p>
+            <button class="btn-popup" onclick="closePopup()">OK</button>
+        </div>
+    </div>
+    
+    <!-- ============================================ -->
+    <!-- LOGOUT MODAL -->
+    <!-- ============================================ -->
+    <div id="logout-modal">
+        <div class="glass-card p-6 max-w-sm mx-4 text-center">
+            <div class="w-16 h-16 mx-auto rounded-full bg-yellow-500/20 flex items-center justify-center mb-4">
+                <i class="fas fa-sign-out-alt text-2xl text-yellow-400"></i>
+            </div>
+            <h2 class="text-xl font-bold">Déconnexion</h2>
+            <p class="text-gray-400 text-sm mt-1">Souhaitez-vous vraiment quitter votre session ?</p>
+            <div class="flex flex-col sm:flex-row gap-3 mt-6">
+                <form method="post" action="{% url 'authentication:logout' %}" class="flex-1" id="logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-primary w-full justify-center">
+                        <i class="fas fa-sign-out-alt"></i> Se déconnecter
+                    </button>
+                </form>
+                <button onclick="closeLogoutModal()" class="btn-outline w-full justify-center">
+                    <i class="fas fa-times"></i> Annuler
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ============================================ -->
+    <!-- SIDEBAR OVERLAY -->
+    <!-- ============================================ -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+    
+    <!-- ============================================ -->
+    <!-- SIDEBAR -->
+    <!-- ============================================ -->
+    <div id="sidebar">
+        <div class="flex justify-between items-center border-b border-white/10 pb-4">
+            <span class="text-2xl font-bold text-[#8B5CF6]">
+                <i class="fas fa-calendar-alt mr-2"></i>KaramuManage
+            </span>
+            <button onclick="closeSidebar()" class="text-2xl hover:text-[#8B5CF6] transition">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <nav class="flex-1 space-y-1 mt-4 overflow-y-auto">
+            <a href="{% url 'authentication:dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition text-gray-300 hover:text-white" onclick="closeSidebar()">
+                <i class="fas fa-chart-pie w-5 text-center text-purple-400"></i>
+                <span>Tableau de bord</span>
+            </a>
+            
+            <a href="{% url 'events:event_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition text-gray-300 hover:text-white" onclick="closeSidebar()">
+                <i class="fas fa-calendar-alt w-5 text-center text-cyan-400"></i>
+                <span>Mes événements</span>
+            </a>
+            
+            {% if event %}
+            <div class="border-t border-white/10 my-2"></div>
+            <p class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold px-3 pt-2">Gestion</p>
+            
+            <a href="{% url 'guests:invited_list' event.id %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition text-gray-300 hover:text-white" onclick="closeSidebar()">
+                <i class="fas fa-users w-5 text-center text-green-400"></i>
+                <span>Invités</span>
+            </a>
+            
+            {% if event.has_tables %}
+            <a href="{% url 'events:table_list' event.id %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition text-gray-300 hover:text-white" onclick="closeSidebar()">
+                <i class="fas fa-chair w-5 text-center text-yellow-400"></i>
+                <span>Tables</span>
+            </a>
+            {% endif %}
+            
+            <a href="{% url 'expenses:forecast' event.id %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition text-gray-300 hover:text-white" onclick="closeSidebar()">
+                <i class="fas fa-wine-bottle w-5 text-center text-purple-400"></i>
+                <span>Prévisions</span>
+            </a>
+            
+            <a href="{% url 'expenses:estimation' event.id %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition text-gray-300 hover:text-white" onclick="closeSidebar()">
+                <i class="fas fa-calculator w-5 text-center text-cyan-400"></i>
+                <span>Estimation</span>
+            </a>
+            {% endif %}
+            
+            <div class="border-t border-white/10 my-2"></div>
+            <p class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold px-3 pt-2">Actions</p>
+            
+            <a href="{% url 'events:event_create' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 transition" onclick="closeSidebar()">
+                <i class="fas fa-plus-circle w-5 text-center"></i>
+                <span>Nouvel événement</span>
+            </a>
+            
+            {% if event %}
+            <a href="{% url 'guests:bulk_import' event.id %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 transition" onclick="closeSidebar()">
+                <i class="fas fa-file-upload w-5 text-center"></i>
+                <span>Importer invités</span>
+            </a>
+            {% endif %}
+        </nav>
+        
+        <div class="border-t border-white/10 pt-4 mt-2">
+            <div class="flex items-center gap-3 px-3 py-2">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                    {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold truncate">{{ user.first_name }} {{ user.last_name }}</p>
+                    <p class="text-xs text-gray-400 truncate">{{ user.email }}</p>
+                </div>
+            </div>
+            <div class="flex gap-2 mt-2 px-3">
+                <button onclick="toggleTheme()" class="flex-1 text-center text-xs py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 transition">
+                    <i class="fas fa-moon" id="theme-icon-sidebar"></i>
+                </button>
+                <button onclick="openLogoutModal()" class="flex-1 text-center text-xs py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ============================================ -->
+    <!-- NAVBAR -->
+    <!-- ============================================ -->
+    <nav class="fixed top-0 left-0 right-0 z-30 bg-dark/92 backdrop-blur-lg border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button id="hamburger" class="text-2xl hover:text-[#8B5CF6] transition" onclick="openSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a href="{% url 'authentication:home' %}" class="text-xl sm:text-2xl font-bold text-[#8B5CF6] flex items-center gap-2">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span class="hidden xs:inline">KaramuManage</span>
+                </a>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-6 text-sm font-medium">
+                <a href="{% url 'authentication:home' %}#features" class="text-gray-300 hover:text-white transition">
+                    <i class="fas fa-star mr-1"></i> Fonctionnalités
+                </a>
+                <a href="{% url 'authentication:home' %}#pricing" class="text-gray-300 hover:text-white transition">
+                    <i class="fas fa-tag mr-1"></i> Tarifs
+                </a>
+                <a href="{% url 'authentication:home' %}#contact" class="text-gray-300 hover:text-white transition">
+                    <i class="fas fa-envelope mr-1"></i> Contact
+                </a>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="text-xl text-gray-300 hover:text-white transition hidden sm:block" id="theme-toggle-desktop">
+                    <i class="fas fa-moon" id="theme-icon-desktop"></i>
+                </button>
+                
+                {% if user.is_authenticated %}
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" @click.away="open = false" class="w-9 h-9 rounded-full bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-white font-semibold text-sm hover:scale-105 transition flex items-center justify-center">
+                            {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}
+                        </button>
+                        <div x-show="open" x-transition class="absolute right-0 mt-2 dropdown-menu">
+                            <div class="px-4 py-3 border-b border-white/10">
+                                <p class="text-sm font-semibold">{{ user.first_name }} {{ user.last_name }}</p>
+                                <p class="text-xs text-gray-400">{{ user.email }}</p>
+                            </div>
+                            <a href="{% url 'events:event_list' %}" class="dropdown-item">
+                                <i class="fas fa-calendar-alt"></i> Mes événements
+                            </a>
+                            <button onclick="openLogoutModal()" class="dropdown-item text-red-400 hover:text-red-300">
+                                <i class="fas fa-sign-out-alt"></i> Déconnexion
+                            </button>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{% url 'authentication:login' %}" class="hidden sm:inline text-sm text-gray-300 hover:text-white transition">
+                        <i class="fas fa-sign-in-alt mr-1"></i> Connexion
+                    </a>
+                    <a href="{% url 'authentication:register' %}" class="btn-primary hidden sm:inline-flex">
+                        <i class="fas fa-user-plus"></i> S'inscrire
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Espace pour navbar -->
+    <div class="h-16"></div>
+    
+    <!-- ============================================ -->
+    <!-- MESSAGES DJANGO (cachés) -->
+    <!-- ============================================ -->
+    <div style="display: none;">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="django-message" data-type="{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+    
+    <!-- ============================================ -->
+    <!-- CONTENU PRINCIPAL -->
+    <!-- ============================================ -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- ============================================ -->
+    <!-- FOOTER -->
+    <!-- ============================================ -->
+    <footer class="site-footer">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 pb-8">
+                <div class="col-span-2 md:col-span-1">
+                    <div class="footer-brand">
+                        <i class="fas fa-calendar-alt mr-2"></i>KaramuManage
+                    </div>
+                    <p class="footer-description">
+                        Plateforme professionnelle de gestion d'événements.
+                    </p>
+                    <div class="flex gap-4 mt-4 text-gray-400">
+                        <a href="#" class="hover:text-white transition"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="hover:text-white transition"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" class="hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-400 mb-3">Navigation</h4>
+                    <ul class="footer-links">
+                        <li><a href="{% url 'authentication:home' %}"><i class="fas fa-home mr-1"></i> Accueil</a></li>
+                        <li><a href="{% url 'authentication:home' %}#features"><i class="fas fa-star mr-1"></i> Fonctionnalités</a></li>
+                        <li><a href="{% url 'authentication:home' %}#pricing"><i class="fas fa-tag mr-1"></i> Tarifs</a></li>
+                        <li><a href="{% url 'authentication:home' %}#contact"><i class="fas fa-envelope mr-1"></i> Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-400 mb-3">Gestion</h4>
+                    <ul class="footer-links">
+                        <li><a href="{% url 'events:event_list' %}"><i class="fas fa-calendar-check mr-1"></i> Événements</a></li>
+                        <li><a href="#"><i class="fas fa-users mr-1"></i> Invités</a></li>
+                        <li><a href="#"><i class="fas fa-chair mr-1"></i> Tables</a></li>
+                        <li><a href="#"><i class="fas fa-wine-bottle mr-1"></i> Dépenses</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-400 mb-3">Support</h4>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-question-circle mr-1"></i> Aide</a></li>
+                        <li><a href="#"><i class="fas fa-question mr-1"></i> FAQ</a></li>
+                        <li><a href="#"><i class="fas fa-file-contract mr-1"></i> Conditions</a></li>
+                        <li><a href="#"><i class="fas fa-lock mr-1"></i> Confidentialité</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-white/10 pt-4 flex flex-col sm:flex-row justify-between items-center gap-2 text-sm text-gray-500">
+                <span>&copy; {% now "Y" %} KaramuManage. Tous droits réservés.</span>
+                <span><i class="fas fa-cog mr-1"></i> Gestion d'événements</span>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- ============================================ -->
+    <!-- SCRIPTS -->
+    <!-- ============================================ -->
+    <script>
+        // ============================================
+        // 0. AFFICHER LE BODY APRÈS CHARGEMENT
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            document.body.classList.add('loaded');
+        });
+        
+        // ============================================
+        // 1. SIDEBAR
+        // ============================================
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sidebar-overlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar-overlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // ============================================
+        // 2. LOGOUT MODAL
+        // ============================================
+        function openLogoutModal() {
+            document.getElementById('logout-modal').classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeLogoutModal() {
+            document.getElementById('logout-modal').classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLogoutModal();
+                closePopup();
+                closeSidebar();
+            }
+        });
+        
+        document.getElementById('logout-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeLogoutModal();
+        });
+        
+        // ============================================
+        // 3. TOAST SYSTEM
+        // ============================================
+        function showToast(message, type = 'info', duration = 5000) {
+            const container = document.getElementById('toast-container');
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-triangle-exclamation',
+                info: 'fa-info-circle'
+            };
+            const titles = {
+                success: 'Succès',
+                error: 'Erreur',
+                warning: 'Attention',
+                info: 'Information'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon"><i class="fas ${icons[type] || icons.info}"></i></div>
+                <div class="toast-content">
+                    <div class="toast-title">${titles[type] || 'Information'}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.closest('.toast').remove()"><i class="fas fa-times"></i></button>
+                <div class="toast-progress"><div class="toast-progress-bar" style="animation-duration: ${duration}ms;"></div></div>
+            `;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+        
+        // ============================================
+        // 4. POPUP SYSTEM
+        // ============================================
+        function showPopup(message, title = 'Succès', type = 'success') {
+            const overlay = document.getElementById('popup-overlay');
+            const icon = document.getElementById('popup-icon');
+            const titleEl = document.getElementById('popup-title');
+            const messageEl = document.getElementById('popup-message');
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-triangle-exclamation',
+                info: 'fa-info-circle'
+            };
+            
+            icon.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i>`;
+            icon.className = `popup-icon ${type}`;
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closePopup() {
+            document.getElementById('popup-overlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        document.getElementById('popup-overlay').addEventListener('click', function(e) {
+            if (e.target === this) closePopup();
+        });
+        
+        // ============================================
+        // 5. CONVERSION MESSAGES DJANGO
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const djangoMessages = document.querySelectorAll('.django-message');
+            djangoMessages.forEach(function(msg) {
+                const type = msg.dataset.type || 'info';
+                const text = msg.textContent.trim();
+                
+                if (type === 'success') {
+                    showPopup(text, 'Succès', 'success');
+                } else if (type === 'error') {
+                    showPopup(text, 'Erreur', 'error');
+                } else if (type === 'warning') {
+                    showToast(text, 'warning', 6000);
+                } else {
+                    showToast(text, 'info', 5000);
+                }
+                msg.style.display = 'none';
+            });
+        });
+        
+        // ============================================
+        // 6. THEME TOGGLE (CORRIGÉ - sans flash)
+        // ============================================
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            
+            if (isDark) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                localStorage.setItem('theme', 'light');
+                updateThemeIcons('light');
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                updateThemeIcons('dark');
+            }
+        }
+        
+        function updateThemeIcons(theme) {
+            const iconClass = theme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+            ['theme-icon-desktop', 'theme-icon-sidebar'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.className = iconClass;
+            });
+        }
+        
+        // ============================================
+        // 7. TOGGLE PASSWORD
+        // ============================================
+        function togglePassword(fieldId, button) {
+            const field = document.getElementById(fieldId);
+            if (!field) return;
+            const icon = button.querySelector('i');
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                field.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+        
+        // ============================================
+        // 8. RESPONSIVE MENU
+        // ============================================
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) {
+                closeSidebar();
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
