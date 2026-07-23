@@ -27,5 +27,5 @@ RUN python manage.py collectstatic --noinput
 # Exposer le port
 EXPOSE 8000
 
-# Commande de démarrage avec gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "event_management.wsgi:application"]
+# Commande de démarrage avec migrations
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn event_management.wsgi:application"]
