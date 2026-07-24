@@ -89,25 +89,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'event_management.wsgi.application'
 
-# ===== BASE DE DONNÉES =====
-if DEBUG:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
+# ===== BASE DE DONNÉES - POSTGRESQL UNIQUEMENT =====
+# Utilise toujours PostgreSQL (en développement et production)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('POSTGRES_DB', 'karamumanage'),
+        'USER': os.environ.get('POSTGRES_USER', 'karamumanage_user'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
+        'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('POSTGRES_DB'),
-            'USER': os.environ.get('POSTGRES_USER'),
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
-            'HOST': os.environ.get('POSTGRES_HOST'),
-            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
-        }
-    }
+}
 
 # ===== VALIDATEURS DE MOTS DE PASSE =====
 AUTH_PASSWORD_VALIDATORS = [
@@ -169,7 +162,7 @@ GUESTS_PER_PAGE = 20
 
 # ===== SÉCURITÉ PRODUCTION =====
 if not DEBUG:
-    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_SECONDS = 7200
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_SSL_REDIRECT = True
