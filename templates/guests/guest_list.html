@@ -14,18 +14,21 @@
             <a href="{% url 'events:event_detail' event.slug %}" class="text-purple-400 hover:text-purple-300 transition text-xs sm:text-sm">
                 <i class="fas fa-arrow-left mr-1"></i> {% trans "Retour" %}
             </a>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mt-0.5">{{ event.name }}</h1>
-            <p class="text-xs sm:text-sm text-gray-400">
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mt-0.5 text-gray-900 dark:text-white">{{ event.name }}</h1>
+            <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                 {% trans "Réponses des invités" %}
                 <span class="badge badge-purple ml-1 text-[10px] sm:text-xs">{{ stats.total }}</span>
             </p>
         </div>
         <div class="flex gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto">
-            <a href="{% url 'guests:export_csv' event.id %}" class="btn-secondary btn-sm text-xs sm:text-sm">
+            <a href="{% url 'guests:export_checkins_csv' event.id %}" class="btn-secondary btn-sm text-xs sm:text-sm">
                 <i class="fas fa-file-csv"></i> CSV
             </a>
-            <a href="{% url 'guests:export_excel' event.id %}" class="btn-secondary btn-sm text-xs sm:text-sm">
+            <a href="{% url 'guests:export_checkins_excel' event.id %}" class="btn-secondary btn-sm text-xs sm:text-sm">
                 <i class="fas fa-file-excel"></i> Excel
+            </a>
+            <a href="{% url 'guests:export_checkins_pdf' event.id %}" class="btn-primary btn-sm text-xs sm:text-sm">
+                <i class="fas fa-file-pdf"></i> PDF
             </a>
         </div>
     </div>
@@ -35,55 +38,45 @@
     <!-- ============================================================ -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
         <div class="stat-card text-center p-2 sm:p-3">
-            <div class="stat-number text-purple-400 text-lg sm:text-xl">{{ stats.total }}</div>
-            <div class="stat-label text-[10px] sm:text-xs">{% trans "Total" %}</div>
+            <div class="stat-number text-purple-600 dark:text-purple-400">{{ stats.total|default:0 }}</div>
+            <div class="stat-label text-gray-500 dark:text-gray-400">{% trans "Total" %}</div>
         </div>
         <div class="stat-card text-center p-2 sm:p-3">
-            <div class="stat-number text-green-400 text-lg sm:text-xl">{{ stats.attending }}</div>
-            <div class="stat-label text-[10px] sm:text-xs">{% trans "Présents" %}</div>
+            <div class="stat-number text-green-600 dark:text-green-400">{{ stats.attending|default:0 }}</div>
+            <div class="stat-label text-gray-500 dark:text-gray-400">{% trans "Présents" %}</div>
         </div>
         <div class="stat-card text-center p-2 sm:p-3">
-            <div class="stat-number text-red-400 text-lg sm:text-xl">{{ stats.not_attending }}</div>
-            <div class="stat-label text-[10px] sm:text-xs">{% trans "Absents" %}</div>
+            <div class="stat-number text-red-600 dark:text-red-400">{{ stats.not_attending|default:0 }}</div>
+            <div class="stat-label text-gray-500 dark:text-gray-400">{% trans "Absents" %}</div>
         </div>
         <div class="stat-card text-center p-2 sm:p-3">
-            <div class="stat-number text-cyan-400 text-lg sm:text-xl">{{ stats.verified }}</div>
-            <div class="stat-label text-[10px] sm:text-xs">{% trans "Vérifiés" %}</div>
+            <div class="stat-number text-cyan-600 dark:text-cyan-400">{{ stats.verified|default:0 }}</div>
+            <div class="stat-label text-gray-500 dark:text-gray-400">{% trans "Vérifiés" %}</div>
         </div>
     </div>
 
     <!-- ============================================================ -->
     <!-- BARRE DE RECHERCHE -->
     <!-- ============================================================ -->
-    <div class="flex flex-col sm:flex-row justify-between gap-3 mb-4">
-        <form method="get" class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-            <input type="text" name="q" value="{{ search_query }}" 
-                   placeholder="{% trans 'Rechercher...' %}" 
-                   class="form-input py-1.5 text-xs sm:text-sm min-w-[120px] sm:min-w-[200px]">
-            <select name="status" class="form-input py-1.5 text-xs sm:text-sm">
-                <option value="">{% trans "Tous" %}</option>
-                <option value="attending" {% if status_filter == 'attending' %}selected{% endif %}>{% trans "Présents" %}</option>
-                <option value="not_attending" {% if status_filter == 'not_attending' %}selected{% endif %}>{% trans "Absents" %}</option>
-                <option value="verified" {% if status_filter == 'verified' %}selected{% endif %}>{% trans "Vérifiés" %}</option>
-                <option value="unverified" {% if status_filter == 'unverified' %}selected{% endif %}>{% trans "Non vérifiés" %}</option>
-            </select>
-            <button type="submit" class="btn-primary btn-sm text-xs sm:text-sm">
-                <i class="fas fa-search"></i>
-            </button>
-            {% if search_query or status_filter %}
-                <a href="?" class="text-[10px] sm:text-xs text-gray-400 hover:text-white transition">{% trans "Réinitialiser" %}</a>
-            {% endif %}
-        </form>
-
-        <form method="get" class="flex items-center gap-1.5 sm:gap-2">
-            <label for="per_page" class="text-[10px] sm:text-xs text-gray-400">{% trans "Afficher" %}</label>
-            <select name="per_page" id="per_page" onchange="this.form.submit()" class="form-input py-1 text-xs sm:text-sm">
-                <option value="15" {% if current_per_page == 15 %}selected{% endif %}>15</option>
-                <option value="20" {% if current_per_page == 20 %}selected{% endif %}>20</option>
-                <option value="50" {% if current_per_page == 50 %}selected{% endif %}>50</option>
-                <option value="100" {% if current_per_page == 100 %}selected{% endif %}>100</option>
-            </select>
-        </form>
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+        <div class="flex-1 min-w-[180px]">
+            <input type="text" id="search-input" value="{{ search_query }}"
+                   placeholder="{% trans 'Rechercher un invité...' %}" 
+                   class="form-input py-2 text-sm bg-white/5 dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20">
+        </div>
+        <select id="status-filter" class="form-input py-2 text-sm max-w-[140px] bg-white/5 dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white">
+            <option value="" class="text-gray-900 dark:text-white">{% trans "Tous" %}</option>
+            <option value="attending" {% if status_filter == 'attending' %}selected{% endif %} class="text-gray-900 dark:text-white">{% trans "Présents" %}</option>
+            <option value="not_attending" {% if status_filter == 'not_attending' %}selected{% endif %} class="text-gray-900 dark:text-white">{% trans "Absents" %}</option>
+            <option value="verified" {% if status_filter == 'verified' %}selected{% endif %} class="text-gray-900 dark:text-white">{% trans "Vérifiés" %}</option>
+            <option value="unverified" {% if status_filter == 'unverified' %}selected{% endif %} class="text-gray-900 dark:text-white">{% trans "Non vérifiés" %}</option>
+        </select>
+        <button onclick="applyFilters()" class="btn-primary btn-sm text-xs">
+            <i class="fas fa-search"></i> {% trans "Rechercher" %}
+        </button>
+        {% if search_query or status_filter %}
+            <a href="?" class="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white transition">{% trans "Réinitialiser" %}</a>
+        {% endif %}
     </div>
 
     <!-- ============================================================ -->
@@ -94,54 +87,74 @@
             <div class="-mx-3 sm:-mx-4">
                 <table class="w-full text-[10px] sm:text-xs">
                     <thead>
-                        <tr class="border-b border-white/10">
-                            <th class="text-left py-2 px-2 text-gray-400 font-medium">{% trans "Invité" %}</th>
-                            <th class="text-left py-2 px-2 text-gray-400 font-medium hidden sm:table-cell">{% trans "Email" %}</th>
-                            <th class="text-center py-2 px-2 text-gray-400 font-medium">{% trans "Présence" %}</th>
-                            <th class="text-center py-2 px-2 text-gray-400 font-medium hidden md:table-cell">{% trans "Boisson" %}</th>
-                            <th class="text-center py-2 px-2 text-gray-400 font-medium hidden lg:table-cell">{% trans "Vérifié" %}</th>
-                            <th class="text-center py-2 px-2 text-gray-400 font-medium">{% trans "Table" %}</th>
-                            <th class="text-center py-2 px-2 text-gray-400 font-medium hidden xl:table-cell">{% trans "Check-in" %}</th>
+                        <tr class="border-b border-gray-200 dark:border-white/10">
+                            <th class="text-left py-2 px-2 text-gray-500 dark:text-gray-400 font-medium min-w-[140px]">{% trans "Invité" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium min-w-[80px] hidden sm:table-cell">{% trans "Présence" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium min-w-[100px]">{% trans "Boisson" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium min-w-[80px] hidden md:table-cell">{% trans "Vérifié" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium min-w-[70px]">{% trans "Table" %}</th>
+                            <th class="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium min-w-[80px] hidden lg:table-cell">{% trans "Check-in" %}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for guest in guests %}
-                            <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                            <tr class="border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5 transition">
                                 <td class="py-2 px-2">
-                                    <div class="font-medium">{{ guest.first_name }} {{ guest.last_name }}</div>
-                                    <div class="text-[8px] sm:text-[10px] text-gray-500 sm:hidden">{{ guest.email|default:"-" }}</div>
+                                    <div class="font-medium text-gray-900 dark:text-white truncate max-w-[100px] sm:max-w-[150px]">{{ guest.first_name }} {{ guest.last_name }}</div>
+                                    <div class="text-[8px] sm:text-[10px] text-gray-500 dark:text-gray-400 truncate max-w-[100px] sm:max-w-[150px]">{{ guest.email|default:"-" }}</div>
                                 </td>
-                                <td class="py-2 px-2 hidden sm:table-cell text-gray-400">{{ guest.email|default:"-" }}</td>
-                                <td class="text-center py-2 px-2">
+                                <td class="text-center py-2 px-2 hidden sm:table-cell">
                                     {% if guest.will_attend %}
-                                        <span class="badge badge-green text-[8px] sm:text-[10px]">{% trans "Oui" %}</span>
+                                        <span class="badge badge-green text-[8px] sm:text-[10px]">
+                                            <i class="fas fa-check mr-0.5"></i> {% trans "Oui" %}
+                                        </span>
                                         {% if guest.number_of_guests > 1 %}
-                                            <span class="text-[8px] sm:text-[10px] text-gray-400">+{{ guest.number_of_guests|add:-1 }}</span>
+                                            <span class="text-[8px] sm:text-[10px] text-gray-500 dark:text-gray-400">+{{ guest.number_of_guests|add:-1 }}</span>
                                         {% endif %}
                                     {% else %}
-                                        <span class="badge badge-red text-[8px] sm:text-[10px]">{% trans "Non" %}</span>
+                                        <span class="badge badge-red text-[8px] sm:text-[10px]">
+                                            <i class="fas fa-times mr-0.5"></i> {% trans "Non" %}
+                                        </span>
                                     {% endif %}
                                 </td>
-                                <td class="text-center py-2 px-2 hidden md:table-cell">{{ guest.drink_display|default:"-" }}</td>
-                                <td class="text-center py-2 px-2 hidden lg:table-cell">
+                                <td class="text-center py-2 px-2">
+                                    <div class="text-gray-800 dark:text-gray-300 text-[10px] sm:text-xs font-medium">
+                                        {{ guest.drink_display|default:"-" }}
+                                    </div>
+                                    {% if guest.is_accompanied and guest.companion_drink_display %}
+                                        <div class="text-[8px] text-gray-500 dark:text-gray-400">
+                                            + {{ guest.companion_drink_display }}
+                                        </div>
+                                    {% endif %}
+                                    {% if guest.is_accompanied and guest.get_companion_full_name %}
+                                        <div class="text-[8px] text-gray-400 dark:text-gray-500">
+                                            {{ guest.get_companion_full_name }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center py-2 px-2 hidden md:table-cell">
                                     {% if guest.is_verified %}
-                                        <span class="badge badge-green text-[8px] sm:text-[10px]"><i class="fas fa-check"></i></span>
+                                        <span class="badge badge-green text-[8px] sm:text-[10px]">
+                                            <i class="fas fa-check mr-0.5"></i> {% trans "Oui" %}
+                                        </span>
                                     {% else %}
-                                        <span class="badge badge-yellow text-[8px] sm:text-[10px]"><i class="fas fa-clock"></i></span>
+                                        <span class="badge badge-yellow text-[8px] sm:text-[10px]">
+                                            <i class="fas fa-clock mr-0.5"></i> {% trans "En attente" %}
+                                        </span>
                                     {% endif %}
                                 </td>
                                 <td class="text-center py-2 px-2">
                                     {% if guest.table %}
-                                        <span class="badge badge-purple text-[8px] sm:text-[10px]">{{ guest.table.number }}</span>
+                                        <span class="badge badge-purple text-[8px] sm:text-[10px]">{{ guest.table.id }}</span>
                                     {% else %}
-                                        <span class="text-gray-500 text-[8px] sm:text-[10px]">-</span>
+                                        <span class="text-gray-400 dark:text-gray-500 text-[8px] sm:text-[10px]">-</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-center py-2 px-2 hidden xl:table-cell">
+                                <td class="text-center py-2 px-2 hidden lg:table-cell">
                                     {% if guest.checkin_time %}
-                                        <span class="text-cyan-400 text-[10px]">{{ guest.checkin_time|date:"H:i" }}</span>
+                                        <span class="text-cyan-600 dark:text-cyan-400 text-[10px]">{{ guest.checkin_time|date:"H:i" }}</span>
                                     {% else %}
-                                        <span class="text-gray-500">-</span>
+                                        <span class="text-gray-400 dark:text-gray-500">-</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -152,12 +165,12 @@
 
             <!-- Pagination -->
             {% if is_paginated %}
-                <div class="flex flex-wrap justify-center gap-1.5 sm:gap-2 mt-4 pt-3 border-t border-white/10">
+                <div class="flex flex-wrap justify-center gap-1.5 sm:gap-2 mt-4 pt-3 border-t border-gray-200 dark:border-white/10">
                     {% if page_obj.has_previous %}
                         <a href="?page=1&per_page={{ current_per_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn-secondary btn-sm text-xs">&laquo;</a>
                         <a href="?page={{ page_obj.previous_page_number }}&per_page={{ current_per_page }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="btn-secondary btn-sm text-xs">&lsaquo;</a>
                     {% endif %}
-                    <span class="flex items-center px-3 text-[10px] sm:text-xs text-gray-400">
+                    <span class="flex items-center px-3 text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
                         {% blocktrans with current=page_obj.number total=page_obj.paginator.num_pages %}
                             Page {{ current }}/{{ total }}
                         {% endblocktrans %}
@@ -170,17 +183,15 @@
             {% endif %}
 
         {% else %}
-            <div class="text-center py-8 sm:py-12 text-gray-400">
+            <div class="text-center py-8 sm:py-12 text-gray-500 dark:text-gray-400">
                 <i class="fas fa-inbox text-3xl sm:text-4xl mb-3 block"></i>
                 <p class="text-sm">{% trans "Aucune réponse pour le moment." %}</p>
-                <p class="text-xs text-gray-500 mt-1">{% trans "Les invités commenceront à répondre dès que vous partagerez le lien RSVP." %}</p>
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{% trans "Les invités commenceront à répondre dès que vous partagerez le lien RSVP." %}</p>
             </div>
         {% endif %}
     </div>
 
-    <!-- ============================================================ -->
-    <!-- ACTIONS -->
-    <!-- ============================================================ -->
+    <!-- Actions -->
     <div class="mt-4 flex flex-wrap gap-2">
         <a href="{% url 'events:event_detail' event.slug %}" class="btn-secondary btn-sm text-xs">
             <i class="fas fa-arrow-left"></i> {% trans "Retour" %}
@@ -191,16 +202,53 @@
     </div>
 </div>
 
+<script>
+    function applyFilters() {
+        const search = document.getElementById('search-input').value;
+        const status = document.getElementById('status-filter').value;
+        let url = new URL(window.location.href);
+        if (search) url.searchParams.set('q', search);
+        else url.searchParams.delete('q');
+        if (status) url.searchParams.set('status', status);
+        else url.searchParams.delete('status');
+        url.searchParams.set('page', 1);
+        window.location.href = url.toString();
+    }
+
+    document.getElementById('search-input').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') applyFilters();
+    });
+    document.getElementById('status-filter').addEventListener('change', applyFilters);
+
+    // Theme-aware styles for stat cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const isDark = document.documentElement.classList.contains('dark');
+        // Les classes sont déjà gérées par Tailwind dark:
+    });
+</script>
+
 <style>
+    /* ============================================================ */
+    /* STAT CARDS - Compatible clair/sombre */
+    /* ============================================================ */
     .stat-card {
         transition: all 0.3s ease;
-        border: 1px solid rgba(255,255,255,0.05);
+        border: 1px solid #e5e7eb;
         border-radius: 10px;
         display: block;
         text-decoration: none;
+        background: #ffffff;
+    }
+    .dark .stat-card {
+        border-color: rgba(255,255,255,0.05);
+        background: rgba(255,255,255,0.03);
     }
     .stat-card:hover {
-        border-color: rgba(139, 92, 246, 0.3);
+        border-color: #8B5CF6;
+        background: #faf5ff;
+    }
+    .dark .stat-card:hover {
+        border-color: rgba(139,92,246,0.3);
         background: rgba(255,255,255,0.03);
     }
     .stat-card .stat-number {
@@ -209,12 +257,187 @@
     }
     .stat-card .stat-label {
         font-size: 10px;
-        color: rgba(255,255,255,0.4);
+        color: #6b7280;
         margin-top: 2px;
+    }
+    .dark .stat-card .stat-label {
+        color: rgba(255,255,255,0.4);
     }
     @media (min-width: 640px) {
         .stat-card .stat-number { font-size: 28px; }
         .stat-card .stat-label { font-size: 12px; }
     }
+
+    /* ============================================================ */
+    /* BADGES */
+    /* ============================================================ */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    .badge-purple {
+        background: #ede9fe;
+        color: #7c3aed;
+    }
+    .dark .badge-purple {
+        background: rgba(124,58,237,0.15);
+        color: #a78bfa;
+    }
+    .badge-green {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    .dark .badge-green {
+        background: rgba(34,197,94,0.15);
+        color: #4ade80;
+    }
+    .badge-red {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    .dark .badge-red {
+        background: rgba(239,68,68,0.15);
+        color: #f87171;
+    }
+    .badge-yellow {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .dark .badge-yellow {
+        background: rgba(234,179,8,0.15);
+        color: #fbbf24;
+    }
+    .badge-cyan {
+        background: #cffafe;
+        color: #0e7490;
+    }
+    .dark .badge-cyan {
+        background: rgba(6,182,212,0.15);
+        color: #67e8f9;
+    }
+
+    /* ============================================================ */
+    /* TABLEAU - Compatible clair/sombre */
+    /* ============================================================ */
+    .glass-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .dark .glass-card {
+        background: rgba(255,255,255,0.03);
+        border-color: rgba(255,255,255,0.06);
+    }
+    .glass-card:hover {
+        border-color: #8B5CF6;
+        box-shadow: 0 8px 32px rgba(124,58,237,0.08);
+        transform: translateY(-2px);
+    }
+    .dark .glass-card:hover {
+        border-color: rgba(124,58,237,0.3);
+        box-shadow: 0 8px 32px rgba(124,58,237,0.08);
+    }
+
+    /* ============================================================ */
+    /* FORM INPUTS - Compatible clair/sombre */
+    /* ============================================================ */
+    .form-input {
+        width: 100%;
+        padding: 10px 14px;
+        background: #f9fafb;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        color: #111827;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        outline: none;
+        font-family: 'Inter', sans-serif;
+        box-sizing: border-box;
+    }
+    .dark .form-input {
+        background: rgba(255,255,255,0.05);
+        border-color: rgba(255,255,255,0.1);
+        color: #e5e7eb;
+    }
+    .form-input:focus {
+        border-color: #8B5CF6;
+        box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+        background: #ffffff;
+    }
+    .dark .form-input:focus {
+        background: rgba(255,255,255,0.08);
+        box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+    }
+    .form-input::placeholder {
+        color: #9ca3af;
+    }
+    .dark .form-input::placeholder {
+        color: rgba(255,255,255,0.3);
+    }
+
+    /* ============================================================ */
+    /* BOUTONS */
+    /* ============================================================ */
+    .btn-primary {
+        background: linear-gradient(135deg, #7c3aed, #06b6d4);
+        color: #fff;
+        padding: 0.5rem 1.2rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 12px;
+        justify-content: center;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 8px 24px rgba(124,58,237,0.3);
+        color: #fff;
+        text-decoration: none;
+    }
+
+    .btn-secondary {
+        background: #f3f4f6;
+        color: #1f2937;
+        padding: 0.5rem 1.2rem;
+        border-radius: 9999px;
+        font-weight: 600;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: 1px solid #d1d5db;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 12px;
+        justify-content: center;
+    }
+    .dark .btn-secondary {
+        background: rgba(255,255,255,0.06);
+        color: #fff;
+        border-color: rgba(255,255,255,0.08);
+    }
+    .btn-secondary:hover {
+        background: #e5e7eb;
+        transform: translateY(-2px);
+    }
+    .dark .btn-secondary:hover {
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+    }
+
+    .btn-sm { padding: 0.3rem 0.8rem; font-size: 11px; }
 </style>
 {% endblock %}

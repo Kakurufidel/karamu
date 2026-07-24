@@ -123,7 +123,7 @@
             </div>
 
             <!-- ========================================================== -->
-            <!-- TABLE (visible uniquement si has_tables = True) -->
+            <!-- TABLE (uniquement si has_tables = True) -->
             <!-- ========================================================== -->
             {% if event.has_tables %}
                 <div class="mb-6" id="table-field">
@@ -328,7 +328,6 @@
                 const value = this.value.trim();
                 const existingError = this.parentElement.querySelector('.email-error-msg');
                 
-                // Supprimer l'ancien message d'erreur
                 if (existingError) {
                     existingError.remove();
                 }

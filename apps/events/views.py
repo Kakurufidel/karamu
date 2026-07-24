@@ -67,15 +67,14 @@ class EventListView(LoginRequiredMixin, ListView):
 # ============================================================
 
 class EventCreateView(LoginRequiredMixin, CreateView):
-    """Cree un nouvel evenement."""
+    """Crée un nouvel événement."""
     model = Event
     form_class = EventForm
     template_name = 'events/event_form.html'
-    success_url = reverse_lazy('authentication:dashboard')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = _('Creer un evenement')
+        context['title'] = _('Créer un événement')
         return context
 
     def get_form_kwargs(self):
@@ -87,16 +86,15 @@ class EventCreateView(LoginRequiredMixin, CreateView):
         event = form.save(commit=False)
         event.main_organizer = self.request.user
         
-        # Gestion des champs booleens
+        # Gestion des champs booléens
         event.allow_other_drinks = form.cleaned_data.get('allow_other_drinks', True)
         event.has_tables = form.cleaned_data.get('has_tables', False)
         event.is_published = form.cleaned_data.get('is_published', False)
         
         event.save()
         
-        # Si la gestion des tables est activee, creer une table par defaut
+        # Si la gestion des tables est activée, créer une table par défaut
         if event.has_tables:
-            # ✅ CORRECTION : Supprimer 'number'
             Table.objects.create(
                 event=event,
                 name=_('Table principale'),
@@ -104,8 +102,8 @@ class EventCreateView(LoginRequiredMixin, CreateView):
                 created_by=self.request.user
             )
         
-        messages.success(self.request, _('Evenement cree avec succes.'))
-        return redirect(self.success_url)
+        messages.success(self.request, _('Événement créé avec succès.'))
+        return redirect('events:event_detail', slug=event.slug)  # 👈 REDIRECTION VERS EVENT_DETAIL
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
@@ -115,16 +113,15 @@ class EventCreateView(LoginRequiredMixin, CreateView):
 
 
 # ============================================================
-# MODIFICATION D'EVENEMENT
+# MODIFICATION D'ÉVÉNEMENT
 # ============================================================
 
 class EventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    """Modifie un evenement existant."""
+    """Modifie un événement existant."""
     model = Event
     form_class = EventForm
     template_name = 'events/event_form.html'
     slug_url_kwarg = 'slug'
-    success_url = reverse_lazy('authentication:dashboard')
     
     def test_func(self):
         event = self.get_object()
@@ -137,7 +134,7 @@ class EventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = _('Modifier l\'evenement')
+        context['title'] = _('Modifier l\'événement')
         return context
 
     def form_valid(self, form):
@@ -150,18 +147,17 @@ class EventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         event.has_tables = new_has_tables
         event.is_published = form.cleaned_data.get('is_published', False)
         
-        # Si has_tables est passe de True a False, supprimer les tables
+        # Si has_tables est passé de True à False, supprimer les tables
         if old_has_tables and not new_has_tables:
             event.tables.all().delete()
             messages.info(
                 self.request, 
-                _('Les tables ont ete supprimees car la gestion des tables a ete desactivee.')
+                _('Les tables ont été supprimées car la gestion des tables a été désactivée.')
             )
         
-        # Si has_tables est passe de False a True, creer une table par defaut
+        # Si has_tables est passé de False à True, créer une table par défaut
         if not old_has_tables and new_has_tables:
             if not event.tables.exists():
-                # ✅ CORRECTION : Supprimer 'number'
                 Table.objects.create(
                     event=event,
                     name=_('Table principale'),
@@ -170,20 +166,18 @@ class EventUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                 )
                 messages.info(
                     self.request, 
-                    _('Une table par defaut a ete creee. Vous pouvez en ajouter d\'autres.')
+                    _('Une table par défaut a été créée. Vous pouvez en ajouter d\'autres.')
                 )
         
         event.save()
-        messages.success(self.request, _('Evenement modifie avec succes.'))
-        return redirect(self.success_url)
+        messages.success(self.request, _('Événement modifié avec succès.'))
+        return redirect('events:event_detail', slug=event.slug)  # 👈 REDIRECTION VERS EVENT_DETAIL
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
             for error in errors:
                 messages.error(self.request, f"{field}: {error}")
         return super().form_invalid(form)
-
-
 # ============================================================
 # DETAIL D'EVENEMENT
 # ============================================================

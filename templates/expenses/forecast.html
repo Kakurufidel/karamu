@@ -7,6 +7,50 @@
 {% block extra_head %}
 <style>
     /* ============================================================ */
+    /* VARIABLES - Mode clair/sombre */
+    /* ============================================================ */
+    :root {
+        --text-primary: #e5e7eb;
+        --text-secondary: #9ca3af;
+        --text-muted: rgba(255,255,255,0.5);
+        --input-bg: rgba(255,255,255,0.05);
+        --input-border: rgba(255,255,255,0.08);
+        --input-text: #e5e7eb;
+        --card-bg: rgba(255,255,255,0.03);
+        --border-color: rgba(255,255,255,0.06);
+        --label-color: rgba(255,255,255,0.6);
+        --table-header: rgba(255,255,255,0.4);
+        --table-border: rgba(255,255,255,0.06);
+        --table-hover: rgba(255,255,255,0.03);
+        --modal-bg: #1a1a2e;
+        --summary-bg: rgba(255,255,255,0.03);
+        --summary-border: rgba(255,255,255,0.04);
+        --btn-secondary-bg: rgba(255,255,255,0.06);
+        --btn-secondary-hover: rgba(255,255,255,0.1);
+    }
+
+    /* MODE CLAIR */
+    html.light {
+        --text-primary: #0f172a;
+        --text-secondary: #1e293b;
+        --text-muted: #475569;
+        --input-bg: rgba(0,0,0,0.04);
+        --input-border: rgba(0,0,0,0.12);
+        --input-text: #0f172a;
+        --card-bg: rgba(255,255,255,0.8);
+        --border-color: rgba(0,0,0,0.08);
+        --label-color: #334155;
+        --table-header: rgba(0,0,0,0.5);
+        --table-border: rgba(0,0,0,0.08);
+        --table-hover: rgba(0,0,0,0.03);
+        --modal-bg: #ffffff;
+        --summary-bg: rgba(0,0,0,0.03);
+        --summary-border: rgba(0,0,0,0.06);
+        --btn-secondary-bg: rgba(0,0,0,0.05);
+        --btn-secondary-hover: rgba(0,0,0,0.08);
+    }
+
+    /* ============================================================ */
     /* SECTIONS PLIABLES */
     /* ============================================================ */
     .section-toggle {
@@ -43,24 +87,44 @@
     }
 
     /* ============================================================ */
+    /* GLASS CARD */
+    /* ============================================================ */
+    .glass-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 20px 24px;
+        transition: all 0.2s ease;
+    }
+    html.light .glass-card {
+        background: rgba(255,255,255,0.8);
+        border-color: rgba(0,0,0,0.08);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    /* ============================================================ */
     /* INPUTS COMPACTS */
     /* ============================================================ */
     .input-compact {
         padding: 6px 8px;
         font-size: 13px;
         border-radius: 6px;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.1);
-        color: #e5e7eb;
+        background: var(--input-bg);
+        border: 1px solid var(--input-border);
+        color: var(--input-text);
         width: 100%;
         transition: all 0.2s ease;
         text-align: center;
+        outline: none;
     }
     .input-compact:focus {
         border-color: #8B5CF6;
         outline: none;
         box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
         background: rgba(255,255,255,0.08);
+    }
+    html.light .input-compact:focus {
+        background: rgba(139, 92, 246, 0.04);
     }
     .input-compact-sm { max-width: 65px; }
     .input-compact-md { max-width: 90px; }
@@ -69,6 +133,45 @@
         .input-compact-sm { max-width: 50px; }
         .input-compact-md { max-width: 70px; }
         .input-compact { font-size: 12px; padding: 4px 6px; }
+    }
+
+    /* ============================================================ */
+    /* FORMULAIRES */
+    /* ============================================================ */
+    .form-input {
+        width: 100%;
+        padding: 8px 12px;
+        background: var(--input-bg);
+        border: 1px solid var(--input-border);
+        border-radius: 8px;
+        color: var(--input-text);
+        font-size: 13px;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+    .form-input:focus {
+        border-color: #8B5CF6;
+        box-shadow: 0 0 0 3px rgba(139,92,246,0.12);
+    }
+    .form-input:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    select.form-input {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239ca3af' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        padding-right: 30px;
+        cursor: pointer;
+    }
+    select.form-input option {
+        background: var(--input-bg);
+        color: var(--input-text);
+    }
+    html.light select.form-input option {
+        background: #ffffff;
+        color: #0f172a;
     }
 
     /* ============================================================ */
@@ -86,70 +189,136 @@
         font-size: 11px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        color: rgba(255,255,255,0.4);
-        border-bottom: 1px solid rgba(255,255,255,0.06);
+        color: var(--table-header);
+        border-bottom: 1px solid var(--table-border);
     }
     .table-forecast thead th:first-child {
         text-align: left;
     }
     .table-forecast tbody td {
         padding: 8px 8px;
-        border-bottom: 1px solid rgba(255,255,255,0.04);
+        border-bottom: 1px solid var(--table-border);
         vertical-align: middle;
+        color: var(--text-primary);
     }
     .table-forecast tbody tr:hover {
-        background: rgba(255,255,255,0.03);
+        background: var(--table-hover);
     }
     .table-forecast tbody tr:last-child td {
         border-bottom: none;
     }
     .table-forecast .drink-name {
         font-weight: 600;
-        color: #e5e7eb;
+        color: var(--text-primary);
         font-size: 14px;
         padding-left: 4px;
         white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     .table-forecast .drink-name .badge-drink {
         display: inline-block;
         width: 4px;
         height: 28px;
         border-radius: 4px;
-        margin-right: 10px;
-        vertical-align: middle;
-        background: #8B5CF6;
+        flex-shrink: 0;
     }
-    .table-forecast .text-center {
-        text-align: center;
-    }
-    .table-forecast .text-right {
-        text-align: right;
-    }
-    .table-forecast .font-bold {
-        font-weight: 700;
-    }
-    .table-forecast .text-purple {
-        color: #A78BFA;
-    }
-    .table-forecast .text-cyan {
-        color: #67E8F9;
-    }
-    .table-forecast .text-green {
-        color: #34D399;
-    }
+    .table-forecast .text-center { text-align: center; }
+    .table-forecast .text-right { text-align: right; }
+    .table-forecast .font-bold { font-weight: 700; }
+    .text-purple { color: #7C3AED; }
+    .text-cyan { color: #0891B2; }
+    .text-green { color: #059669; }
 
     .table-forecast tfoot td {
         padding: 10px 8px;
-        border-top: 2px solid rgba(255,255,255,0.08);
+        border-top: 2px solid var(--table-border);
         font-weight: 700;
         font-size: 14px;
+        color: var(--text-primary);
     }
 
     /* ============================================================ */
-    /* BOUTON SUPPRIMER */
+    /* BOUTONS */
     /* ============================================================ */
+    .btn-primary {
+        background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+        color: white;
+        padding: 8px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: center;
+        text-decoration: none;
+    }
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(139,92,246,0.25);
+    }
+    .btn-primary.btn-sm {
+        padding: 6px 14px;
+        font-size: 12px;
+    }
+
+    .btn-secondary {
+        background: var(--btn-secondary-bg);
+        color: var(--text-primary);
+        padding: 8px 20px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: center;
+    }
+    .btn-secondary:hover {
+        background: var(--btn-secondary-hover);
+    }
+    .btn-secondary.btn-sm {
+        padding: 6px 14px;
+        font-size: 12px;
+    }
+
+    .btn-success {
+        background: #10B981;
+        color: white;
+        padding: 8px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: center;
+        text-decoration: none;
+    }
+    .btn-success:hover {
+        background: #059669;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(16,185,129,0.25);
+    }
+    .btn-success.btn-sm {
+        padding: 6px 14px;
+        font-size: 12px;
+    }
+
     .btn-remove-drink {
-        color: rgba(255,255,255,0.2);
+        color: var(--text-muted);
         transition: all 0.2s ease;
         padding: 4px 8px;
         border-radius: 4px;
@@ -161,6 +330,23 @@
     .btn-remove-drink:hover {
         color: #EF4444;
         background: rgba(239, 68, 68, 0.15);
+    }
+
+    .btn-add-drink {
+        color: #10B981;
+        transition: all 0.2s ease;
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px dashed #10B981;
+        background: transparent;
+        cursor: pointer;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .btn-add-drink:hover {
+        background: rgba(16, 185, 129, 0.1);
     }
 
     /* ============================================================ */
@@ -177,19 +363,18 @@
         align-items: center;
         padding: 20px;
     }
-    .modal-overlay.active {
-        display: flex;
-    }
+    .modal-overlay.active { display: flex; }
     .modal-box {
         max-width: 420px;
         width: 100%;
-        background: #1a1a2e;
+        background: var(--modal-bg);
         border-radius: 16px;
         padding: 28px 24px 24px;
-        border: 1px solid rgba(255,255,255,0.08);
+        border: 1px solid var(--border-color);
         box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         animation: modalIn 0.25s ease;
     }
+    html.light .modal-box { background: #ffffff; border-color: rgba(0,0,0,0.08); }
     @keyframes modalIn {
         from { opacity: 0; transform: scale(0.95) translateY(16px); }
         to { opacity: 1; transform: scale(1) translateY(0); }
@@ -204,27 +389,22 @@
         justify-content: center;
         margin: 0 auto 14px;
     }
-    .modal-icon i {
-        font-size: 22px;
-        color: #EF4444;
-    }
+    .modal-icon i { font-size: 22px; color: #EF4444; }
     .modal-title {
         text-align: center;
         font-size: 17px;
         font-weight: 700;
         margin-bottom: 6px;
-        color: #e5e7eb;
+        color: var(--text-primary);
     }
     .modal-message {
         text-align: center;
         font-size: 13px;
-        color: rgba(255,255,255,0.5);
+        color: var(--text-secondary);
         margin-bottom: 20px;
         line-height: 1.5;
     }
-    .modal-message strong {
-        color: #e5e7eb;
-    }
+    .modal-message strong { color: var(--text-primary); }
     .modal-actions {
         display: flex;
         gap: 10px;
@@ -240,8 +420,9 @@
         transition: all 0.2s ease;
     }
     .modal-actions .btn-cancel {
-        background: rgba(255,255,255,0.06);
-        color: rgba(255,255,255,0.6);
+        background: var(--input-bg);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
     }
     .modal-actions .btn-cancel:hover {
         background: rgba(255,255,255,0.12);
@@ -286,24 +467,48 @@
     .summary-card {
         padding: 14px 12px;
         border-radius: 10px;
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.04);
+        background: var(--summary-bg);
+        border: 1px solid var(--summary-border);
         text-align: center;
+        transition: all 0.2s ease;
     }
     .summary-card .number {
         font-size: 24px;
         font-weight: 700;
+        color: var(--text-primary);
     }
+    .summary-card .number.text-cyan { color: #0891B2; }
+    .summary-card .number.text-green { color: #059669; }
+    .summary-card .number.text-purple { color: #7C3AED; }
     .summary-card .label {
         font-size: 10px;
-        color: rgba(255,255,255,0.35);
+        color: var(--text-muted);
         margin-top: 2px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
 
+    /* Input pour ajouter une boisson */
+    .input-add-drink {
+        padding: 6px 10px;
+        font-size: 13px;
+        border-radius: 6px;
+        background: var(--input-bg);
+        border: 1px solid var(--input-border);
+        color: var(--input-text);
+        transition: all 0.2s ease;
+        outline: none;
+        min-width: 150px;
+    }
+    .input-add-drink:focus {
+        border-color: #8B5CF6;
+        box-shadow: 0 0 0 3px rgba(139,92,246,0.12);
+    }
+
     @media (max-width: 640px) {
         .summary-card .number { font-size: 18px; }
+        .glass-card { padding: 14px 16px; }
+        .input-add-drink { min-width: 100px; font-size: 12px; }
     }
 </style>
 {% endblock %}
@@ -316,11 +521,11 @@
     <!-- ============================================================ -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
         <div>
-            <a href="{% url 'events:event_detail' event.slug %}" class="text-purple-400 hover:text-purple-300 transition text-xs sm:text-sm">
+            <a href="{% url 'events:event_detail' event.slug %}" class="text-purple-500 hover:text-purple-600 transition text-xs sm:text-sm font-medium">
                 <i class="fas fa-arrow-left mr-1"></i> {% trans "Retour" %}
             </a>
-            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold mt-0.5">{% trans "Mes prévisions" %}</h1>
-            <p class="text-xs sm:text-sm text-gray-400 truncate max-w-[200px] sm:max-w-none">{{ event.name }}</p>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-primary mt-0.5">{% trans "Mes prévisions" %}</h1>
+            <p class="text-xs sm:text-sm text-secondary truncate max-w-[200px] sm:max-w-none">{{ event.name }}</p>
         </div>
         <div class="flex gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto">
             <button onclick="saveForecast()" class="btn-primary btn-sm text-xs sm:text-sm">
@@ -337,43 +542,38 @@
     <!-- ============================================================ -->
     <div class="glass-card p-3 sm:p-4 mb-3">
         <div class="section-toggle flex justify-between items-center" onclick="toggleSection('params-section')">
-            <h2 class="text-sm sm:text-base font-semibold flex items-center gap-2">
-                <i class="fas fa-sliders-h text-purple-400"></i>
+            <h2 class="text-sm sm:text-base font-semibold text-primary flex items-center gap-2">
+                <i class="fas fa-sliders-h text-purple-500"></i>
                 {% trans "Paramètres" %}
             </h2>
-            <i class="fas fa-chevron-down chevron text-gray-400 text-xs transition-transform"></i>
+            <i class="fas fa-chevron-down chevron text-muted text-xs transition-transform"></i>
         </div>
         <div id="params-section" class="section-content">
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <div>
-                    <label class="text-[10px] sm:text-xs text-gray-400 block mb-0.5">{% trans "Total invités" %}</label>
+                    <label class="text-[10px] sm:text-xs text-secondary block mb-0.5 font-medium">{% trans "Total invités" %}</label>
                     <input type="number" id="total-guests" value="{{ total_invited }}" 
                            class="form-input text-sm" readonly>
-                    <p class="text-[8px] sm:text-[10px] text-gray-500 mt-0.5">{% trans "Basé sur l'import" %}</p>
+                    <p class="text-[8px] sm:text-[10px] text-muted mt-0.5">{% trans "Basé sur l'import" %}</p>
                 </div>
                 <div>
-                    <label class="text-[10px] sm:text-xs text-gray-400 block mb-0.5">{% trans "Présence (%)" %}</label>
+                    <label class="text-[10px] sm:text-xs text-secondary block mb-0.5 font-medium">{% trans "Présence (%)" %}</label>
                     <input type="number" id="attendance-rate" value="75" 
                            class="form-input text-sm" min="0" max="100">
                 </div>
                 <div>
-                    <label class="text-[10px] sm:text-xs text-gray-400 block mb-0.5">{% trans "Tournées" %}</label>
+                    <label class="text-[10px] sm:text-xs text-secondary block mb-0.5 font-medium">{% trans "Tournées" %}</label>
                     <input type="number" id="services" value="1" 
                            class="form-input text-sm" min="1" max="10">
-                    <p class="text-[8px] sm:text-[10px] text-gray-500 mt-0.5">{% trans "1 = 1 boisson par invité" %}</p>
+                    <p class="text-[8px] sm:text-[10px] text-muted mt-0.5">{% trans "1 = 1 boisson par invité" %}</p>
                 </div>
                 <div>
-                    <label class="text-[10px] sm:text-xs text-gray-400 block mb-0.5">{% trans "Devise" %}</label>
+                    <label class="text-[10px] sm:text-xs text-secondary block mb-0.5 font-medium">{% trans "Devise" %}</label>
                     <select id="currency" class="form-input text-sm">
                         <option value="CDF">CDF</option>
                         <option value="USD">USD</option>
                     </select>
                 </div>
-            </div>
-            <div class="flex justify-end mt-3 pt-2 border-t border-white/5">
-                <button onclick="openSection('repartition-section')" class="btn-primary btn-sm text-xs">
-                    {% trans "Étape suivante" %} <i class="fas fa-arrow-right ml-1"></i>
-                </button>
             </div>
         </div>
     </div>
@@ -384,15 +584,28 @@
     <div class="glass-card p-3 sm:p-4 mb-3" id="repartition-section">
         <div class="section-toggle flex justify-between items-center" onclick="toggleSection('repartition-content')">
             <div class="flex items-center gap-2">
-                <h2 class="text-sm sm:text-base font-semibold flex items-center gap-2">
-                    <i class="fas fa-table text-cyan-400"></i>
+                <h2 class="text-sm sm:text-base font-semibold text-primary flex items-center gap-2">
+                    <i class="fas fa-table text-cyan-500"></i>
                     {% trans "Répartition" %}
                 </h2>
             </div>
-            <i class="fas fa-chevron-down chevron text-gray-400 text-xs transition-transform"></i>
+            <i class="fas fa-chevron-down chevron text-muted text-xs transition-transform"></i>
         </div>
         <div id="repartition-content" class="section-content">
-            
+
+            <!-- AJOUTER UNE BOISSON -->
+            <div class="flex flex-wrap items-center gap-2 mb-3 p-2 rounded-lg bg-white/5 border border-dashed border-purple-500/30">
+                <i class="fas fa-plus-circle text-purple-400 text-sm"></i>
+                <input type="text" id="new-drink-input" placeholder="{% trans 'Nouvelle boisson...' %}" 
+                       class="input-add-drink flex-1 min-w-[120px]">
+                <button onclick="addNewDrink()" class="btn-primary btn-sm text-xs">
+                    <i class="fas fa-plus"></i> {% trans "Ajouter" %}
+                </button>
+                <button onclick="updateDrinks()" class="btn-secondary btn-sm text-xs">
+                    <i class="fas fa-save"></i> {% trans "Mettre à jour" %}
+                </button>
+            </div>
+
             <!-- Actions rapides -->
             <div class="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
                 <button onclick="setDefaultPieces(12)" class="btn-secondary btn-sm text-[10px] sm:text-xs">
@@ -428,7 +641,7 @@
                             <td>
                                 <span class="drink-name">
                                     <span class="badge-drink" style="background: {% cycle '#8B5CF6' '#06B6D4' '#F59E0B' '#10B981' '#EC4899' '#6366F1' '#F97316' '#14B8A6' '#8B5CF6' '#06B6D4' %}"></span>
-                                    {{ drink }}
+                                    <span class="text-primary">{{ drink }}</span>
                                 </span>
                             </td>
                             <td class="text-center">
@@ -452,33 +665,25 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="6" class="text-center py-6 text-gray-400">
-                                <i class="fas fa-warning text-yellow-400 mr-1"></i>
+                            <td colspan="6" class="text-center py-6 text-muted">
+                                <i class="fas fa-warning text-yellow-500 mr-1"></i>
                                 {% trans "Aucune boisson configurée." %}
-                                <a href="{% url 'events:event_update' event.slug %}" class="text-cyan-400 hover:underline ml-1">
-                                    {% trans "Ajouter" %}
-                                </a>
+                                <p class="text-xs text-muted mt-1">{% trans "Ajoutez une boisson ci-dessus." %}</p>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td class="text-purple">{% trans "TOTAL" %}</td>
+                            <td class="text-purple font-bold">{% trans "TOTAL" %}</td>
                             <td class="text-center text-purple">-</td>
-                            <td class="text-center text-purple" id="total-cases-display">0</td>
+                            <td class="text-center text-purple font-bold" id="total-cases-display">0</td>
                             <td class="text-center text-purple">-</td>
-                            <td class="text-right text-purple text-base" id="total-cost-display">0</td>
+                            <td class="text-right text-purple text-base font-bold" id="total-cost-display">0</td>
                             <td></td>
                         </tr>
                     </tfoot>
                 </table>
-            </div>
-
-            <div class="flex justify-end mt-3 pt-2 border-t border-white/5">
-                <button onclick="openSection('summary-section')" class="btn-primary btn-sm text-xs">
-                    {% trans "Voir le résumé" %} <i class="fas fa-arrow-right ml-1"></i>
-                </button>
             </div>
         </div>
     </div>
@@ -488,11 +693,11 @@
     <!-- ============================================================ -->
     <div class="glass-card p-3 sm:p-4 border border-purple-500/20" id="summary-section">
         <div class="section-toggle flex justify-between items-center" onclick="toggleSection('summary-content')">
-            <h2 class="text-sm sm:text-base font-semibold flex items-center gap-2">
-                <i class="fas fa-file-invoice text-green-400"></i>
+            <h2 class="text-sm sm:text-base font-semibold text-primary flex items-center gap-2">
+                <i class="fas fa-file-invoice text-green-500"></i>
                 {% trans "Résumé" %}
             </h2>
-            <i class="fas fa-chevron-down chevron text-gray-400 text-xs transition-transform"></i>
+            <i class="fas fa-chevron-down chevron text-muted text-xs transition-transform"></i>
         </div>
         <div id="summary-content" class="section-content">
 
@@ -527,10 +732,10 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td class="text-purple">{% trans "TOTAL" %}</td>
+                            <td class="text-purple font-bold">{% trans "TOTAL" %}</td>
                             <td class="text-center text-purple">-</td>
-                            <td class="text-center text-purple" id="summary-footer-cases">0</td>
-                            <td class="text-right text-purple text-base" id="summary-footer-cost">0</td>
+                            <td class="text-center text-purple font-bold" id="summary-footer-cases">0</td>
+                            <td class="text-right text-purple text-base font-bold" id="summary-footer-cost">0</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -579,7 +784,8 @@
     // ============================================================
     function toggleSection(sectionId) {
         const content = document.getElementById(sectionId);
-        const toggle = content.closest('.glass-card').querySelector('.section-toggle');
+        const card = content.closest('.glass-card');
+        const toggle = card ? card.querySelector('.section-toggle') : null;
         content.classList.toggle('open');
         if (toggle) toggle.classList.toggle('active');
     }
@@ -620,178 +826,4 @@
         if (e.key === 'Escape') closeDeleteModal();
     });
     document.getElementById('delete-modal').addEventListener('click', function(e) {
-        if (e.target === this) closeDeleteModal();
-    });
-
-    // ============================================================
-    // SUPPRIMER
-    // ============================================================
-    function removeDrink(drinkName) {
-        fetch('{% url "expenses:remove_drink" event.id %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
-            },
-            body: JSON.stringify({ drink_name: drinkName })
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                showToast('success', '{% trans "Boisson supprimée." %}');
-                setTimeout(() => location.reload(), 800);
-            } else {
-                showToast('error', data.error || '{% trans "Erreur." %}');
-            }
-        })
-        .catch(() => showToast('error', '{% trans "Erreur réseau." %}'));
-    }
-
-    // ============================================================
-    // CALCUL
-    // ============================================================
-    function calculateAll() {
-        const currency = document.getElementById('currency').value;
-        const rows = document.querySelectorAll('#forecast-body tr');
-        let totalCases = 0;
-        let totalCost = 0;
-        let summaryData = [];
-
-        rows.forEach(row => {
-            const drink = row.dataset.drink || '';
-            const piecesInput = row.querySelector('.pieces-input');
-            const casesInput = row.querySelector('.cases-input');
-            const priceInput = row.querySelector('.price-input');
-            const totalDisplay = row.querySelector('.total-cost-display');
-
-            const pieces = parseInt(piecesInput?.value) || 1;
-            const cases = parseInt(casesInput?.value) || 0;
-            const price = parseFloat(priceInput?.value) || 0;
-            const cost = cases * price;
-
-            if (totalDisplay) totalDisplay.textContent = cost.toFixed(0);
-
-            totalCases += cases;
-            totalCost += cost;
-
-            if (cases > 0 || price > 0) {
-                summaryData.push({ drink, pieces, cases, price, cost });
-            }
-        });
-
-        // Totaux
-        document.getElementById('total-cases-display').textContent = totalCases;
-        document.getElementById('total-cost-display').textContent = totalCost.toFixed(0);
-
-        // Résumé
-        document.getElementById('summary-total-cases').textContent = totalCases;
-        document.getElementById('summary-total-cost').textContent = totalCost.toFixed(0) + ' ' + currency;
-        document.getElementById('summary-currency-display').textContent = currency;
-        document.getElementById('summary-footer-cases').textContent = totalCases;
-        document.getElementById('summary-footer-cost').textContent = totalCost.toFixed(0) + ' ' + currency;
-
-        // Corps du résumé
-        const summaryBody = document.getElementById('summary-body');
-        summaryBody.innerHTML = '';
-        summaryData.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.className = 'border-b border-white/5 hover:bg-white/5 transition';
-            tr.innerHTML = `
-                <td class="py-1.5 px-2 font-medium">${item.drink}</td>
-                <td class="text-center py-1.5 px-2">${item.pieces}</td>
-                <td class="text-center py-1.5 px-2 font-bold text-cyan">${item.cases}</td>
-                <td class="text-right py-1.5 px-2 font-bold text-green">${item.cost.toFixed(0)}</td>
-            `;
-            summaryBody.appendChild(tr);
-        });
-    }
-
-    // ============================================================
-    // ACTIONS
-    // ============================================================
-    function setDefaultPieces(val) {
-        document.querySelectorAll('.pieces-input').forEach(i => i.value = val);
-        calculateAll();
-    }
-
-    function clearAll() {
-        document.querySelectorAll('.price-input').forEach(i => i.value = 0);
-        document.querySelectorAll('.cases-input').forEach(i => i.value = 0);
-        document.querySelectorAll('.pieces-input').forEach(i => i.value = 12);
-        calculateAll();
-    }
-
-    // ============================================================
-    // SAUVEGARDE
-    // ============================================================
-    function saveForecast() {
-        const data = {
-            total_guests: document.getElementById('total-guests').value,
-            attendance_rate: document.getElementById('attendance-rate').value,
-            services: document.getElementById('services').value,
-            currency: document.getElementById('currency').value,
-            drinks: []
-        };
-
-        document.querySelectorAll('#forecast-body tr').forEach(row => {
-            const drink = row.dataset.drink || '';
-            const pieces = row.querySelector('.pieces-input')?.value || 12;
-            const cases = row.querySelector('.cases-input')?.value || 0;
-            const price = row.querySelector('.price-input')?.value || 0;
-            if (parseInt(cases) > 0 || parseFloat(price) > 0) {
-                data.drinks.push({
-                    name: drink,
-                    pieces_per_case: parseInt(pieces),
-                    cases: parseInt(cases),
-                    price_per_case: parseFloat(price)
-                });
-            }
-        });
-
-        fetch('{% url "expenses:save_forecast" event.id %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || ''
-            },
-            body: JSON.stringify(data)
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) showToast('success', '{% trans "Prévisions sauvegardées !" %}');
-            else showToast('error', '{% trans "Erreur." %}');
-        })
-        .catch(() => showToast('error', '{% trans "Erreur réseau." %}'));
-    }
-
-    function exportPDF() {
-        window.location.href = '{% url "expenses:export_forecast_pdf" event.id %}';
-    }
-
-    // ============================================================
-    // TOAST
-    // ============================================================
-    function showToast(type, message) {
-        const t = document.getElementById('toast');
-        t.textContent = message;
-        t.className = type;
-        t.classList.add('show');
-        clearTimeout(t._timer);
-        t._timer = setTimeout(() => t.classList.remove('show'), 3000);
-    }
-
-    // ============================================================
-    // ÉVÉNEMENTS
-    // ============================================================
-    document.addEventListener('DOMContentLoaded', function() {
-        calculateAll();
-        document.querySelectorAll('#forecast-body input').forEach(i => {
-            i.addEventListener('input', calculateAll);
-            i.addEventListener('change', calculateAll);
-        });
-        document.getElementById('attendance-rate').addEventListener('input', calculateAll);
-        document.getElementById('services').addEventListener('input', calculateAll);
-        document.getElementById('currency').addEventListener('change', calculateAll);
-    });
-</script>
-{% endblock %}
+        if (e.target === this)

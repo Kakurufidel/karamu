@@ -276,7 +276,7 @@
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
         <a href="{% url 'guests:invited_list' event.id %}" class="stat-card text-center p-2 sm:p-3">
             <div class="stat-number text-purple-400">{{ stats.total_invited|default:0 }}</div>
-            <div class="stat-label">{% trans "Invités" %}</div>
+            <div class="stat-label">     {% trans "Invités" %}</div>
         </a>
         <a href="{% url 'guests:guest_list' event.id %}" class="stat-card text-center p-2 sm:p-3">
             <div class="stat-number text-cyan-400">{{ stats.total_responses|default:0 }}</div>

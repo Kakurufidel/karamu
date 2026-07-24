@@ -107,14 +107,14 @@ class RegisterView(FormView):
         user = form.save()
         login(self.request, user)
         messages.success(self.request, _('Bienvenue ! Votre compte a été créé avec succès.'))
-        return redirect_after_auth(self.request, user)
+        
+        return redirect('events:event_list')
 
     def form_invalid(self, form):
         for field, errors in form.errors.items():
             for error in errors:
                 messages.error(self.request, f"{field}: {error}")
         return super().form_invalid(form)
-
 
 class LogoutView(View):
     """Vue de déconnexion"""

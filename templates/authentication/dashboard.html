@@ -9,38 +9,38 @@
     <!-- En-tête -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-            <h1 class="text-2xl md:text-3xl font-bold">{% trans "Tableau de bord" %}</h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-white">{% trans "Tableau de bord" %}</h1>
             <p class="text-gray-400 text-sm mt-1">
                 {% trans "Bonjour" %} {{ user.first_name|default:user.username }}
                 {% if is_organizer %}
-                    <span class="badge badge-purple ml-2">{% trans "Organisateur" %}</span>
+                    <span class="inline-block px-3 py-1 text-xs font-semibold text-purple-300 bg-purple-500/20 rounded-full ml-2">{% trans "Organisateur" %}</span>
                 {% else %}
-                    <span class="badge badge-cyan ml-2">{% trans "Co-organisateur" %}</span>
+                    <span class="inline-block px-3 py-1 text-xs font-semibold text-cyan-300 bg-cyan-500/20 rounded-full ml-2">{% trans "Co-organisateur" %}</span>
                 {% endif %}
             </p>
         </div>
-        <a href="{% url 'events:event_create' %}">Créer</a>
-        <i class="fas fa-plus-circle"></i> {% trans "Créer un événement" %}
+        <a href="{% url 'events:event_create' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl transition">
+            <i class="fas fa-plus-circle"></i> {% trans "Créer un événement" %}
         </a>
     </div>
 
     <!-- Cartes statistiques -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
-        <div class="stat-card text-center">
-            <div class="stat-number text-purple-400">{{ total_events|default:0 }}</div>
-            <div class="stat-label">{% trans "Événements" %}</div>
+        <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-5 text-center border border-white/10">
+            <div class="text-3xl md:text-4xl font-bold text-purple-400">{{ total_events|default:0 }}</div>
+            <div class="text-sm text-gray-400 mt-1">{% trans "Événements" %}</div>
         </div>
-        <div class="stat-card text-center">
-            <div class="stat-number text-cyan-400">{{ total_guests|default:0 }}</div>
-            <div class="stat-label">{% trans "Invités" %}</div>
+        <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-5 text-center border border-white/10">
+            <div class="text-3xl md:text-4xl font-bold text-cyan-400">{{ total_guests|default:0 }}</div>
+            <div class="text-sm text-gray-400 mt-1">{% trans "Invités" %}</div>
         </div>
-        <div class="stat-card text-center">
-            <div class="stat-number text-green-400">{{ total_responses|default:0 }}</div>
-            <div class="stat-label">{% trans "Réponses" %}</div>
+        <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-5 text-center border border-white/10">
+            <div class="text-3xl md:text-4xl font-bold text-green-400">{{ total_responses|default:0 }}</div>
+            <div class="text-sm text-gray-400 mt-1">{% trans "Réponses" %}</div>
         </div>
-        <div class="stat-card text-center">
-            <div class="stat-number text-yellow-400">{{ attendance_rate|default:0 }}%</div>
-            <div class="stat-label">{% trans "Taux de présence" %}</div>
+        <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-5 text-center border border-white/10">
+            <div class="text-3xl md:text-4xl font-bold text-yellow-400">{{ attendance_rate|default:0 }}%</div>
+            <div class="text-sm text-gray-400 mt-1">{% trans "Taux de présence" %}</div>
         </div>
     </div>
 
@@ -49,23 +49,23 @@
         <div class="lg:col-span-2 space-y-6">
 
             <!-- Actions rapides -->
-            <div class="glass-card p-5">
-                <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                     <i class="fas fa-bolt text-yellow-400"></i>
                     {% trans "Actions rapides" %}
                 </h2>
                 <div class="grid sm:grid-cols-2 gap-3">
-                    <a href="{% url 'events:event_create' %} class="flex items-center gap-3 p-3 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 transition">
+                    <a href="{% url 'events:event_create' %}" class="flex items-center gap-3 p-3 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 transition text-white">
                         <i class="fas fa-plus-circle text-purple-400"></i>
                         <span>{% trans "Créer un événement" %}</span>
                     </a>
                     {% if is_organizer %}
-                        <button onclick="showInviteModal()" class="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition text-left">
+                        <button onclick="showInviteModal()" class="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition text-white text-left">
                             <i class="fas fa-user-plus text-cyan-400"></i>
                             <span>{% trans "Inviter un co-organisateur" %}</span>
                         </button>
                     {% endif %}
-                    <a href="#" class="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition">
+                    <a href="#" class="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition text-white">
                         <i class="fas fa-file-export text-purple-400"></i>
                         <span>{% trans "Exporter les données" %}</span>
                     </a>
@@ -73,9 +73,9 @@
             </div>
 
             <!-- Mes événements -->
-            <div class="glass-card p-5">
+            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold flex items-center gap-2">
+                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
                         <i class="fas fa-calendar-alt text-purple-400"></i>
                         {% trans "Mes événements" %}
                     </h2>
@@ -89,12 +89,12 @@
                         {% for event in events|slice:":5" %}
                             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 rounded-xl bg-white/5 hover:bg-white/10 transition gap-2">
                                 <div class="min-w-0">
-                                    <p class="font-semibold text-sm truncate">{{ event.name }}</p>
+                                    <p class="font-semibold text-sm text-white truncate">{{ event.name }}</p>
                                     <div class="flex flex-wrap items-center gap-2 text-xs text-gray-400">
                                         <span>{{ event.date|date:"d/m/Y" }}</span>
                                         <span class="w-1 h-1 rounded-full bg-gray-600"></span>
                                         <span>{{ event.total_responses|default:0 }} {% trans "réponses" %}</span>
-                                        <span class="badge {% if event.is_published %}badge-green{% else %}badge-yellow{% endif %}">
+                                        <span class="inline-block px-2 py-0.5 text-xs rounded-full {% if event.is_published %}bg-green-500/20 text-green-400{% else %}bg-yellow-500/20 text-yellow-400{% endif %}">
                                             {% if event.is_published %}{% trans "Publié" %}{% else %}{% trans "Brouillon" %}{% endif %}
                                         </span>
                                     </div>
@@ -109,7 +109,7 @@
                     <div class="text-center py-8 text-gray-400">
                         <i class="fas fa-calendar-plus text-3xl mb-3 block"></i>
                         <p>{% trans "Aucun événement pour le moment." %}</p>
-                        <a href="{% url 'events:create_event' %}" class="text-purple-400 hover:text-purple-300 transition mt-2 inline-block">
+                        <a href="{% url 'events:event_create' %}" class="text-purple-400 hover:text-purple-300 transition mt-2 inline-block">
                             {% trans "Créer votre premier événement" %}
                         </a>
                     </div>
@@ -121,8 +121,8 @@
         <div class="space-y-6">
 
             <!-- Co-organisateurs -->
-            <div class="glass-card p-5">
-                <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                     <i class="fas fa-user-friends text-cyan-400"></i>
                     {% trans "Co-organisateurs" %}
                 </h2>
@@ -133,7 +133,7 @@
                             {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}
                         </div>
                         <div class="min-w-0">
-                            <p class="text-sm font-semibold">{{ user.first_name }} {{ user.last_name }}</p>
+                            <p class="text-sm font-semibold text-white">{{ user.first_name }} {{ user.last_name }}</p>
                             <p class="text-xs text-gray-400">{% trans "Organisateur principal" %}</p>
                         </div>
                     </div>
@@ -145,7 +145,7 @@
                                     {{ collab.user.first_name|slice:":1"|upper }}{{ collab.user.last_name|slice:":1"|upper }}
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-semibold truncate">{{ collab.user.first_name }} {{ collab.user.last_name }}</p>
+                                    <p class="text-sm font-semibold text-white truncate">{{ collab.user.first_name }} {{ collab.user.last_name }}</p>
                                     <p class="text-xs text-gray-400 truncate">{{ collab.user.email }}</p>
                                 </div>
                             </div>
@@ -166,8 +166,8 @@
             </div>
 
             <!-- Inviter des invités -->
-            <div class="glass-card p-5">
-                <h2 class="text-lg font-semibold mb-3 flex items-center gap-2">
+            <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
+                <h2 class="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                     <i class="fas fa-envelope text-purple-400"></i>
                     {% trans "Inviter des invités" %}
                 </h2>
@@ -177,23 +177,23 @@
 
                 {% if events %}
                     <div class="space-y-3">
-                        <select id="event-select" class="form-select">
-                            <option value="">{% trans "Sélectionnez un événement" %}</option>
+                        <select id="event-select" class="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="" class="text-gray-900">{% trans "Sélectionnez un événement" %}</option>
                             {% for event in events %}
-                                <option value="{{ event.get_rsvp_url }}" data-url="{{ event.get_rsvp_url }}">
+                                <option value="{{ event.get_rsvp_url }}" data-url="{{ event.get_rsvp_url }}" class="text-gray-900">
                                     {{ event.name }}
                                 </option>
                             {% endfor %}
                         </select>
 
                         <div class="flex gap-2">
-                            <input type="text" id="invite-link" readonly class="form-input text-sm flex-1" placeholder="{% trans 'Sélectionnez un événement' %}">
-                            <button onclick="copyInviteLink()" class="btn-secondary btn-sm flex-shrink-0">
+                            <input type="text" id="invite-link" readonly class="flex-1 px-4 py-2.5 bg-white/5 border border-white/20 rounded-xl text-white text-sm focus:outline-none" placeholder="{% trans 'Sélectionnez un événement' %}">
+                            <button onclick="copyInviteLink()" class="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition">
                                 <i class="fas fa-copy"></i>
                             </button>
                         </div>
 
-                        <button onclick="shareWhatsApp()" class="btn-success w-full justify-center">
+                        <button onclick="shareWhatsApp()" class="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition flex items-center justify-center gap-2">
                             <i class="fab fa-whatsapp"></i> {% trans "Partager sur WhatsApp" %}
                         </button>
                     </div>
@@ -208,46 +208,46 @@
     </div>
 </div>
 
-<!-- Modal invitation co-organisateur -->
+<!-- Modal invitation co-organisateur (simplifié) -->
 {% if is_organizer %}
-<div id="invite-modal" class="modal-overlay">
-    <div class="modal-content">
-        <button onclick="closeInviteModal()" class="modal-close">
-            <i class="fas fa-times"></i>
-        </button>
-
-        <div class="text-center mb-6">
-            <div class="w-16 h-16 mx-auto rounded-full bg-purple-500/20 flex items-center justify-center mb-3">
-                <i class="fas fa-user-plus text-2xl text-purple-400"></i>
-            </div>
-            <h2 class="text-xl font-bold">{% trans "Inviter un co-organisateur" %}</h2>
-            <p class="text-sm text-gray-400 mt-1">
-                {% trans "Sélectionnez l'événement et copiez le lien." %}
-            </p>
+<div id="invite-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+    <div class="bg-gray-900 rounded-2xl max-w-md w-full mx-4 p-6 border border-white/10 shadow-2xl">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fas fa-user-plus text-purple-400"></i>
+                {% trans "Inviter un co-organisateur" %}
+            </h2>
+            <button onclick="closeInviteModal()" class="text-gray-400 hover:text-white transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
         </div>
 
+        <p class="text-sm text-gray-400 mb-4">
+            {% trans "Sélectionnez un événement et partagez le lien." %}
+        </p>
+
         <div class="space-y-4">
-            <select id="coorganizer-event-select" class="form-select">
-                <option value="">{% trans "Sélectionnez un événement" %}</option>
+            <select id="coorganizer-event-select" class="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <option value="" class="text-gray-900">{% trans "Sélectionnez un événement" %}</option>
                 {% for event in events %}
-                    <option value="{{ event.get_coorganizer_url }}" data-url="{{ event.get_coorganizer_url }}">
+                    <option value="{{ event.get_coorganizer_url }}" data-url="{{ event.get_coorganizer_url }}" class="text-gray-900">
                         {{ event.name }}
                     </option>
                 {% endfor %}
             </select>
 
             <div class="flex gap-2">
-                <input type="text" id="coorganizer-link" readonly class="form-input text-sm flex-1" placeholder="{% trans 'Sélectionnez un événement' %}">
-                <button onclick="copyCoorgLink()" class="btn-secondary btn-sm flex-shrink-0">
+                <input type="text" id="coorganizer-link" readonly class="flex-1 px-4 py-2.5 bg-white/5 border border-white/20 rounded-xl text-white text-sm focus:outline-none" placeholder="{% trans 'Sélectionnez un événement' %}">
+                <button onclick="copyCoorgLink()" class="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition">
                     <i class="fas fa-copy"></i>
                 </button>
             </div>
 
-            <button onclick="shareCoorgWhatsApp()" class="btn-success w-full justify-center">
+            <button onclick="shareCoorgWhatsApp()" class="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition flex items-center justify-center gap-2">
                 <i class="fab fa-whatsapp"></i> {% trans "Partager sur WhatsApp" %}
             </button>
 
-            <button onclick="closeInviteModal()" class="btn-secondary w-full justify-center">
+            <button onclick="closeInviteModal()" class="w-full py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl transition">
                 {% trans "Fermer" %}
             </button>
         </div>
@@ -264,11 +264,7 @@
         eventSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             const url = selectedOption.getAttribute('data-url');
-            if (url) {
-                inviteLink.value = window.location.origin + url;
-            } else {
-                inviteLink.value = '';
-            }
+            inviteLink.value = url ? window.location.origin + url : '';
         });
     }
 
@@ -298,12 +294,12 @@
     const coorgLink = document.getElementById('coorganizer-link');
 
     function showInviteModal() {
-        document.getElementById('invite-modal').classList.add('active');
+        document.getElementById('invite-modal').classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
 
     function closeInviteModal() {
-        document.getElementById('invite-modal').classList.remove('active');
+        document.getElementById('invite-modal').classList.add('hidden');
         document.body.style.overflow = '';
     }
 
@@ -311,11 +307,7 @@
         coorgEventSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             const url = selectedOption.getAttribute('data-url');
-            if (url) {
-                coorgLink.value = window.location.origin + url;
-            } else {
-                coorgLink.value = '';
-            }
+            coorgLink.value = url ? window.location.origin + url : '';
         });
     }
 
