@@ -32,11 +32,9 @@
     <!-- ✅ Script de thème exécuté immédiatement pour éviter le flash -->
     <script>
         (function() {
-            // Récupérer le thème sauvegardé
             var savedTheme = localStorage.getItem('theme') || 'dark';
             var html = document.documentElement;
             
-            // Appliquer le thème avant le rendu
             if (savedTheme === 'light') {
                 html.classList.remove('dark');
                 html.classList.add('light');
@@ -45,7 +43,6 @@
                 html.classList.add('dark');
             }
             
-            // Définir la classe pour le body
             document.body.style.display = 'none';
         })();
     </script>
@@ -56,7 +53,6 @@
         /* THEME - DARK / LIGHT */
         /* ============================================================ */
         :root {
-            /* Dark mode (défaut) */
             --bg-primary: #0a0a0f;
             --bg-secondary: #1a1a2e;
             --bg-card: rgba(255,255,255,0.04);
@@ -76,7 +72,6 @@
             --footer-text: #64748b;
         }
 
-        /* ✅ Light mode - textes plus lisibles */
         html.light {
             --bg-primary: #f1f5f9;
             --bg-secondary: #ffffff;
@@ -112,12 +107,10 @@
             transition: background 0.2s ease, color 0.2s ease;
         }
         
-        /* ✅ Afficher le body après le chargement du thème */
         body.loaded {
             display: block !important;
         }
         
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg-secondary); }
         ::-webkit-scrollbar-thumb {
@@ -142,7 +135,7 @@
         }
         
         /* ============================================================ */
-        /* TEXTES - ✅ Renforcés en mode clair */
+        /* TEXTES */
         /* ============================================================ */
         .text-gray-400 { color: var(--text-muted) !important; }
         .text-gray-300 { color: var(--text-secondary) !important; }
@@ -150,7 +143,6 @@
         .text-gray-100 { color: var(--text-light) !important; }
         .text-white { color: var(--text-primary) !important; }
         
-        /* ✅ Mode clair : textes plus foncés */
         html.light .text-gray-400 { color: #475569 !important; }
         html.light .text-gray-300 { color: #334155 !important; }
         html.light .text-gray-200 { color: #1e293b !important; }
@@ -307,6 +299,14 @@
             box-shadow: 0 0 0 3px rgba(239,68,68,0.15) !important;
         }
         
+        .form-input[type="password"] {
+            letter-spacing: 2px;
+            font-family: 'Inter', sans-serif;
+        }
+        .form-input[type="password"]::placeholder {
+            letter-spacing: 0;
+        }
+        
         textarea.form-input { resize: vertical; min-height: 80px; }
         select.form-input {
             appearance: none;
@@ -357,6 +357,36 @@
         }
         .form-errors-global i { margin-top: 2px; font-size: 16px; flex-shrink: 0; }
         .form-errors-global ul { margin: 0; padding-left: 16px; }
+        
+        /* Password wrapper */
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .password-wrapper .form-input {
+            padding-right: 48px;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            padding: 4px;
+            transition: color 0.2s ease;
+            z-index: 5;
+            line-height: 1;
+        }
+        .toggle-password:hover { 
+            color: var(--text-primary); 
+        }
+        .toggle-password:focus { 
+            outline: none; 
+        }
         
         /* ============================================================ */
         /* BADGES */
@@ -411,21 +441,23 @@
         }
         
         /* ============================================================ */
-        /* TOAST */
+        /* TOAST - Version unifiée et moderne */
         /* ============================================================ */
         .toast-container {
             position: fixed;
-            bottom: 24px;
-            right: 24px;
+            top: 80px;
+            right: 20px;
             z-index: 9999;
             display: flex;
             flex-direction: column;
             gap: 12px;
             max-width: 380px;
             width: 100%;
+            pointer-events: none;
         }
         .toast {
-            padding: 16px 20px;
+            pointer-events: auto;
+            padding: 14px 20px;
             border-radius: 12px;
             background: var(--bg-secondary);
             backdrop-filter: blur(16px);
@@ -435,15 +467,54 @@
             display: flex;
             align-items: flex-start;
             gap: 12px;
+            position: relative;
+            overflow: hidden;
         }
-        .toast.hiding { animation: slideOutRight 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
-        .toast-error .toast-icon { background: rgba(239,68,68,0.15); color: #f87171; }
-        .toast-success .toast-icon { background: rgba(34,197,94,0.15); color: #4ade80; }
-        .toast-warning .toast-icon { background: rgba(234,179,8,0.15); color: #fbbf24; }
-        .toast-info .toast-icon { background: rgba(6,182,212,0.15); color: #67e8f9; }
-        .toast-content { flex: 1; }
-        .toast-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
-        .toast-message { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+        .toast.hiding { 
+            animation: slideOutRight 0.3s cubic-bezier(0.4,0,0.2,1) forwards; 
+        }
+        .toast-icon {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .toast-error .toast-icon { 
+            background: rgba(239,68,68,0.15); 
+            color: #f87171; 
+        }
+        .toast-success .toast-icon { 
+            background: rgba(34,197,94,0.15); 
+            color: #4ade80; 
+        }
+        .toast-warning .toast-icon { 
+            background: rgba(234,179,8,0.15); 
+            color: #fbbf24; 
+        }
+        .toast-info .toast-icon { 
+            background: rgba(6,182,212,0.15); 
+            color: #67e8f9; 
+        }
+        .toast-content { 
+            flex: 1; 
+            min-width: 0;
+        }
+        .toast-title { 
+            font-size: 13px; 
+            font-weight: 600; 
+            color: var(--text-primary); 
+            margin-bottom: 2px; 
+        }
+        .toast-message { 
+            font-size: 13px; 
+            color: var(--text-secondary); 
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
         .toast-close {
             flex-shrink: 0;
             background: none;
@@ -453,23 +524,36 @@
             padding: 4px;
             font-size: 14px;
             transition: color 0.2s;
+            margin-top: -4px;
+            margin-right: -4px;
         }
-        .toast-close:hover { color: var(--text-primary); }
+        .toast-close:hover { 
+            color: var(--text-primary); 
+        }
         .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
             height: 3px;
-            border-radius: 0 0 12px 12px;
-            margin: 12px -20px -16px -20px;
             background: rgba(255,255,255,0.05);
             overflow: hidden;
         }
         .toast-progress-bar {
             height: 100%;
-            border-radius: 0 0 0 3px;
+            border-radius: 0 3px 3px 0;
             background: linear-gradient(135deg, #7c3aed, #06b6d4);
             animation: progressBar linear forwards;
         }
-        .toast-error .toast-progress-bar { background: linear-gradient(135deg, #ef4444, #f87171); }
-        .toast-success .toast-progress-bar { background: linear-gradient(135deg, #22c55e, #4ade80); }
+        .toast-error .toast-progress-bar { 
+            background: linear-gradient(135deg, #ef4444, #f87171); 
+        }
+        .toast-success .toast-progress-bar { 
+            background: linear-gradient(135deg, #22c55e, #4ade80); 
+        }
+        .toast-warning .toast-progress-bar { 
+            background: linear-gradient(135deg, #eab308, #fbbf24); 
+        }
         
         @keyframes slideInRight {
             from { opacity: 0; transform: translateX(100px) scale(0.9); }
@@ -660,13 +744,6 @@
         .footer-links a:hover { color: var(--text-primary); }
         
         /* ============================================================ */
-        /* NAVBAR - corrigé z-index */
-        /* ============================================================ */
-        nav.fixed {
-            z-index: 30;
-        }
-        
-        /* ============================================================ */
         /* RESPONSIVE */
         /* ============================================================ */
         @media (max-width: 640px) {
@@ -675,7 +752,12 @@
                 width: 100%;
                 justify-content: center;
             }
-            .toast-container { bottom: 16px; right: 16px; left: 16px; max-width: none; }
+            .toast-container { 
+                top: 72px; 
+                right: 12px; 
+                left: 12px; 
+                max-width: none; 
+            }
             #sidebar { width: 280px; left: -280px; padding: 1rem; }
             .stat-number { font-size: 20px; }
         }
@@ -699,7 +781,6 @@
         .hidden { display: none !important; }
         .block { display: block !important; }
         
-        /* Animations */
         .animate-fade-in-up {
             animation: fadeInUp 0.4s ease forwards;
         }
@@ -721,8 +802,6 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <!-- Le body s'affichera après le chargement du thème -->
-    
     <!-- ============================================ -->
     <!-- TOAST CONTAINER -->
     <!-- ============================================ -->
@@ -1055,7 +1134,7 @@
         });
         
         // ============================================
-        // 3. TOAST SYSTEM
+        // 3. TOAST SYSTEM - Version unifiée
         // ============================================
         function showToast(message, type = 'info', duration = 5000) {
             const container = document.getElementById('toast-container');
@@ -1072,6 +1151,13 @@
                 info: 'Information'
             };
             
+            // Supprimer les toasts précédents du même type pour éviter l'accumulation
+            const existingToasts = container.querySelectorAll('.toast');
+            if (existingToasts.length > 3) {
+                existingToasts[0].classList.add('hiding');
+                setTimeout(() => existingToasts[0].remove(), 300);
+            }
+            
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
             toast.innerHTML = `
@@ -1085,9 +1171,14 @@
             `;
             container.appendChild(toast);
             
+            // Fermeture automatique
             setTimeout(() => {
-                toast.classList.add('hiding');
-                setTimeout(() => toast.remove(), 300);
+                if (toast.parentNode) {
+                    toast.classList.add('hiding');
+                    setTimeout(() => {
+                        if (toast.parentNode) toast.remove();
+                    }, 300);
+                }
             }, duration);
         }
         
@@ -1114,11 +1205,19 @@
             
             overlay.classList.add('active');
             document.body.style.overflow = 'hidden';
+            
+            // Fermeture automatique après 5s
+            clearTimeout(overlay._timeout);
+            overlay._timeout = setTimeout(() => {
+                closePopup();
+            }, 5000);
         }
         
         function closePopup() {
-            document.getElementById('popup-overlay').classList.remove('active');
+            const overlay = document.getElementById('popup-overlay');
+            overlay.classList.remove('active');
             document.body.style.overflow = '';
+            clearTimeout(overlay._timeout);
         }
         
         document.getElementById('popup-overlay').addEventListener('click', function(e) {
@@ -1133,22 +1232,24 @@
             djangoMessages.forEach(function(msg) {
                 const type = msg.dataset.type || 'info';
                 const text = msg.textContent.trim();
-                
-                if (type === 'success') {
-                    showPopup(text, 'Succès', 'success');
-                } else if (type === 'error') {
-                    showPopup(text, 'Erreur', 'error');
-                } else if (type === 'warning') {
-                    showToast(text, 'warning', 6000);
-                } else {
-                    showToast(text, 'info', 5000);
+                if (text) {
+                    // Pour les messages de succès, utiliser le popup
+                    if (type === 'success') {
+                        showPopup(text, 'Succès', 'success');
+                    } else if (type === 'error') {
+                        showPopup(text, 'Erreur', 'error');
+                    } else if (type === 'warning') {
+                        showToast(text, 'warning', 6000);
+                    } else {
+                        showToast(text, 'info', 5000);
+                    }
+                    msg.style.display = 'none';
                 }
-                msg.style.display = 'none';
             });
         });
         
         // ============================================
-        // 6. THEME TOGGLE (CORRIGÉ - sans flash)
+        // 6. THEME TOGGLE
         // ============================================
         function toggleTheme() {
             const html = document.documentElement;
@@ -1189,10 +1290,11 @@
                 field.type = 'password';
                 icon.className = 'fas fa-eye';
             }
+            field.focus();
         }
         
         // ============================================
-        // 8. RESPONSIVE MENU
+        // 8. RESPONSIVE
         // ============================================
         window.addEventListener('resize', function() {
             if (window.innerWidth >= 768) {

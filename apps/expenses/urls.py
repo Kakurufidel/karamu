@@ -10,7 +10,10 @@ urlpatterns = [
     path('event/<int:event_id>/forecast/', 
          views.ForecastView.as_view(), 
          name='forecast'),
-    
+#     ajouter une boison
+    path('event/<int:event_id>/add-drink/', 
+         views.AddDrinkToEventView.as_view(), 
+         name='add_drink_to_event'),
     path('event/<int:event_id>/forecast/save/', 
          views.SaveForecastView.as_view(), 
          name='save_forecast'),

@@ -12,8 +12,8 @@
             <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-purple-500/20 to-cyan-500/20 mb-4">
                 <i class="fas fa-user-plus text-3xl text-cyan-400"></i>
             </div>
-            <h1 class="text-2xl font-bold">{% trans "Créer un compte" %}</h1>
-            <p class="text-gray-400 text-sm mt-1">{% trans "Rejoignez KaramuManage et gérez vos événements en toute simplicité" %}</p>
+            <h1 class="text-2xl font-bold text-primary">{% trans "Créer un compte" %}</h1>
+            <p class="text-secondary text-sm mt-1">{% trans "Rejoignez KaramuManage et gérez vos événements en toute simplicité" %}</p>
         </div>
 
         <!-- Carte d'inscription -->
@@ -112,7 +112,7 @@
                             {{ form.password1.errors.0 }}
                         </div>
                     {% endif %}
-                    <p class="text-xs text-gray-500 mt-1">
+                    <p class="text-xs text-muted mt-1">
                         <i class="fas fa-info-circle mr-1"></i>
                         {% trans "Minimum 8 caractères" %}
                     </p>
@@ -139,14 +139,14 @@
                 </div>
 
                 <!-- Code co-organisateur -->
-                <div class="mb-6 pt-2 border-t border-white/10">
+                <div class="mb-6 pt-2 border-t border-card">
                     <div class="flex items-center justify-between cursor-pointer" onclick="toggleCoorgCode()">
                         <label class="form-label cursor-pointer">
                             <i class="fas fa-users-cog text-purple-400 mr-1"></i>
                             {% trans "Code co-organisateur" %}
                             <span class="optional">({% trans "optionnel" %})</span>
                         </label>
-                        <span id="coorg-toggle-icon" class="text-gray-400 transition-transform duration-300">
+                        <span id="coorg-toggle-icon" class="text-muted transition-transform duration-300">
                             <i class="fas fa-chevron-down"></i>
                         </span>
                     </div>
@@ -162,7 +162,7 @@
                                 {{ form.coorganizer_code.errors.0 }}
                             </div>
                         {% endif %}
-                        <p class="text-xs text-gray-500 mt-1">
+                        <p class="text-xs text-muted mt-1">
                             <i class="fas fa-info-circle mr-1"></i>
                             {% trans "Si vous avez reçu un code, saisissez-le ici pour rejoindre un événement en tant que co-organisateur." %}
                         </p>
@@ -181,7 +181,7 @@
                 <!-- Conditions -->
                 <div class="flex items-start gap-2 mb-6">
                     <input type="checkbox" name="terms" id="terms" required class="form-checkbox mt-0.5">
-                    <label for="terms" class="text-sm text-gray-400">
+                    <label for="terms" class="text-sm text-secondary">
                         {% trans "J'accepte les" %}
                         <a href="#" class="text-purple-400 hover:text-purple-300 transition">
                             {% trans "conditions d'utilisation" %}
@@ -200,7 +200,7 @@
                 </button>
 
                 <!-- Lien connexion -->
-                <div class="text-center mt-5 text-sm text-gray-400">
+                <div class="text-center mt-5 text-sm text-secondary">
                     {% trans "Vous avez déjà un compte ?" %}
                     <a href="{% url 'authentication:login' %}" class="text-purple-400 hover:text-purple-300 transition font-semibold">
                         {% trans "Se connecter" %}
@@ -210,31 +210,101 @@
             </form>
         </div>
 
-        <div class="text-center mt-6 text-xs text-gray-500">
+        <div class="text-center mt-6 text-xs text-muted">
             <p>&copy; {% now "Y" %} KaramuManage. {% trans "Tous droits réservés." %}</p>
         </div>
 
     </div>
 </div>
 
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
+
 <style>
+    /* ============================================================ */
+    /* VARIABLES CSS - Support clair/sombre */
+    /* ============================================================ */
+    :root {
+        --text-primary: #e5e7eb;
+        --text-secondary: #9ca3af;
+        --text-muted: rgba(255,255,255,0.4);
+        --bg-input: rgba(255,255,255,0.05);
+        --bg-input-focus: rgba(255,255,255,0.08);
+        --border-input: rgba(255,255,255,0.1);
+        --border-card: rgba(255,255,255,0.06);
+        --color-purple: #8B5CF6;
+        --color-cyan: #06B6D4;
+        --color-green: #10B981;
+        --color-red: #EF4444;
+        --color-red-light: #F87171;
+    }
+
+    html.light {
+        --text-primary: #0f172a;
+        --text-secondary: #1e293b;
+        --text-muted: #64748b;
+        --bg-input: rgba(0,0,0,0.04);
+        --bg-input-focus: rgba(139,92,246,0.04);
+        --border-input: rgba(0,0,0,0.12);
+        --border-card: rgba(0,0,0,0.06);
+    }
+
+    /* ============================================================ */
+    /* STYLES GLOBAUX */
+    /* ============================================================ */
+    .text-primary { color: var(--text-primary); }
+    .text-secondary { color: var(--text-secondary); }
+    .text-muted { color: var(--text-muted); }
+    .border-card { border-color: var(--border-card); }
+
+    /* ============================================================ */
+    /* GLASS CARD */
+    /* ============================================================ */
+    .glass-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid var(--border-card);
+        border-radius: 16px;
+        padding: 20px 24px;
+        transition: all 0.2s ease;
+        backdrop-filter: blur(8px);
+    }
+    html.light .glass-card {
+        background: rgba(255,255,255,0.8);
+        border-color: rgba(0,0,0,0.08);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    /* ============================================================ */
+    /* FORM LABEL */
+    /* ============================================================ */
     .form-label {
         display: block;
         font-size: 13px;
         font-weight: 500;
-        color: rgba(255,255,255,0.7);
+        color: var(--text-secondary);
         margin-bottom: 4px;
     }
-    .form-label .required { color: #EF4444; margin-left: 2px; }
-    .form-label .optional { color: rgba(255,255,255,0.3); font-weight: 400; font-size: 11px; margin-left: 4px; }
+    .form-label .required { 
+        color: var(--color-red); 
+        margin-left: 2px; 
+    }
+    .form-label .optional { 
+        color: var(--text-muted); 
+        font-weight: 400; 
+        font-size: 11px; 
+        margin-left: 4px; 
+    }
 
+    /* ============================================================ */
+    /* FORM INPUT */
+    /* ============================================================ */
     .form-input {
         width: 100%;
         padding: 10px 14px;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.1);
+        background: var(--bg-input);
+        border: 1px solid var(--border-input);
         border-radius: 8px;
-        color: #e5e7eb;
+        color: var(--text-primary);
         font-size: 14px;
         transition: all 0.2s ease;
         outline: none;
@@ -242,13 +312,28 @@
         box-sizing: border-box;
     }
     .form-input:focus {
-        border-color: #8B5CF6;
+        border-color: var(--color-purple);
         box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
-        background: rgba(255,255,255,0.08);
+        background: var(--bg-input-focus);
     }
-    .form-input::placeholder { color: rgba(255,255,255,0.3); }
-    .form-input.error { border-color: #EF4444 !important; }
+    .form-input::placeholder { 
+        color: var(--text-muted); 
+    }
+    .form-input.error { 
+        border-color: var(--color-red) !important; 
+    }
+    /* Style pour le champ de mot de passe */
+    .form-input[type="password"] {
+        letter-spacing: 2px;
+        font-family: 'Inter', sans-serif;
+    }
+    .form-input[type="password"]::placeholder {
+        letter-spacing: 0;
+    }
 
+    /* ============================================================ */
+    /* PASSWORD WRAPPER */
+    /* ============================================================ */
     .password-wrapper {
         position: relative;
         width: 100%;
@@ -263,7 +348,7 @@
         transform: translateY(-50%);
         background: none;
         border: none;
-        color: rgba(255,255,255,0.4);
+        color: var(--text-muted);
         cursor: pointer;
         font-size: 16px;
         padding: 4px;
@@ -271,27 +356,46 @@
         z-index: 5;
         line-height: 1;
     }
-    .toggle-password:hover { color: rgba(255,255,255,0.8); }
-    .toggle-password:focus { outline: none; }
+    .toggle-password:hover { 
+        color: var(--text-primary); 
+    }
+    .toggle-password:focus { 
+        outline: none; 
+    }
 
+    /* ============================================================ */
+    /* FORM CHECKBOX */
+    /* ============================================================ */
     .form-checkbox {
         width: 18px;
         height: 18px;
-        accent-color: #8B5CF6;
+        accent-color: var(--color-purple);
         cursor: pointer;
         flex-shrink: 0;
         border-radius: 4px;
+        background: var(--bg-input);
+        border: 1px solid var(--border-input);
+        transition: all 0.2s ease;
+    }
+    .form-checkbox:checked {
+        background: var(--color-purple);
+        border-color: var(--color-purple);
     }
 
+    /* ============================================================ */
+    /* FORM ERRORS */
+    /* ============================================================ */
     .form-error {
         display: flex;
         align-items: center;
         gap: 6px;
-        color: #F87171;
+        color: var(--color-red-light);
         font-size: 12px;
         margin-top: 4px;
     }
-    .form-error i { font-size: 14px; }
+    .form-error i { 
+        font-size: 14px; 
+    }
 
     .form-errors-global {
         display: flex;
@@ -301,12 +405,110 @@
         background: rgba(239,68,68,0.1);
         border: 1px solid rgba(239,68,68,0.2);
         border-radius: 8px;
-        color: #F87171;
+        color: var(--color-red-light);
         font-size: 13px;
         margin-bottom: 16px;
     }
 
-    #coorg-code-field { animation: slideDown 0.3s ease forwards; }
+    /* ============================================================ */
+    /* BUTTONS */
+    /* ============================================================ */
+    .btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px 20px;
+        background: linear-gradient(135deg, var(--color-purple), var(--color-cyan));
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        min-height: 44px;
+    }
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(139,92,246,0.25);
+        color: white;
+    }
+    .btn-primary.w-full {
+        width: 100%;
+    }
+
+    /* ============================================================ */
+    /* TOAST NOTIFICATION */
+    /* ============================================================ */
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 14px 24px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        transform: translateX(calc(100% + 40px));
+        opacity: 0;
+        z-index: 99999;
+        font-size: 14px;
+        font-weight: 500;
+        max-width: 420px;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .toast.show {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    .toast.success { 
+        background: var(--color-green); 
+    }
+    .toast.success i { 
+        color: white; 
+    }
+    .toast.error { 
+        background: var(--color-red); 
+    }
+    .toast.error i { 
+        color: white; 
+    }
+    .toast.info { 
+        background: var(--color-cyan); 
+    }
+    .toast.info i { 
+        color: white; 
+    }
+    .toast .toast-icon {
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    .toast .toast-content {
+        flex: 1;
+    }
+    .toast .toast-close {
+        background: none;
+        border: none;
+        color: rgba(255,255,255,0.6);
+        cursor: pointer;
+        font-size: 16px;
+        padding: 0 0 0 8px;
+        transition: color 0.2s ease;
+    }
+    .toast .toast-close:hover {
+        color: white;
+    }
+
+    /* ============================================================ */
+    /* CO-ORGANISATEUR CODE */
+    /* ============================================================ */
+    #coorg-code-field { 
+        animation: slideDown 0.3s ease forwards; 
+    }
     @keyframes slideDown {
         from { opacity: 0; transform: translateY(-8px); }
         to { opacity: 1; transform: translateY(0); }
@@ -314,19 +516,26 @@
 </style>
 
 <script>
+    // ============================================================
+    // TOGGLE PASSWORD VISIBILITY
+    // ============================================================
     function togglePassword(fieldId, button) {
         const field = document.getElementById(fieldId);
         if (!field) return;
         const icon = button.querySelector('i');
         if (field.type === 'password') {
             field.type = 'text';
-            icon.className = 'fas fa-eye-slash'
+            icon.className = 'fas fa-eye-slash';
         } else {
             field.type = 'password';
             icon.className = 'fas fa-eye';
         }
+        field.focus();
     }
 
+    // ============================================================
+    // TOGGLE CO-ORGANIZER CODE
+    // ============================================================
     function toggleCoorgCode() {
         const field = document.getElementById('coorg-code-field');
         const icon = document.getElementById('coorg-toggle-icon');
@@ -339,7 +548,68 @@
         }
     }
 
+    // ============================================================
+    // TOAST NOTIFICATION SYSTEM
+    // ============================================================
+    function showToast(message, type = 'success') {
+        // Créer le toast s'il n'existe pas
+        let toast = document.getElementById('toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'toast';
+            toast.className = 'toast';
+            document.body.appendChild(toast);
+        }
+        
+        // Icônes selon le type
+        const icons = {
+            success: 'fas fa-check-circle',
+            error: 'fas fa-exclamation-circle',
+            info: 'fas fa-info-circle'
+        };
+        
+        const iconClass = icons[type] || icons.success;
+        
+        toast.innerHTML = `
+            <span class="toast-icon"><i class="${iconClass}"></i></span>
+            <span class="toast-content">${message}</span>
+            <button class="toast-close" onclick="this.closest('.toast').classList.remove('show')">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        toast.className = `toast ${type}`;
+        
+        // Forcer le reflow pour que l'animation fonctionne
+        void toast.offsetWidth;
+        
+        // Afficher
+        toast.classList.add('show');
+        
+        // Fermeture automatique après 4 secondes
+        clearTimeout(toast._timeout);
+        toast._timeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 4000);
+    }
+
+    // ============================================================
+    // GESTION DES MESSAGES FLASH DJANGO
+    // ============================================================
     document.addEventListener('DOMContentLoaded', function() {
+        // Récupérer les messages depuis la page
+        const messages = document.querySelectorAll('.django-messages .message');
+        messages.forEach(msg => {
+            const text = msg.textContent.trim();
+            const type = msg.dataset.tags || 'info';
+            if (text) {
+                setTimeout(() => {
+                    showToast(text, type);
+                }, 300);
+            }
+        });
+        
+        // Vérifier le code co-organisateur
         const codeInput = document.getElementById('id_coorganizer_code');
         if (codeInput && codeInput.value.trim() !== '') {
             const field = document.getElementById('coorg-code-field');
@@ -349,6 +619,34 @@
                 icon.innerHTML = '<i class="fas fa-chevron-up"></i>';
             }
         }
+        
+        // Gérer la soumission du formulaire pour afficher le toast de succès
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Vérifier si le formulaire est valide
+                const isValid = form.checkValidity();
+                if (!isValid) {
+                    // Afficher une erreur si des champs sont invalides
+                    const errors = form.querySelectorAll('.form-error');
+                    if (errors.length === 0) {
+                        // Si pas d'erreur affichée, montrer un message générique
+                        setTimeout(() => {
+                            showToast('{% trans "Veuillez corriger les erreurs dans le formulaire" %}', 'error');
+                        }, 100);
+                    }
+                }
+            });
+        }
     });
 </script>
+
+<!-- Afficher les messages Django dans le toast -->
+<div class="django-messages" style="display:none;">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message" data-tags="{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+</div>
 {% endblock %}

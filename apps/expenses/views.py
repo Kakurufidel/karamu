@@ -14,7 +14,7 @@ from apps.guests.models import GuestResponse
 from .models import DrinkPackaging, EventForecast
 from .forms import EstimationSettingsForm
 from .services import EstimationService
-
+from event_management import settings
 
 def user_can_manage_expenses(user, event):
     return (event.main_organizer == user or
@@ -461,3 +461,36 @@ class ExportDevisSummaryView(LoginRequiredMixin, UserPassesTestMixin, View):
 
         response.write('\n'.join(lines))
         return response
+    
+    # vue pour ajouter une boison
+class AddDrinkToEventView(LoginRequiredMixin, UserPassesTestMixin, View):
+    """Ajoute une boisson à l'événement"""
+    
+    def test_func(self):
+        self.event = get_object_or_404(Event, id=self.kwargs['event_id'])
+        return user_can_manage_expenses(self.request.user, self.event)
+    
+    def post(self, request, event_id):
+        try:
+            data = json.loads(request.body)
+            drink_name = data.get('drink_name', '').strip()
+            
+            if not drink_name:
+                return JsonResponse({'success': False, 'error': 'Nom de boisson requis'})
+            
+            # Récupérer la liste actuelle des boissons
+            drink_options = self.event.drink_options or []
+            
+            # Vérifier si la boisson existe déjà
+            if drink_name in drink_options:
+                return JsonResponse({'success': False, 'error': 'Cette boisson existe déjà'})
+            
+            # Ajouter la boisson
+            drink_options.append(drink_name)
+            self.event.drink_options = drink_options
+            self.event.save()
+            
+            return JsonResponse({'success': True, 'drink': drink_name})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
