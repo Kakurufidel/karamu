@@ -119,6 +119,7 @@
     .section-toggle .chevron {
         transition: transform 0.3s ease;
         color: var(--text-muted);
+        display: inline-block;
     }
     .section-toggle.active .chevron {
         transform: rotate(180deg);
@@ -313,23 +314,6 @@
         background: rgba(239, 68, 68, 0.15);
     }
 
-    .btn-add-drink {
-        color: var(--color-green);
-        transition: all 0.2s ease;
-        padding: 4px 8px;
-        border-radius: 4px;
-        border: 1px dashed var(--color-green);
-        background: transparent;
-        cursor: pointer;
-        font-size: 12px;
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-    }
-    .btn-add-drink:hover {
-        background: rgba(16, 185, 129, 0.1);
-    }
-
     /* ============================================================ */
     /* TABLEAU */
     /* ============================================================ */
@@ -495,31 +479,54 @@
     }
 
     /* ============================================================ */
-    /* TOAST */
+    /* TOAST - Positionné en haut à droite */
     /* ============================================================ */
-    #toast {
+    #toast-container {
         position: fixed;
-        bottom: 24px;
-        right: 24px;
-        padding: 12px 20px;
+        top: 80px;
+        right: 20px;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 380px;
+        width: 100%;
+        pointer-events: none;
+    }
+    #toast {
+        pointer-events: auto;
+        padding: 14px 20px;
         border-radius: var(--radius-card);
         box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        transition: all 0.3s ease;
-        transform: translateY(calc(100% + 24px));
+        transform: translateX(calc(100% + 40px));
         opacity: 0;
-        z-index: 99999;
+        transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         font-size: 14px;
         font-weight: 500;
-        max-width: 400px;
         color: white;
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
     #toast.show {
-        transform: translateY(0);
+        transform: translateX(0);
         opacity: 1;
     }
     #toast.success { background: var(--color-green); }
     #toast.error { background: var(--color-red); }
     #toast.info { background: var(--color-cyan); }
+    #toast .toast-icon { font-size: 18px; flex-shrink: 0; }
+    #toast .toast-content { flex: 1; }
+    #toast .toast-close {
+        background: none;
+        border: none;
+        color: rgba(255,255,255,0.6);
+        cursor: pointer;
+        font-size: 14px;
+        padding: 0 0 0 8px;
+        transition: color 0.2s;
+    }
+    #toast .toast-close:hover { color: white; }
 
     /* ============================================================ */
     /* EMPTY STATE */
@@ -588,6 +595,12 @@
         .table-forecast tbody td { padding: 6px 4px; }
         .table-forecast .drink-name { font-size: 12px; }
         .modal-box { margin: 16px; padding: 20px 16px; }
+        #toast-container {
+            top: 72px;
+            right: 12px;
+            left: 12px;
+            max-width: none;
+        }
     }
 </style>
 {% endblock %}
@@ -679,7 +692,7 @@
             </div>
             <i class="fas fa-chevron-down chevron text-muted text-xs transition-transform"></i>
         </div>
-        <div id="repartition-content" class="section-content">
+        <div id="repartition-content" class="section-content open">
 
             <!-- AJOUTER UNE BOISSON -->
             <div class="flex flex-wrap items-center gap-2 mb-3 p-2 rounded-lg bg-purple-500/5 border border-dashed border-purple-500/30">
@@ -822,7 +835,7 @@
             </h2>
             <i class="fas fa-chevron-down chevron text-muted text-xs transition-transform"></i>
         </div>
-        <div id="summary-content" class="section-content">
+        <div id="summary-content" class="section-content open">
 
             <!-- CARTES RÉSUMÉ -->
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
@@ -869,6 +882,17 @@
 </div>
 
 <!-- ============================================================ -->
+<!-- TOAST CONTAINER (pour les messages) -->
+<!-- ============================================================ -->
+<div id="toast-container">
+    <div id="toast">
+        <span class="toast-icon"><i class="fas fa-check-circle"></i></span>
+        <span class="toast-content">Message</span>
+        <button class="toast-close" onclick="closeToast()"><i class="fas fa-times"></i></button>
+    </div>
+</div>
+
+<!-- ============================================================ -->
 <!-- MODAL SUPPRESSION -->
 <!-- ============================================================ -->
 <div class="modal-overlay" id="delete-modal">
@@ -887,11 +911,6 @@
         </div>
     </div>
 </div>
-
-<!-- ============================================================ -->
-<!-- TOAST -->
-<!-- ============================================================ -->
-<div id="toast"></div>
 
 <!-- ============================================================ -->
 <!-- SCRIPTS -->
@@ -928,18 +947,60 @@
     }
 
     // ============================================================
+    // TOAST - Version moderne en haut à droite
+    // ============================================================
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const icon = toast.querySelector('.toast-icon i');
+        const content = toast.querySelector('.toast-content');
+        
+        // Configurer l'icône selon le type
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-exclamation-circle',
+            info: 'fa-info-circle'
+        };
+        icon.className = 'fas ' + (icons[type] || icons.success);
+        
+        // Configurer la couleur
+        toast.className = type;
+        
+        // Définir le message
+        content.textContent = message;
+        
+        // Afficher
+        toast.classList.add('show');
+        
+        // Auto-fermeture après 4 secondes
+        clearTimeout(toast._timeout);
+        toast._timeout = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 4000);
+    }
+
+    function closeToast() {
+        const toast = document.getElementById('toast');
+        toast.classList.remove('show');
+    }
+
+    // ============================================================
     // SECTIONS PLIABLES
     // ============================================================
     function toggleSection(sectionId) {
         const content = document.getElementById(sectionId);
+        if (!content) return;
+        
+        // Trouver le toggle associé
         const card = content.closest('.glass-card');
         const toggle = card ? card.querySelector('.section-toggle') : null;
+        
+        // Basculer la classe open
         content.classList.toggle('open');
         if (toggle) toggle.classList.toggle('active');
     }
 
     // ============================================================
-    // MODAL
+    // MODAL DE SUPPRESSION
     // ============================================================
     function openDeleteModal(drinkName) {
         pendingDeleteDrink = drinkName;
@@ -960,14 +1021,17 @@
     });
 
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeDeleteModal();
+        if (e.key === 'Escape') {
+            closeDeleteModal();
+            closeToast();
+        }
     });
     document.getElementById('delete-modal').addEventListener('click', function(e) {
         if (e.target === this) closeDeleteModal();
     });
 
     // ============================================================
-    // AJOUTER UNE BOISSON (avec sauvegarde en base)
+    // AJOUTER UNE BOISSON
     // ============================================================
     function addNewDrink() {
         const input = document.getElementById('new-drink-input');
@@ -978,7 +1042,7 @@
             return;
         }
         
-        // Vérifier si la boisson existe déjà dans le DOM
+        // Vérifier si la boisson existe déjà
         const existingRows = document.querySelectorAll('#forecast-body tr');
         for (let row of existingRows) {
             const nameSpan = row.querySelector('.drink-name span:last-child');
@@ -988,7 +1052,7 @@
             }
         }
         
-        // Envoyer la requête pour ajouter la boisson à l'événement
+        // Envoyer la requête
         fetch(`/expenses/event/${eventId}/add-drink/`, {
             method: 'POST',
             headers: {
@@ -1003,23 +1067,23 @@
                 addDrinkRow(drinkName);
                 input.value = '';
                 input.focus();
-                showToast(`{% trans "Boisson" %} "${drinkName}" {% trans "ajoutée avec succès" %}`, 'success');
+                showToast(`{% trans "Boisson" %} "${drinkName}" {% trans "ajoutée" %}`, 'success');
             } else {
-                showToast('{% trans "Erreur" %}: ' + (data.error || '{% trans "Impossible d\'ajouter la boisson" %}'), 'error');
+                showToast('{% trans "Erreur" %}: ' + (data.error || '{% trans "Impossible d\'ajouter" %}'), 'error');
             }
         })
         .catch(error => {
-            showToast('{% trans "Erreur de connexion" %}: ' + error.message, 'error');
+            showToast('{% trans "Erreur" %}: ' + error.message, 'error');
         });
     }
 
     // ============================================================
-    // AJOUTER UNE LIGNE DANS LE TABLEAU (sans sauvegarde)
+    // AJOUTER UNE LIGNE DANS LE TABLEAU
     // ============================================================
     function addDrinkRow(drinkName) {
         const tbody = document.getElementById('forecast-body');
         const colors = ['#8B5CF6', '#06B6D4', '#F59E0B', '#10B981', '#EC4899', '#6366F1', '#F97316', '#14B8A6'];
-        const colorIndex = document.querySelectorAll('#forecast-body tr').length % colors.length;
+        const colorIndex = document.querySelectorAll('#forecast-body tr:not(:has(.empty-state))').length % colors.length;
         
         // Supprimer le message "Aucune boisson" si présent
         const emptyRow = tbody.querySelector('.empty-state');
@@ -1057,7 +1121,7 @@
             </td>
         `;
         
-        // Ajouter les événements pour les calculs automatiques
+        // Ajouter les événements
         const inputs = tr.querySelectorAll('input');
         inputs.forEach(input => {
             input.addEventListener('input', function() {
@@ -1085,7 +1149,6 @@
     // SUPPRIMER UNE BOISSON
     // ============================================================
     function removeDrink(drinkName) {
-        // Envoyer la requête pour supprimer la boisson de l'événement
         fetch(`/expenses/event/${eventId}/remove-drink/`, {
             method: 'POST',
             headers: {
@@ -1097,7 +1160,6 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Supprimer la ligne du DOM
                 const rows = document.querySelectorAll('#forecast-body tr');
                 rows.forEach(row => {
                     const nameSpan = row.querySelector('.drink-name span:last-child');
@@ -1106,7 +1168,6 @@
                     }
                 });
                 
-                // Vérifier si le tableau est vide
                 if (document.querySelectorAll('#forecast-body tr').length === 0) {
                     document.getElementById('forecast-body').innerHTML = `
                         <tr>
@@ -1114,7 +1175,7 @@
                                 <div class="empty-state">
                                     <i class="fas fa-wine-bottle"></i>
                                     <div class="title">{% trans "Aucune boisson configurée" %}</div>
-                                    <div class="subtitle">{% trans "Ajoutez une boisson ci-dessus pour commencer" %}</div>
+                                    <div class="subtitle">{% trans "Ajoutez une boisson ci-dessus" %}</div>
                                 </div>
                             </td>
                         </tr>
@@ -1128,19 +1189,19 @@
             }
         })
         .catch(error => {
-            showToast('{% trans "Erreur de connexion" %}: ' + error.message, 'error');
+            showToast('{% trans "Erreur" %}: ' + error.message, 'error');
         });
     }
 
     // ============================================================
-    // RAFRAÎCHIR LES BOISSONS DEPUIS LA BASE
+    // RAFRAÎCHIR
     // ============================================================
     function refreshDrinks() {
         window.location.reload();
     }
 
     // ============================================================
-    // CALCULS PAR LIGNE
+    // CALCULS
     // ============================================================
     function updateRowCalculations(row) {
         const piecesInput = row.querySelector('.pieces-input');
@@ -1158,16 +1219,12 @@
         updateAllCalculations();
     }
 
-    // ============================================================
-    // METTRE À JOUR TOUS LES TOTAUX
-    // ============================================================
     function updateAllCalculations() {
         const rows = document.querySelectorAll('#forecast-body tr');
         let totalCases = 0;
         let totalCost = 0;
         let hasData = false;
         
-        // Ignorer la ligne "Aucune boisson"
         rows.forEach(row => {
             if (row.querySelector('.empty-state')) return;
             
@@ -1190,18 +1247,15 @@
         
         const currency = document.getElementById('currency').value || 'CDF';
         
-        // Mettre à jour les affichages
         document.getElementById('total-cases-display').textContent = totalCases;
         document.getElementById('total-cost-display').textContent = totalCost.toFixed(2);
         
-        // Résumé
         document.getElementById('summary-total-cases').textContent = totalCases;
         document.getElementById('summary-total-cost').textContent = totalCost.toFixed(2) + ' ' + currency;
         document.getElementById('summary-currency-display').textContent = currency;
         document.getElementById('summary-footer-cases').textContent = totalCases;
         document.getElementById('summary-footer-cost').textContent = totalCost.toFixed(2);
         
-        // Corps du résumé
         const summaryBody = document.getElementById('summary-body');
         summaryBody.innerHTML = '';
         
@@ -1235,7 +1289,7 @@
             summaryBody.innerHTML = `
                 <tr>
                     <td colspan="4" class="text-center py-4 text-muted">
-                        <i class="fas fa-info-circle"></i> {% trans "Aucune donnée à afficher" %}
+                        <i class="fas fa-info-circle"></i> {% trans "Aucune donnée" %}
                     </td>
                 </tr>
             `;
@@ -1248,24 +1302,24 @@
     function setDefaultPieces(value) {
         const inputs = document.querySelectorAll('.pieces-input');
         if (inputs.length === 0) {
-            showToast('{% trans "Aucune boisson à modifier" %}', 'info');
+            showToast('{% trans "Aucune boisson" %}', 'info');
             return;
         }
         inputs.forEach(input => {
             input.value = value;
             updateRowCalculations(input.closest('tr'));
         });
-        showToast(`{% trans "Toutes les boissons passées à" %} ${value} {% trans "pièces/casier" %}`, 'success');
+        showToast(`{% trans "Passé à" %} ${value} {% trans "pièces" %}`, 'success');
     }
 
     function clearAll() {
-        if (!confirm('{% trans "Voulez-vous vraiment réinitialiser toutes les valeurs ?" %}')) return;
+        if (!confirm('{% trans "Réinitialiser toutes les valeurs ?" %}')) return;
         
         const casesInputs = document.querySelectorAll('.cases-input');
         const priceInputs = document.querySelectorAll('.price-input');
         
         if (casesInputs.length === 0) {
-            showToast('{% trans "Aucune boisson à réinitialiser" %}', 'info');
+            showToast('{% trans "Aucune boisson" %}', 'info');
             return;
         }
         
@@ -1296,7 +1350,6 @@
         const drinks = [];
         const rows = document.querySelectorAll('#forecast-body tr');
         
-        // Vérifier si le tableau est vide
         let hasDrinks = false;
         rows.forEach(row => {
             if (!row.querySelector('.empty-state')) {
@@ -1332,7 +1385,6 @@
             }
         });
         
-        // Récupérer les paramètres
         const totalGuests = parseInt(document.getElementById('total-guests').value) || 0;
         const attendanceRate = parseInt(document.getElementById('attendance-rate').value) || 75;
         const services = parseInt(document.getElementById('services').value) || 1;
@@ -1346,7 +1398,6 @@
             drinks: drinks
         };
         
-        // Envoyer la requête
         fetch(`/expenses/event/${eventId}/forecast/save/`, {
             method: 'POST',
             headers: {
@@ -1358,77 +1409,80 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                showToast('{% trans "Prévisions sauvegardées avec succès !" %}', 'success');
+                showToast('{% trans "Prévisions sauvegardées !" %}', 'success');
             } else {
                 showToast('{% trans "Erreur" %}: ' + (data.error || '{% trans "Une erreur est survenue" %}'), 'error');
             }
         })
         .catch(error => {
-            showToast('{% trans "Erreur de connexion" %}: ' + error.message, 'error');
+            showToast('{% trans "Erreur" %}: ' + error.message, 'error');
         });
     }
 
     // ============================================================
-    // TOAST
+    // INITIALISATION
     // ============================================================
-    function showToast(message, type = 'success') {
-        const toast = document.getElementById('toast');
-        toast.textContent = message;
-        toast.className = type + ' show';
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Ajouter les événements aux lignes existantes
+        const rows = document.querySelectorAll('#forecast-body tr');
+        let hasRealData = false;
         
-        clearTimeout(toast._timeout);
-        toast._timeout = setTimeout(() => {
-            toast.classList.remove('show');
-        }, 3500);
-    }
-
-// ============================================================
-// INITIALISATION
-// ============================================================
-document.addEventListener('DOMContentLoaded', function() {
-    // Ajouter les événements aux lignes existantes
-    const rows = document.querySelectorAll('#forecast-body tr');
-    rows.forEach(row => {
-        if (row.querySelector('.empty-state')) return;
-        
-        const inputs = row.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.addEventListener('input', function() {
-                updateRowCalculations(this.closest('tr'));
-            });
-            input.addEventListener('change', function() {
-                updateRowCalculations(this.closest('tr'));
+        rows.forEach(row => {
+            if (row.querySelector('.empty-state')) return;
+            hasRealData = true;
+            
+            const inputs = row.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    updateRowCalculations(this.closest('tr'));
+                });
+                input.addEventListener('change', function() {
+                    updateRowCalculations(this.closest('tr'));
+                });
             });
         });
-    });
-    
-    // Calculer les totaux initiaux
-    updateAllCalculations();
-    
-    // Enter pour ajouter une boisson
-    document.getElementById('new-drink-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addNewDrink();
+        
+        // 2. Calculer les totaux initiaux
+        updateAllCalculations();
+        
+        // 3. Enter pour ajouter une boisson
+        const newDrinkInput = document.getElementById('new-drink-input');
+        if (newDrinkInput) {
+            newDrinkInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addNewDrink();
+                }
+            });
+        }
+        
+        // 4. ✅ OUVRIR LES SECTIONS (forcément ouvertes par défaut)
+        // La section répartition a déjà la classe "open" dans le HTML
+        // On s'assure que le toggle est aussi actif
+        const repartitionSection = document.getElementById('repartition-content');
+        const repartitionToggle = document.querySelector('#repartition-section .section-toggle');
+        if (repartitionSection && repartitionToggle) {
+            repartitionSection.classList.add('open');
+            repartitionToggle.classList.add('active');
+        }
+        
+        const summarySection = document.getElementById('summary-content');
+        const summaryToggle = document.querySelector('#summary-section .section-toggle');
+        if (summarySection && summaryToggle) {
+            summarySection.classList.add('open');
+            summaryToggle.classList.add('active');
+        }
+        
+        // 5. Ouvrir les paramètres s'il y a des données sauvegardées
+        const hasSavedData = document.querySelectorAll('#forecast-body tr:not(:has(.empty-state))').length > 0;
+        if (hasSavedData) {
+            const paramsSection = document.getElementById('params-section');
+            const paramsToggle = document.querySelector('.glass-card .section-toggle');
+            if (paramsSection && paramsToggle) {
+                paramsSection.classList.add('open');
+                paramsToggle.classList.add('active');
+            }
         }
     });
-    
-    // ✅ OUVRIR LA SECTION RÉPARTITION PAR DÉFAUT (TOUJOURS)
-    // C'est la solution la plus simple et fiable
-    const section = document.getElementById('repartition-content');
-    const toggle = document.querySelector('#repartition-section .section-toggle');
-    if (section && toggle) {
-        section.classList.add('open');
-        toggle.classList.add('active');
-    }
-    
-    // ✅ OUVRIR AUSSI LA SECTION RÉSUMÉ
-    const summarySection = document.getElementById('summary-content');
-    const summaryToggle = document.querySelector('#summary-section .section-toggle');
-    if (summarySection && summaryToggle) {
-        summarySection.classList.add('open');
-        summaryToggle.classList.add('active');
-    }
-});
 </script>
 {% endblock %}
