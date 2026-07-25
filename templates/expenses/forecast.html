@@ -1382,47 +1382,53 @@
         }, 3500);
     }
 
-    // ============================================================
-    // INITIALISATION
-    // ============================================================
-    document.addEventListener('DOMContentLoaded', function() {
-        // Ajouter les événements aux lignes existantes
-        const rows = document.querySelectorAll('#forecast-body tr');
-        rows.forEach(row => {
-            if (row.querySelector('.empty-state')) return;
-            
-            const inputs = row.querySelectorAll('input');
-            inputs.forEach(input => {
-                input.addEventListener('input', function() {
-                    updateRowCalculations(this.closest('tr'));
-                });
-                input.addEventListener('change', function() {
-                    updateRowCalculations(this.closest('tr'));
-                });
+// ============================================================
+// INITIALISATION
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Ajouter les événements aux lignes existantes
+    const rows = document.querySelectorAll('#forecast-body tr');
+    rows.forEach(row => {
+        if (row.querySelector('.empty-state')) return;
+        
+        const inputs = row.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                updateRowCalculations(this.closest('tr'));
+            });
+            input.addEventListener('change', function() {
+                updateRowCalculations(this.closest('tr'));
             });
         });
-        
-        // Calculer les totaux initiaux
-        updateAllCalculations();
-        
-        // Enter pour ajouter une boisson
-        document.getElementById('new-drink-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addNewDrink();
-            }
-        });
-        
-        // Ouvrir la section répartition si elle contient des données
-        const hasData = document.querySelectorAll('#forecast-body tr:not(:has(.empty-state))').length > 0;
-        if (hasData) {
-            const section = document.getElementById('repartition-content');
-            const toggle = document.querySelector('#repartition-section .section-toggle');
-            if (section && toggle) {
-                section.classList.add('open');
-                toggle.classList.add('active');
-            }
+    });
+    
+    // Calculer les totaux initiaux
+    updateAllCalculations();
+    
+    // Enter pour ajouter une boisson
+    document.getElementById('new-drink-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addNewDrink();
         }
     });
+    
+    // ✅ OUVRIR LA SECTION RÉPARTITION PAR DÉFAUT (TOUJOURS)
+    // C'est la solution la plus simple et fiable
+    const section = document.getElementById('repartition-content');
+    const toggle = document.querySelector('#repartition-section .section-toggle');
+    if (section && toggle) {
+        section.classList.add('open');
+        toggle.classList.add('active');
+    }
+    
+    // ✅ OUVRIR AUSSI LA SECTION RÉSUMÉ
+    const summarySection = document.getElementById('summary-content');
+    const summaryToggle = document.querySelector('#summary-section .section-toggle');
+    if (summarySection && summaryToggle) {
+        summarySection.classList.add('open');
+        summaryToggle.classList.add('active');
+    }
+});
 </script>
 {% endblock %}
