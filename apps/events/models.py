@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
+from django.core.exceptions import ValidationError
 from apps.core.models import BaseModel
 
 
@@ -29,6 +30,13 @@ class Event(BaseModel):
         CORPORATE = 'corporate', _('Corporate')
         GRADUATION = 'graduation', _('Remise de diplôme')
         OTHER = 'other', _('Autre')
+    
+    # ========== PLANS TARIFAIRES ==========
+    class PlanChoices(models.TextChoices):
+        FREE = 'free', _('Gratuit (50 invités, 2 co-organisateurs)')
+        STANDARD = 'standard', _('Standard (100 invités, 5 co-organisateurs) - 25 000 FC / 10$')
+        PREMIUM = 'premium', _('Premium (200 invités, 10 co-organisateurs) - 35 000 FC / 15$')
+        UNLIMITED = 'unlimited', _('Illimité - 70 000 FC / 30$')
     
     # ========== ORGANISATEUR PRINCIPAL ==========
     main_organizer = models.ForeignKey(
@@ -130,8 +138,64 @@ class Event(BaseModel):
     
     # ========== PAIEMENT ET LIMITES ==========
     is_paid = models.BooleanField(_('payé'), default=False)
-    max_guests_allowed = models.PositiveIntegerField(_('nombre max d\'invités'), default=400)
-    max_collaborators_allowed = models.PositiveIntegerField(_('nombre max de co-organisateurs'), default=5)
+    
+    # Sélection du plan par l'utilisateur
+    selected_plan = models.CharField(
+        _('plan choisi'),
+        max_length=20,
+        choices=PlanChoices.choices,
+        default=PlanChoices.FREE,
+        db_index=True,
+    )
+    
+    # Limites effectives (appliquées après validation du paiement)
+    max_guests_allowed = models.PositiveIntegerField(
+        _('nombre max d\'invités'),
+        default=50,
+        help_text=_('Limite d\'invités selon le plan choisi')
+    )
+    max_collaborators_allowed = models.PositiveIntegerField(
+        _('nombre max de co-organisateurs'),
+        default=2,
+        help_text=_('Limite de co-organisateurs selon le plan choisi')
+    )
+    
+    # ========== GESTION DES PAIEMENTS ==========
+    payment_proof_image = models.ImageField(
+        _('justificatif de paiement'),
+        upload_to='payment_proofs/%Y/%m/%d/',
+        blank=True,
+        null=True,
+        help_text=_('Capture d\'écran ou photo du reçu de paiement')
+    )
+    payment_verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='verified_payments',
+        verbose_name=_('paiement vérifié par'),
+    )
+    payment_verified_at = models.DateTimeField(
+        _('date de vérification'),
+        null=True,
+        blank=True,
+    )
+    payment_rejection_reason = models.TextField(
+        _('motif de rejet'),
+        blank=True,
+        help_text=_('Raison du rejet du paiement (si non validé)')
+    )
+    payment_requested_at = models.DateTimeField(
+        _('demande de paiement faite le'),
+        null=True,
+        blank=True,
+    )
+    payment_rejected_at = models.DateTimeField(
+        _('rejeté le'),
+        null=True,
+        blank=True,
+    )
     
     # ========== CODE COURT POUR CO-ORGANISATEUR ==========
     coorganizer_short_code = models.CharField(
@@ -173,6 +237,7 @@ class Event(BaseModel):
             models.Index(fields=['slug']),
             models.Index(fields=['rsvp_token']),
             models.Index(fields=['coorganizer_token']),
+            models.Index(fields=['selected_plan', 'is_paid']),
         ]
     
     def __str__(self):
@@ -220,10 +285,168 @@ class Event(BaseModel):
         if not self.has_tables and self.pk:
             self.tables.all().delete()
         
+        # Appliquer les limites du plan si le paiement est validé
+        if self.is_paid:
+            self.apply_plan_limits()
+        
         super().save(*args, **kwargs)
     
     # ============================================================
-    # PROPRIÉTÉS ET MÉTHODES
+    # MÉTHODES DE GESTION DES PLANS
+    # ============================================================
+    
+    @classmethod
+    def get_plan_limits(cls, plan):
+        """
+        Retourne les limites associées à un plan.
+        
+        Args:
+            plan (str): Le slug du plan ('free', 'standard', 'premium', 'unlimited')
+        
+        Returns:
+            dict: {'max_guests': int|None, 'max_collaborators': int|None}
+        """
+        limits = {
+            cls.PlanChoices.FREE: {'max_guests': 50, 'max_collaborators': 2},
+            cls.PlanChoices.STANDARD: {'max_guests': 100, 'max_collaborators': 5},
+            cls.PlanChoices.PREMIUM: {'max_guests': 200, 'max_collaborators': 10},
+            cls.PlanChoices.UNLIMITED: {'max_guests': None, 'max_collaborators': None},
+        }
+        return limits.get(plan, limits[cls.PlanChoices.FREE])
+    
+    @classmethod
+    def get_plan_prices(cls, plan):
+        """
+        Retourne les prix associés à un plan.
+        
+        Args:
+            plan (str): Le slug du plan
+        
+        Returns:
+            dict: {'usd': int, 'cdf': int}
+        """
+        prices = {
+            cls.PlanChoices.FREE: {'usd': 0, 'cdf': 0},
+            cls.PlanChoices.STANDARD: {'usd': 10, 'cdf': 25000},
+            cls.PlanChoices.PREMIUM: {'usd': 15, 'cdf': 35000},
+            cls.PlanChoices.UNLIMITED: {'usd': 30, 'cdf': 70000},
+        }
+        return prices.get(plan, prices[cls.PlanChoices.FREE])
+    
+    def apply_plan_limits(self):
+        """
+        Applique les limites du plan sélectionné à l'événement.
+        Si le plan est illimité, met des valeurs très élevées.
+        """
+        limits = self.get_plan_limits(self.selected_plan)
+        
+        if limits['max_guests'] is not None:
+            self.max_guests_allowed = limits['max_guests']
+        else:
+            self.max_guests_allowed = 999999  # Valeur élevée pour "illimité"
+        
+        if limits['max_collaborators'] is not None:
+            self.max_collaborators_allowed = limits['max_collaborators']
+        else:
+            self.max_collaborators_allowed = 999  # Valeur élevée pour "illimité"
+    
+    def is_plan_upgrade(self, new_plan):
+        """
+        Vérifie si le nouveau plan est un upgrade (plus de capacités).
+        
+        Args:
+            new_plan (str): Le slug du nouveau plan
+        
+        Returns:
+            bool: True si c'est un upgrade
+        """
+        plan_levels = {
+            self.PlanChoices.FREE: 0,
+            self.PlanChoices.STANDARD: 1,
+            self.PlanChoices.PREMIUM: 2,
+            self.PlanChoices.UNLIMITED: 3,
+        }
+        current_level = plan_levels.get(self.selected_plan, 0)
+        new_level = plan_levels.get(new_plan, 0)
+        return new_level > current_level
+    
+    def get_plan_display_info(self):
+        """
+        Retourne les informations affichables du plan actuel.
+        
+        Returns:
+            dict: Informations sur le plan
+        """
+        limits = self.get_plan_limits(self.selected_plan)
+        prices = self.get_plan_prices(self.selected_plan)
+        
+        return {
+            'name': self.get_selected_plan_display(),
+            'max_guests': limits['max_guests'] or _('Illimité'),
+            'max_collaborators': limits['max_collaborators'] or _('Illimité'),
+            'price_usd': prices['usd'],
+            'price_cdf': prices['cdf'],
+        }
+    
+    # ============================================================
+    # MÉTHODES DE VÉRIFICATION DES LIMITES
+    # ============================================================
+    
+    def can_add_guests(self, count=1):
+        """
+        Vérifie si on peut ajouter des invités.
+        
+        Args:
+            count (int): Nombre d'invités à ajouter
+        
+        Returns:
+            tuple: (bool, str) -> (peut_ajouter, message_erreur)
+        """
+        current_count = self.total_invited_guests()
+        if current_count + count > self.max_guests_allowed:
+            return False, _(
+                'Nombre maximum d\'invités atteint (%(max)s). '
+                'Vous avez actuellement %(current)s invités. '
+                'Pour ajouter plus d\'invités, veuillez passer à un plan supérieur.'
+            ) % {
+                'max': self.max_guests_allowed,
+                'current': current_count
+            }
+        return True, ''
+    
+    def can_add_collaborator(self):
+        """
+        Vérifie si on peut ajouter un co-organisateur.
+        
+        Returns:
+            tuple: (bool, str) -> (peut_ajouter, message_erreur)
+        """
+        current_count = EventCollaborator.objects.filter(
+            event=self,
+            status=EventCollaborator.Status.ACCEPTED,
+            is_deleted=False
+        ).count()
+        
+        if current_count >= self.max_collaborators_allowed:
+            return False, _(
+                'Nombre maximum de co-organisateurs atteint (%(max)s). '
+                'Pour ajouter plus de co-organisateurs, veuillez passer à un plan supérieur.'
+            ) % {'max': self.max_collaborators_allowed}
+        return True, ''
+    
+    def has_payment_pending(self):
+        """Vérifie si une demande de paiement est en attente."""
+        return (self.payment_proof_image and 
+                not self.is_paid and 
+                not self.payment_verified_at and 
+                not self.payment_rejected_at)
+    
+    def has_payment_rejected(self):
+        """Vérifie si le paiement a été rejeté."""
+        return bool(self.payment_rejection_reason and self.payment_rejected_at)
+    
+    # ============================================================
+    # PROPRIÉTÉS ET MÉTHODES EXISTANTES
     # ============================================================
     
     @property
@@ -418,15 +641,32 @@ class EventCollaborator(BaseModel):
         ]
     
     def save(self, *args, **kwargs):
+        # Vérifier la limite des co-organisateurs lors de l'acceptation
+        if self.pk and self.status == self.Status.ACCEPTED:
+            # Vérifier si le statut vient de changer pour 'accepted'
+            try:
+                old_instance = EventCollaborator.objects.get(pk=self.pk)
+                if old_instance.status != self.Status.ACCEPTED:
+                    can_add, error_message = self.event.can_add_collaborator()
+                    if not can_add:
+                        raise ValidationError(error_message)
+            except EventCollaborator.DoesNotExist:
+                pass
+        
         if not self.invitation_token:
             self.invitation_token = secrets.token_urlsafe(32)[:50]
+        
         super().save(*args, **kwargs)
     
     def __str__(self):
         return f"{self.user.email} - {self.event.name}"
     
     def accept(self):
-        """Accepte l'invitation"""
+        """Accepte l'invitation avec vérification des limites"""
+        can_add, error_message = self.event.can_add_collaborator()
+        if not can_add:
+            raise ValidationError(error_message)
+        
         self.status = self.Status.ACCEPTED
         self.accepted_at = timezone.now()
         self.save(update_fields=['status', 'accepted_at'])

@@ -11,6 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils.translation import gettext as _
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 from .models import InvitedGuest, GuestResponse
 
@@ -38,44 +39,70 @@ except ImportError:
 
 
 # ============================================================
-# IMPORT EXCEL
+# IMPORT EXCEL AVEC VÉRIFICATION DES LIMITES
 # ============================================================
 
 def import_guests_from_excel(excel_file, event, user):
     """
-    Importe une liste d'invités depuis un fichier Excel.
+    Importe une liste d'invités depuis un fichier Excel avec vérification des limites.
     
-    Colonnes attendues :
-    - Prénom (obligatoire)
-    - Nom (obligatoire)
-    - Postnom (optionnel)
-    - Email (optionnel) - peut être vide
-    - Téléphone (optionnel)
-    - Table (optionnel) - uniquement si has_tables=True
+    Cette fonction :
+    1. Analyse le fichier Excel pour extraire les données des invités
+    2. Vérifie que le nombre total d'invités ne dépasse pas la limite autorisée
+    3. Importe ou met à jour les invités dans la base de données
+    4. Gère automatiquement la création des tables si nécessaire
+    
+    Colonnes attendues dans le fichier Excel :
+        - Prénom (obligatoire)
+        - Nom (obligatoire) 
+        - Postnom (optionnel)
+        - Email (optionnel) - peut être vide
+        - Téléphone (optionnel)
+        - Table (optionnel) - uniquement si has_tables=True
     
     Gestion des tables :
-    - Si une table avec le même nom existe déjà, on l'utilise
-    - Sinon, on la crée automatiquement avec le nom exact du fichier
-    - Une table peut être attribuée à plusieurs invités
+        - Si une table avec le même nom existe déjà, elle est réutilisée
+        - Sinon, une nouvelle table est créée automatiquement
+        - Une table peut être attribuée à plusieurs invités
+    
+    Args:
+        excel_file (File): Fichier Excel à importer
+        event (Event): Événement auquel associer les invités
+        user (User): Utilisateur effectuant l'import
+    
+    Returns:
+        dict: Résultat de l'import avec les clés suivantes :
+            - created (int): Nombre d'invités créés
+            - updated (int): Nombre d'invités mis à jour
+            - errors (int): Nombre d'erreurs rencontrées
+            - error_messages (list): Liste des messages d'erreur détaillés
+            - limit_reached (bool): True si la limite d'invités est atteinte
+    
+    Raises:
+        ValidationError: Si la limite d'invités est dépassée
     """
     import openpyxl
     from apps.events.models import Table
 
+    # Initialisation du résultat
     result = {
         'created': 0,
         'updated': 0,
         'errors': 0,
-        'error_messages': []
+        'error_messages': [],
+        'limit_reached': False,
     }
 
     try:
+        # Chargement du fichier Excel
         wb = openpyxl.load_workbook(excel_file)
         ws = wb.active
 
-        # Lire les en-têtes (ligne 1)
+        # Lecture des en-têtes (ligne 1)
         headers = [cell.value for cell in ws[1] if cell.value]
         col_map = {}
 
+        # Mapping des colonnes attendues
         for idx, header in enumerate(headers):
             if header and isinstance(header, str):
                 header_lower = header.lower().strip()
@@ -95,7 +122,7 @@ def import_guests_from_excel(excel_file, event, user):
         has_table_col = 'table' in col_map
         has_tables_enabled = event.has_tables
 
-        # Vérifier les colonnes obligatoires
+        # Vérification des colonnes obligatoires
         required_cols = ['first_name', 'last_name']
         missing_cols = [col for col in required_cols if col not in col_map]
         if missing_cols:
@@ -106,15 +133,17 @@ def import_guests_from_excel(excel_file, event, user):
             )
             return result
 
-        row_count = 0
-        # Dictionnaire pour stocker les tables créées pendant l'import
-        tables_cache = {}
+        # ============================================================
+        # ÉTAPE 1 : COMPTAGE DES INVITÉS À IMPORTER
+        # ============================================================
+        
+        # Parcourir le fichier pour extraire les données et compter les invités
+        guests_to_import = []
+        row_errors = []
         
         for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
             if not row or not any(cell for cell in row):
                 continue
-
-            row_count += 1
 
             def get_cell(col_name):
                 idx = col_map.get(col_name)
@@ -126,26 +155,97 @@ def import_guests_from_excel(excel_file, event, user):
             first_name = get_cell('first_name')
             last_name = get_cell('last_name')
             middle_name = get_cell('middle_name')
-            
             email_raw = get_cell('email')
             email = email_raw if email_raw else None
-            
             phone = get_cell('phone')
             table_name = get_cell('table') if has_table_col and has_tables_enabled else ''
 
             # Validation : Prénom et Nom obligatoires
             if not first_name or not last_name:
-                result['errors'] += 1
-                result['error_messages'].append(f"Ligne {row_idx}: Prénom ou nom manquant")
+                row_errors.append(f"Ligne {row_idx}: Prénom ou nom manquant")
                 continue
+
+            # Vérifier si l'invité existe déjà (pour ne pas compter deux fois)
+            exists = False
+            if email:
+                exists = InvitedGuest.objects.filter(event=event, email=email, is_deleted=False).exists()
+            else:
+                exists = InvitedGuest.objects.filter(
+                    event=event,
+                    first_name__iexact=first_name,
+                    last_name__iexact=last_name,
+                    is_deleted=False
+                ).exists()
+            
+            guests_to_import.append({
+                'row_idx': row_idx,
+                'first_name': first_name,
+                'last_name': last_name,
+                'middle_name': middle_name,
+                'email': email,
+                'phone': phone,
+                'table_name': table_name,
+                'exists': exists,
+            })
+
+        # ============================================================
+        # ÉTAPE 2 : VÉRIFICATION DE LA LIMITE D'INVITÉS
+        # ============================================================
+        
+        # Compter les invités existants (non supprimés)
+        current_guest_count = event.total_invited_guests()
+        
+        # Compter les nouveaux invités (ceux qui n'existent pas déjà)
+        new_guests_count = sum(1 for g in guests_to_import if not g['exists'])
+        
+        # Vérifier si l'ajout dépasse la limite
+        if current_guest_count + new_guests_count > event.max_guests_allowed:
+            result['limit_reached'] = True
+            error_msg = _(
+                'Impossible d\'importer %(new)s invité(s). '
+                'Limite actuelle : %(max)s invités. '
+                'Vous avez déjà %(current)s invités. '
+                'Veuillez passer à un plan supérieur pour ajouter plus d\'invités.'
+            ) % {
+                'new': new_guests_count,
+                'max': event.max_guests_allowed,
+                'current': current_guest_count,
+            }
+            result['errors'] += 1
+            result['error_messages'].append(error_msg)
+            logger.warning(
+                f"Limite d'invités dépassée pour l'événement {event.id} - "
+                f"Current: {current_guest_count}, Max: {event.max_guests_allowed}, "
+                f"Tentative d'ajout: {new_guests_count}"
+            )
+            
+            # Ajouter les erreurs de ligne
+            result['error_messages'].extend(row_errors)
+            return result
+
+        # ============================================================
+        # ÉTAPE 3 : IMPORT DES INVITÉS
+        # ============================================================
+        
+        # Dictionnaire pour mettre en cache les tables créées pendant l'import
+        tables_cache = {}
+        
+        for guest_data in guests_to_import:
+            first_name = guest_data['first_name']
+            last_name = guest_data['last_name']
+            middle_name = guest_data['middle_name']
+            email = guest_data['email']
+            phone = guest_data['phone']
+            table_name = guest_data['table_name']
+            row_idx = guest_data['row_idx']
 
             # === GESTION DE LA TABLE ===
             table = None
             if has_tables_enabled and table_name:
-                # Nettoyer le nom de la table (garder le nom exact mais sans accents excessifs)
+                # Nettoyer le nom de la table
                 table_clean = table_name.strip()
                 
-                # ✅ Vérifier dans le cache d'abord
+                # Vérifier dans le cache d'abord (optimisation)
                 if table_clean in tables_cache:
                     table = tables_cache[table_clean]
                 else:
@@ -160,11 +260,14 @@ def import_guests_from_excel(excel_file, event, user):
                     if not table:
                         table = Table.objects.create(
                             event=event,
-                            name=table_clean,  # ✅ Utiliser le nom exact du fichier
+                            name=table_clean,
                             capacity=10,
                             created_by=user
                         )
-                        logger.info(f"Table créée: {table_clean} (ID: {table.id})")
+                        logger.info(
+                            f"Table créée lors de l'import: {table_clean} "
+                            f"(ID: {table.id}) pour l'événement {event.id}"
+                        )
                     
                     # Ajouter au cache
                     tables_cache[table_clean] = table
@@ -172,6 +275,7 @@ def import_guests_from_excel(excel_file, event, user):
             # === CRÉATION / MISE À JOUR DE L'INVITÉ ===
             try:
                 if email:
+                    # Recherche par email (prioritaire)
                     invited_guest, created = InvitedGuest.objects.get_or_create(
                         event=event,
                         email=email,
@@ -185,6 +289,7 @@ def import_guests_from_excel(excel_file, event, user):
                         }
                     )
                     if not created:
+                        # Mise à jour des informations
                         invited_guest.first_name = first_name
                         invited_guest.last_name = last_name
                         invited_guest.middle_name = middle_name
@@ -192,9 +297,18 @@ def import_guests_from_excel(excel_file, event, user):
                         invited_guest.table = table
                         invited_guest.save()
                         result['updated'] += 1
+                        logger.debug(
+                            f"Invité mis à jour: {first_name} {last_name} "
+                            f"(email: {email}) pour l'événement {event.id}"
+                        )
                     else:
                         result['created'] += 1
+                        logger.debug(
+                            f"Invité créé: {first_name} {last_name} "
+                            f"(email: {email}) pour l'événement {event.id}"
+                        )
                 else:
+                    # Recherche par nom complet (sans email)
                     existing = InvitedGuest.objects.filter(
                         event=event,
                         first_name__iexact=first_name,
@@ -204,12 +318,18 @@ def import_guests_from_excel(excel_file, event, user):
                     ).first()
                     
                     if existing:
+                        # Mise à jour des informations (sans écraser l'email existant)
                         existing.middle_name = middle_name or existing.middle_name
                         existing.phone = phone or existing.phone
                         existing.table = table or existing.table
                         existing.save()
                         result['updated'] += 1
+                        logger.debug(
+                            f"Invité mis à jour: {first_name} {last_name} "
+                            f"(sans email) pour l'événement {event.id}"
+                        )
                     else:
+                        # Création d'un nouvel invité
                         InvitedGuest.objects.create(
                             event=event,
                             first_name=first_name,
@@ -221,34 +341,69 @@ def import_guests_from_excel(excel_file, event, user):
                             table=table,
                         )
                         result['created'] += 1
+                        logger.debug(
+                            f"Invité créé: {first_name} {last_name} "
+                            f"(sans email) pour l'événement {event.id}"
+                        )
                         
             except Exception as e:
                 result['errors'] += 1
-                result['error_messages'].append(f"Ligne {row_idx} ({first_name} {last_name}): {str(e)}")
+                error_msg = f"Ligne {row_idx} ({first_name} {last_name}): {str(e)}"
+                result['error_messages'].append(error_msg)
+                logger.error(f"Erreur lors de l'import de l'invité {first_name} {last_name}: {str(e)}")
 
-        if row_count == 0:
-            result['errors'] += 1
-            result['error_messages'].append("Aucune ligne de données trouvée dans le fichier.")
+        # Ajouter les erreurs de ligne
+        if row_errors:
+            result['error_messages'].extend(row_errors)
 
     except Exception as e:
         result['errors'] += 1
         result['error_messages'].append(f"Erreur lecture fichier: {str(e)}")
+        logger.error(f"Erreur lors de l'import du fichier Excel: {str(e)}", exc_info=True)
 
-    logger.info(f"Import terminé: {result['created']} créés, {result['updated']} mis à jour, {result['errors']} erreurs")
+    # Logging du résultat final
+    logger.info(
+        f"Import terminé pour l'événement {event.id} - "
+        f"{result['created']} créés, {result['updated']} mis à jour, "
+        f"{result['errors']} erreurs"
+    )
 
     return result
+
+
 # ============================================================
 # PDF - INVITATION
 # ============================================================
 
 class InvitationPDFService:
-    """Service de génération d'invitation PDF avec QR code."""
+    """
+    Service de génération d'invitation PDF avec QR code.
+    
+    Cette classe génère un PDF personnalisé pour chaque invité contenant :
+        - Les informations de l'événement (nom, date, heure, lieu)
+        - Le nom de l'invité
+        - La table assignée (si disponible)
+        - Un QR code pour confirmer la présence
+        - Les détails du code vestimentaire (si spécifié)
+    """
     
     def __init__(self, guest_response):
+        """
+        Initialise le service avec une réponse d'invité.
+        
+        Args:
+            guest_response (GuestResponse): Instance de GuestResponse
+        """
         self.guest_response = guest_response
         self.event = guest_response.event
     
     def generate(self):
+        """
+        Génère le PDF d'invitation.
+        
+        Returns:
+            bytes: Contenu du PDF ou None en cas d'erreur
+        """
         if not REPORTLAB_AVAILABLE:
             logger.error("reportlab is not installed. Cannot generate PDF.")
             return None
@@ -256,6 +411,7 @@ class InvitationPDFService:
         buffer = BytesIO()
         
         try:
+            # Configuration du document PDF (format A4)
             doc = SimpleDocTemplate(
                 buffer,
                 pagesize=A4,
@@ -267,6 +423,10 @@ class InvitationPDFService:
             
             styles = getSampleStyleSheet()
             story = []
+            
+            # ============================================================
+            # STYLES PERSONNALISÉS
+            # ============================================================
             
             title_style = ParagraphStyle(
                 'TitleStyle',
@@ -298,11 +458,16 @@ class InvitationPDFService:
                 fontName='Helvetica'
             )
             
+            # ============================================================
+            # CONTENU DU PDF
+            # ============================================================
+            
             story.append(Paragraph("INVITATION", title_style))
             story.append(Spacer(1, 10))
             story.append(Paragraph(self.event.name, subtitle_style))
             story.append(Spacer(1, 20))
             
+            # Salutation personnalisée
             guest_name = self.guest_response.get_full_name()
             salutation = "Madame" if self.guest_response.first_name.lower() in [
                 'marie', 'jeanne', 'claire', 'sophie', 'anne', 'catherine', 
@@ -321,6 +486,7 @@ class InvitationPDFService:
             ))
             story.append(Spacer(1, 15))
             
+            # Détails de l'événement
             details_data = [
                 ["Date :", self.event.date.strftime('%d %B %Y') if self.event.date else 'À confirmer'],
                 ["Heure :", self.event.time.strftime('%H:%M') if self.event.time else 'À confirmer'],
@@ -341,6 +507,7 @@ class InvitationPDFService:
             story.append(details_table)
             story.append(Spacer(1, 20))
             
+            # Table assignée (si disponible)
             if self.guest_response.table:
                 table_style = ParagraphStyle(
                     'TableStyle',
@@ -350,10 +517,11 @@ class InvitationPDFService:
                     alignment=TA_CENTER,
                     fontName='Helvetica-Bold'
                 )
-                # ✅ Utiliser table.id ou table.number (propriété)
+                # Utilisation de table.id comme numéro
                 story.append(Paragraph(f"Table assignée : {self.guest_response.table.id}", table_style))
                 story.append(Spacer(1, 15))
             
+            # Message de confirmation
             story.append(Paragraph(
                 "Nous sommes impatients de vous accueillir et de partager ce moment avec vous.",
                 body_style
@@ -364,6 +532,10 @@ class InvitationPDFService:
                 body_style
             ))
             story.append(Spacer(1, 20))
+            
+            # ============================================================
+            # GÉNÉRATION DU QR CODE
+            # ============================================================
             
             qr = qrcode.QRCode(version=1, box_size=6, border=2)
             qr.add_data(self.guest_response.get_invitation_link())
@@ -394,6 +566,7 @@ class InvitationPDFService:
             )
             story.append(Paragraph("Scannez ce QR code pour confirmer votre présence", qr_text_style))
             
+            # Pied de page
             story.append(Spacer(1, 30))
             footer_style = ParagraphStyle(
                 'FooterStyle',
@@ -408,16 +581,26 @@ class InvitationPDFService:
                 footer_style
             ))
             
+            # Construction du document
             doc.build(story)
             buffer.seek(0)
             return buffer.getvalue()
         
         except Exception as e:
-            logger.error(f"Erreur génération PDF: {str(e)}")
+            logger.error(f"Erreur génération PDF: {str(e)}", exc_info=True)
             return None
 
 
 def generate_invitation_pdf(guest_response):
+    """
+    Fonction wrapper pour générer un PDF d'invitation.
+    
+    Args:
+        guest_response (GuestResponse): Réponse de l'invité
+    
+    Returns:
+        bytes: Contenu du PDF ou None
+    """
     service = InvitationPDFService(guest_response)
     return service.generate()
 
@@ -427,6 +610,16 @@ def generate_invitation_pdf(guest_response):
 # ============================================================
 
 def send_reminders_for_event(event, days_before=7):
+    """
+    Envoie des rappels aux invités qui n'ont pas encore répondu.
+    
+    Args:
+        event (Event): Événement concerné
+        days_before (int): Nombre de jours avant l'événement
+    
+    Returns:
+        int: Nombre de rappels envoyés
+    """
     if not event.date:
         return 0
     
@@ -470,38 +663,70 @@ def send_reminders_for_event(event, days_before=7):
 # ============================================================
 
 class TableAssignmentService:
-    """Service d'assignation automatique des tables"""
+    """
+    Service d'assignation automatique des tables.
+    
+    Cette classe permet d'assigner automatiquement les invités
+    aux tables disponibles en fonction de leur capacité.
+    """
     
     def __init__(self, event):
+        """
+        Initialise le service avec un événement.
+        
+        Args:
+            event (Event): Événement concerné
+        """
         self.event = event
 
     def auto_assign_all(self):
-        """Assigne automatiquement les invités aux tables disponibles"""
-        # ✅ Utiliser 'id' pour le tri
+        """
+        Assigne automatiquement les invités aux tables disponibles.
+        
+        Returns:
+            bool: True si au moins un invité a été assigné, False sinon
+        """
+        # Récupérer les tables actives (non supprimées)
         tables = list(self.event.tables.filter(is_deleted=False).order_by('id'))
         if not tables:
+            logger.warning(
+                f"Aucune table disponible pour l'assignation automatique "
+                f"de l'événement {self.event.id}"
+            )
             return False
         
+        # Récupérer les invités confirmés sans table assignée
         guests = list(self.event.responses.filter(
             will_attend=True, 
             table__isnull=True,
             is_deleted=False
         ))
         if not guests:
+            logger.info(
+                f"Aucun invité à assigner automatiquement "
+                f"pour l'événement {self.event.id}"
+            )
             return False
         
+        assigned_count = 0
         for guest in guests:
             for table in tables:
                 if table.current_guests_count < table.capacity:
                     guest.table = table
                     guest.save()
+                    assigned_count += 1
+                    logger.debug(
+                        f"Invité {guest.id} assigné à la table {table.id} "
+                        f"pour l'événement {self.event.id}"
+                    )
                     break
-        return True
+        
+        logger.info(
+            f"{assigned_count} invités assignés automatiquement "
+            f"pour l'événement {self.event.id}"
+        )
+        return assigned_count > 0
 
-
-# ============================================================
-# PDF - TABLES
-# ============================================================
 
 # ============================================================
 # PDF - TABLES
@@ -510,20 +735,39 @@ class TableAssignmentService:
 def generate_tables_pdf(event):
     """
     Génère un PDF avec la liste des tables, invités et leurs boissons.
-    Utilise les noms de tables exacts trouvés dans le fichier importé.
-    Affiche tous les invités (confirmés ou non) avec leurs boissons si disponibles.
+    
+    Ce PDF est destiné aux organisateurs pour visualiser :
+        - La configuration des tables
+        - Les invités assignés à chaque table
+        - Leurs choix de boissons (si disponibles)
+        - Le statut de confirmation (confirmé, non confirmé, en attente)
+    
+    Args:
+        event (Event): Événement concerné
+    
+    Returns:
+        bytes: Contenu du PDF ou None en cas d'erreur
     """
     if not REPORTLAB_AVAILABLE:
+        logger.error("reportlab is not installed. Cannot generate tables PDF.")
         return None
     
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, 
-                            rightMargin=50, leftMargin=50,
-                            topMargin=50, bottomMargin=50)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=50,
+        leftMargin=50,
+        topMargin=50,
+        bottomMargin=50
+    )
     styles = getSampleStyleSheet()
     story = []
     
-    # Styles personnalisés
+    # ============================================================
+    # STYLES PERSONNALISÉS
+    # ============================================================
+    
     title_style = ParagraphStyle(
         'CustomTitle',
         parent=styles['Heading1'],
@@ -563,7 +807,10 @@ def generate_tables_pdf(event):
         fontName='Helvetica'
     )
     
-    # En-tête du document
+    # ============================================================
+    # EN-TÊTE DU DOCUMENT
+    # ============================================================
+    
     story.append(Paragraph(f"Récapitulatif des tables - {event.name}", title_style))
     story.append(Paragraph(
         f"Date : {event.date.strftime('%d/%m/%Y')} à {event.time.strftime('%H:%M') if event.time else ''}",
@@ -581,13 +828,22 @@ def generate_tables_pdf(event):
         buffer.seek(0)
         return buffer.getvalue()
     
+    # ============================================================
+    # GÉNÉRATION DU CONTENU POUR CHAQUE TABLE
+    # ============================================================
+    
     for table in tables:
-        # ✅ Titre de la table avec le nom exact du fichier importé
+        # Titre de la table avec le nom exact du fichier importé
         table_display = table.name if table.name else f"Table {table.id}"
-        story.append(Paragraph(f"Table {table.id} - {table_display} (capacité {table.capacity})", table_title_style))
+        story.append(
+            Paragraph(
+                f"Table {table.id} - {table_display} (capacité {table.capacity})",
+                table_title_style
+            )
+        )
         story.append(Spacer(1, 4))
         
-        # ✅ Récupérer TOUS les invités (confirmés ou non)
+        # Récupération des données des invités
         guests_data = []
         
         # 1. Récupérer les GuestResponse (invités ayant répondu)
@@ -622,11 +878,14 @@ def generate_tables_pdf(event):
                     'will_attend': None,
                 })
         
-        # Trier les invités: confirmés d'abord, puis en attente
-        guests_data.sort(key=lambda x: 0 if x['will_attend'] is True else (1 if x['will_attend'] is False else 2))
+        # Trier les invités : confirmés d'abord, puis en attente
+        guests_data.sort(
+            key=lambda x: 0 if x['will_attend'] is True 
+            else (1 if x['will_attend'] is False else 2)
+        )
         
         if guests_data:
-            # ✅ Tableau des invités avec boissons
+            # Construction du tableau des invités
             data = [["Prénom", "Nom", "Statut", "Boisson"]]
             for g in guests_data:
                 # Ajouter un indicateur visuel pour le statut
@@ -644,7 +903,7 @@ def generate_tables_pdf(event):
                     g['drink']
                 ])
             
-            # ✅ Ajuster les largeurs des colonnes
+            # Configuration du tableau
             table_obj = Table(data, colWidths=[80, 100, 70, 100])
             table_obj.setStyle(TableStyle([
                 # En-tête
@@ -681,7 +940,10 @@ def generate_tables_pdf(event):
         
         story.append(Spacer(1, 12))
     
-    # Pied de page
+    # ============================================================
+    # PIED DE PAGE
+    # ============================================================
+    
     story.append(Spacer(1, 30))
     footer_style = ParagraphStyle(
         'Footer',
@@ -691,9 +953,14 @@ def generate_tables_pdf(event):
         alignment=TA_CENTER,
         fontName='Helvetica'
     )
-    story.append(Paragraph(f"Document généré par KaramuManage - {datetime.now().strftime('%d/%m/%Y %H:%M')}", footer_style))
+    story.append(
+        Paragraph(
+            f"Document généré par KaramuManage - {datetime.now().strftime('%d/%m/%Y %H:%M')}",
+            footer_style
+        )
+    )
     
+    # Construction du document
     doc.build(story)
     buffer.seek(0)
     return buffer.getvalue()
-

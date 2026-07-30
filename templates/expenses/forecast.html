@@ -617,7 +617,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- SECTION 1 : PARAMÈTRES -->
+    <!-- SECTION 1 : PARAMÈTRES (FERMÉE PAR DÉFAUT) -->
     <!-- ============================================================ -->
     <div class="glass-card p-3 sm:p-4 mb-3">
         <div class="section-toggle flex justify-between items-center" onclick="toggleSection('params-section')">
@@ -666,7 +666,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- SECTION 2 : RÉPARTITION -->
+    <!-- SECTION 2 : RÉPARTITION (FERMÉE PAR DÉFAUT) -->
     <!-- ============================================================ -->
     <div class="glass-card p-3 sm:p-4 mb-3" id="repartition-section">
         <div class="section-toggle flex justify-between items-center" onclick="toggleSection('repartition-content')">
@@ -676,12 +676,12 @@
                     {% trans "Répartition" %}
                 </h2>
                 <span class="badge badge-cyan text-[8px] sm:text-[10px]">
-                    <i class="fas fa-plus mr-1"></i> {% trans "Ajoutez vos boissons" %}
+                    <i class="fas fa-plus mr-1"></i> {% trans "Gérez vos boissons" %}
                 </span>
             </div>
             <i class="fas fa-chevron-down chevron text-muted text-xs transition-transform"></i>
         </div>
-        <div id="repartition-content" class="section-content open">
+        <div id="repartition-content" class="section-content">
             
             <!-- ACTIONS RAPIDES -->
             <div class="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
@@ -778,7 +778,7 @@
                                     <div class="empty-state">
                                         <i class="fas fa-wine-bottle"></i>
                                         <div class="title">{% trans "Aucune boisson configurée" %}</div>
-                                        <div class="subtitle">{% trans "Ajoutez une boisson ci-dessous" %}</div>
+                                        <div class="subtitle">{% trans "Ajoutez des boissons via la page de modification de l'événement" %}</div>
                                     </div>
                                 </td>
                             </tr>
@@ -798,8 +798,9 @@
             </div>
 
             <!-- ============================================================ -->
-            <!-- AJOUTER UNE BOISSON - En bas de la section -->
+            <!-- AJOUTER UNE BOISSON - COMMENTÉ POUR L'INSTANT -->
             <!-- ============================================================ -->
+            <!--
             <div class="mt-4 pt-3 border-t border-card">
                 <div class="flex flex-wrap items-center gap-2 p-3 rounded-lg bg-purple-500/5 border border-dashed border-purple-500/30">
                     <i class="fas fa-plus-circle text-purple-400 text-sm"></i>
@@ -818,6 +819,7 @@
                     {% trans "La boisson sera ajoutée à la liste des options de l'événement." %}
                 </p>
             </div>
+            -->
 
             <div class="flex justify-end mt-3 pt-2 border-t border-card">
                 <button onclick="openSection('summary-section')" class="btn btn-primary btn-sm text-xs">
@@ -828,7 +830,7 @@
     </div>
 
     <!-- ============================================================ -->
-    <!-- SECTION 3 : RÉSUMÉ -->
+    <!-- SECTION 3 : RÉSUMÉ (FERMÉE PAR DÉFAUT) -->
     <!-- ============================================================ -->
     <div class="glass-card p-3 sm:p-4 border border-purple-500/20" id="summary-section">
         <div class="section-toggle flex justify-between items-center" onclick="toggleSection('summary-content')">
@@ -839,7 +841,7 @@
             </h2>
             <i class="fas fa-chevron-down chevron text-muted text-xs transition-transform"></i>
         </div>
-        <div id="summary-content" class="section-content open">
+        <div id="summary-content" class="section-content">
 
             <!-- CARTES -->
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
@@ -951,15 +953,15 @@
     }
 
     // ============================================================
-    // TOAST - Message de succès/erreur (pas de modal)
+    // TOAST
     // ============================================================
     function showToast(message, type = 'success') {
         const toast = document.getElementById('toast');
         if (!toast) return;
         
-        const icon = toast.querySelector('.toast-icon i');
-        const content = toast.querySelector('.toast-content');
+        toast.querySelector('.toast-content').textContent = message;
         
+        const icon = toast.querySelector('.toast-icon i');
         const icons = {
             success: 'fa-check-circle',
             error: 'fa-exclamation-circle',
@@ -967,7 +969,6 @@
         };
         icon.className = 'fas ' + (icons[type] || icons.success);
         
-        content.textContent = message;
         toast.className = type;
         toast.classList.add('show');
         
@@ -1002,125 +1003,6 @@
             if (toggle) toggle.classList.add('active');
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-    }
-
-    // ============================================================
-    // AJOUTER UNE BOISSON
-    // ============================================================
-    function addNewDrink() {
-        const input = document.getElementById('new-drink-input');
-        if (!input) {
-            showToast('Champ de saisie introuvable', 'error');
-            return;
-        }
-        
-        const drinkName = input.value.trim();
-        
-        if (!drinkName) {
-            showToast('Veuillez entrer un nom de boisson', 'error');
-            return;
-        }
-        
-        // Vérifier si la boisson existe déjà
-        const existingRows = document.querySelectorAll('#forecast-body tr');
-        for (let row of existingRows) {
-            const nameSpan = row.querySelector('.drink-name span:last-child');
-            if (nameSpan && nameSpan.textContent.trim().toLowerCase() === drinkName.toLowerCase()) {
-                showToast('Cette boisson existe déjà', 'error');
-                return;
-            }
-        }
-        
-        // Envoyer la requête pour ajouter la boisson
-        fetch(`/expenses/event/${eventId}/add-drink/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCsrfToken()
-            },
-            body: JSON.stringify({ drink_name: drinkName })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                addDrinkRow(drinkName);
-                input.value = '';
-                input.focus();
-                showToast(`Boisson "${drinkName}" ajoutée avec succès`, 'success');
-            } else {
-                showToast('Erreur: ' + (data.error || 'Impossible d\'ajouter la boisson'), 'error');
-            }
-        })
-        .catch(error => {
-            showToast('Erreur de connexion: ' + error.message, 'error');
-        });
-    }
-
-    function addDrinkRow(drinkName) {
-        const tbody = document.getElementById('forecast-body');
-        if (!tbody) return;
-        
-        const colors = ['#8B5CF6', '#06B6D4', '#F59E0B', '#10B981', '#EC4899', '#6366F1', '#F97316', '#14B8A6'];
-        const colorIndex = document.querySelectorAll('#forecast-body tr').length % colors.length;
-        
-        // Supprimer le message "Aucune boisson" si présent
-        const emptyRow = tbody.querySelector('.empty-state');
-        if (emptyRow) {
-            const tr = emptyRow.closest('tr');
-            if (tr) tr.remove();
-        }
-        
-        const tr = document.createElement('tr');
-        tr.dataset.drink = drinkName;
-        tr.innerHTML = `
-            <td>
-                <span class="drink-name">
-                    <span class="badge-drink" style="background: ${colors[colorIndex]}"></span>
-                    <span class="text-primary">${escapeHtml(drinkName)}</span>
-                </span>
-            </td>
-            <td class="text-center">
-                <input type="number" class="input-compact input-compact-sm pieces-input" 
-                       data-drink="${escapeHtml(drinkName)}" min="1" value="12">
-            </td>
-            <td class="text-center">
-                <input type="number" class="input-compact input-compact-sm cases-input" 
-                       data-drink="${escapeHtml(drinkName)}" min="0" value="0">
-            </td>
-            <td class="text-center">
-                <input type="number" class="input-compact input-compact-md price-input" 
-                       data-drink="${escapeHtml(drinkName)}" min="0" step="0.01" value="0" placeholder="0.00">
-            </td>
-            <td class="text-right total-cost-display font-bold text-green">0</td>
-            <td class="text-center">
-                <button onclick="openDeleteModal('${escapeHtml(drinkName)}')" class="btn-remove-drink" title="Supprimer">
-                    <i class="fas fa-times"></i>
-                </button>
-            </td>
-        `;
-        
-        const inputs = tr.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.addEventListener('input', function() {
-                updateRowCalculations(this.closest('tr'));
-            });
-            input.addEventListener('change', function() {
-                updateRowCalculations(this.closest('tr'));
-            });
-        });
-        
-        tbody.appendChild(tr);
-        updateAllCalculations();
-    }
-
-    function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    function refreshDrinks() {
-        window.location.reload();
     }
 
     // ============================================================
@@ -1184,7 +1066,7 @@
                                 <div class="empty-state">
                                     <i class="fas fa-wine-bottle"></i>
                                     <div class="title">Aucune boisson configurée</div>
-                                    <div class="subtitle">Ajoutez une boisson ci-dessus</div>
+                                    <div class="subtitle">Ajoutez des boissons via la page de modification de l'événement</div>
                                 </div>
                             </td>
                         </tr>
@@ -1294,6 +1176,12 @@
                 </tr>
             `;
         }
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
 
     // ============================================================
@@ -1413,11 +1301,9 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Ajouter les événements aux lignes existantes
         const rows = document.querySelectorAll('#forecast-body tr');
-        let hasRealData = false;
         
         rows.forEach(row => {
             if (row.querySelector('.empty-state')) return;
-            hasRealData = true;
             
             const inputs = row.querySelectorAll('input');
             inputs.forEach(input => {
@@ -1433,40 +1319,8 @@
         // Calculer les totaux initiaux
         updateAllCalculations();
         
-        // Enter pour ajouter une boisson
-        const newDrinkInput = document.getElementById('new-drink-input');
-        if (newDrinkInput) {
-            newDrinkInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addNewDrink();
-                }
-            });
-        }
-        
-        // Ouvrir les sections par défaut
-        const repartitionSection = document.getElementById('repartition-content');
-        const repartitionToggle = document.querySelector('#repartition-section .section-toggle');
-        if (repartitionSection && repartitionToggle) {
-            repartitionSection.classList.add('open');
-            repartitionToggle.classList.add('active');
-        }
-        
-        const summarySection = document.getElementById('summary-content');
-        const summaryToggle = document.querySelector('#summary-section .section-toggle');
-        if (summarySection && summaryToggle) {
-            summarySection.classList.add('open');
-            summaryToggle.classList.add('active');
-        }
-        
-        if (hasRealData) {
-            const paramsSection = document.getElementById('params-section');
-            const paramsToggle = document.querySelector('.glass-card .section-toggle');
-            if (paramsSection && paramsToggle) {
-                paramsSection.classList.add('open');
-                paramsToggle.classList.add('active');
-            }
-        }
+        // Les sections restent fermées par défaut
+        // L'utilisateur les ouvrira en cliquant sur les en-têtes
     });
 </script>
 {% endblock %}
