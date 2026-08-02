@@ -2,9 +2,10 @@ from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from apps.events.models import Event
+from apps.core.models import BaseModel
 
 
-class PaymentRequest(models.Model):
+class PaymentRequest(BaseModel):
     class Plan(models.TextChoices):
         BASIC = 'basic', _('Basic (25 USD)')
         PREMIUM = 'premium', _('Premium (40 USD)')

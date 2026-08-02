@@ -1,7 +1,3 @@
-"""
-Vues de l'application payments.
-Gestion des demandes de paiement et de leur validation par l'administrateur.
-"""
 
 from django.views.generic import CreateView, ListView, UpdateView
 from django.views import View

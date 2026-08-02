@@ -1,7 +1,3 @@
-"""
-Vues de l'application invitation.
-Generation et telechargement des invitations PDF.
-"""
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
