@@ -29,7 +29,7 @@
         }
     </script>
     
-    <!-- ✅ Script de thème exécuté immédiatement pour éviter le flash -->
+    <!-- Script de theme exécuté immédiatement pour éviter le flash -->
     <script>
         (function() {
             var savedTheme = localStorage.getItem('theme') || 'dark';
@@ -358,7 +358,6 @@
         .form-errors-global i { margin-top: 2px; font-size: 16px; flex-shrink: 0; }
         .form-errors-global ul { margin: 0; padding-left: 16px; }
         
-        /* Password wrapper */
         .password-wrapper {
             position: relative;
             width: 100%;
@@ -441,7 +440,36 @@
         }
         
         /* ============================================================ */
-        /* TOAST - Version unifiée et moderne */
+        /* FAQ COLLAPSE */
+        /* ============================================================ */
+        .faq-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .faq-item .faq-chevron {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .faq-item .faq-chevron.rotated {
+            transform: rotate(180deg);
+        }
+        .faq-item .faq-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, padding 0.3s ease;
+            opacity: 0;
+            padding: 0;
+        }
+        .faq-item .faq-content.open {
+            max-height: 1000px;
+            opacity: 1;
+            padding: 16px 0 0 0;
+        }
+        .faq-item .faq-content p {
+            margin: 0;
+            line-height: 1.7;
+        }
+        
+        /* ============================================================ */
+        /* TOAST */
         /* ============================================================ */
         .toast-container {
             position: fixed;
@@ -915,6 +943,13 @@
                 <span>Importer invités</span>
             </a>
             {% endif %}
+            
+            <!-- Lien FAQ dans la sidebar -->
+            <div class="border-t border-white/10 my-2"></div>
+            <a href="{% url 'authentication:home' %}#faq" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition text-gray-300 hover:text-white" onclick="closeSidebar()">
+                <i class="fas fa-question-circle w-5 text-center text-yellow-400"></i>
+                <span>FAQ</span>
+            </a>
         </nav>
         
         <div class="border-t border-white/10 pt-4 mt-2">
@@ -959,6 +994,10 @@
                 </a>
                 <a href="{% url 'authentication:home' %}#pricing" class="text-gray-300 hover:text-white transition">
                     <i class="fas fa-tag mr-1"></i> Tarifs
+                </a>
+                <!-- Lien FAQ dans la navbar desktop -->
+                <a href="{% url 'authentication:home' %}#faq" class="text-gray-300 hover:text-white transition">
+                    <i class="fas fa-question-circle mr-1"></i> FAQ
                 </a>
                 <a href="{% url 'authentication:home' %}#contact" class="text-gray-300 hover:text-white transition">
                     <i class="fas fa-envelope mr-1"></i> Contact
@@ -1050,6 +1089,7 @@
                         <li><a href="{% url 'authentication:home' %}"><i class="fas fa-home mr-1"></i> Accueil</a></li>
                         <li><a href="{% url 'authentication:home' %}#features"><i class="fas fa-star mr-1"></i> Fonctionnalités</a></li>
                         <li><a href="{% url 'authentication:home' %}#pricing"><i class="fas fa-tag mr-1"></i> Tarifs</a></li>
+                        <li><a href="{% url 'authentication:home' %}#faq"><i class="fas fa-question-circle mr-1"></i> FAQ</a></li>
                         <li><a href="{% url 'authentication:home' %}#contact"><i class="fas fa-envelope mr-1"></i> Contact</a></li>
                     </ul>
                 </div>
@@ -1058,7 +1098,7 @@
                     <h4 class="text-sm font-semibold text-gray-400 mb-3">Gestion</h4>
                     <ul class="footer-links">
                         <li><a href="{% url 'events:event_list' %}"><i class="fas fa-calendar-check mr-1"></i> Événements</a></li>
-                        <li><a href="#"><i class="fas fa-users mr-1"></i> Invités</a></li>
+                        <li><a href="{% url 'guests:invited_list' 0 %}"><i class="fas fa-users mr-1"></i> Invités</a></li>
                         <li><a href="#"><i class="fas fa-chair mr-1"></i> Tables</a></li>
                         <li><a href="#"><i class="fas fa-wine-bottle mr-1"></i> Dépenses</a></li>
                     </ul>
@@ -1067,10 +1107,10 @@
                 <div>
                     <h4 class="text-sm font-semibold text-gray-400 mb-3">Support</h4>
                     <ul class="footer-links">
-                        <li><a href="#"><i class="fas fa-question-circle mr-1"></i> Aide</a></li>
-                        <li><a href="#"><i class="fas fa-question mr-1"></i> FAQ</a></li>
+                        <li><a href="{% url 'authentication:home' %}#faq"><i class="fas fa-question-circle mr-1"></i> FAQ</a></li>
                         <li><a href="#"><i class="fas fa-file-contract mr-1"></i> Conditions</a></li>
                         <li><a href="#"><i class="fas fa-lock mr-1"></i> Confidentialité</a></li>
+                        <li><a href="{% url 'authentication:home' %}#contact"><i class="fas fa-envelope mr-1"></i> Contact</a></li>
                     </ul>
                 </div>
             </div>
@@ -1134,7 +1174,7 @@
         });
         
         // ============================================
-        // 3. TOAST SYSTEM - Version unifiée
+        // 3. TOAST SYSTEM
         // ============================================
         function showToast(message, type = 'info', duration = 5000) {
             const container = document.getElementById('toast-container');
@@ -1151,7 +1191,6 @@
                 info: 'Information'
             };
             
-            // Supprimer les toasts précédents du même type pour éviter l'accumulation
             const existingToasts = container.querySelectorAll('.toast');
             if (existingToasts.length > 3) {
                 existingToasts[0].classList.add('hiding');
@@ -1171,7 +1210,6 @@
             `;
             container.appendChild(toast);
             
-            // Fermeture automatique
             setTimeout(() => {
                 if (toast.parentNode) {
                     toast.classList.add('hiding');
@@ -1206,7 +1244,6 @@
             overlay.classList.add('active');
             document.body.style.overflow = 'hidden';
             
-            // Fermeture automatique après 5s
             clearTimeout(overlay._timeout);
             overlay._timeout = setTimeout(() => {
                 closePopup();
@@ -1233,7 +1270,6 @@
                 const type = msg.dataset.type || 'info';
                 const text = msg.textContent.trim();
                 if (text) {
-                    // Pour les messages de succès, utiliser le popup
                     if (type === 'success') {
                         showPopup(text, 'Succès', 'success');
                     } else if (type === 'error') {

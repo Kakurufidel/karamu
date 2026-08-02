@@ -285,151 +285,529 @@
 </section>
 
 <!-- ============================================================ -->
+<!-- FAQ SECTION - 20 Questions en 7 Groupes -->
+<!-- ============================================================ -->
+<section id="faq" class="py-16 sm:py-20">
+    <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12">
+            <span class="inline-block text-sm font-semibold text-purple-400 uppercase tracking-wider">FAQ</span>
+            <h2 class="text-3xl sm:text-4xl font-bold mt-2">{% trans "Questions fréquentes" %}</h2>
+            <p class="text-gray-400 mt-3 max-w-2xl mx-auto">
+                {% trans "Trouvez rapidement les réponses à vos questions sur KaramuManage." %}
+            </p>
+        </div>
+
+        <div class="space-y-6" x-data="{ open: null }">
+
+            <!-- ========================================================== -->
+            <!-- GROUPE 1 : GÉNÉRALITÉS -->
+            <!-- ========================================================== -->
+            <div>
+                <h3 class="text-sm font-semibold text-purple-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <i class="fas fa-info-circle"></i> {% trans "Généralités" %}
+                </h3>
+                <div class="space-y-3">
+
+                    <!-- Q1 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 1 ? null : 1">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-purple-400 text-xs font-bold">Q1</span>
+                                {% trans "Qu'est-ce que KaramuManage ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 1 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 1 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "KaramuManage est une plateforme professionnelle de gestion d'événements qui vous permet d'organiser facilement vos événements (mariages, anniversaires, événements corporatifs, etc.). Elle vous accompagne de l'invitation à la gestion le jour J : import d'invités, gestion des tables, prévisions de dépenses, génération d'invitations PDF, check-in par QR code et bien plus encore." %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Q2 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 2 ? null : 2">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-purple-400 text-xs font-bold">Q2</span>
+                                {% trans "Est-ce que KaramuManage est gratuit ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 2 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 2 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Oui ! KaramuManage propose un plan gratuit qui vous permet d'organiser un événement avec jusqu'à 50 invités et 2 co-organisateurs. Vous pouvez découvrir toutes les fonctionnalités sans aucun engagement. Pour des événements plus importants, des plans payants sont disponibles avec des capacités étendues." %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 3 ? null : 3">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-purple-400 text-xs font-bold">Q3</span>
+                                {% trans "Quels types d'événements puis-je gérer avec KaramuManage ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 3 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 3 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Vous pouvez gérer tous types d'événements : mariages, anniversaires, anniversaires de mariage, événements corporatifs, remises de diplôme, soirées privées, réunions familiales, et bien d'autres. L'outil s'adapte à vos besoins." %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Q4 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 4 ? null : 4">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-purple-400 text-xs font-bold">Q4</span>
+                                {% trans "Comment créer mon compte ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 4 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 4 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Rendez-vous sur la page d'inscription, remplissez vos informations (nom, email, mot de passe) et confirmez votre email. En quelques secondes, vous avez accès à votre tableau de bord et pouvez commencer à créer votre premier événement." %}
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- GROUPE 2 : CRÉATION ET GESTION D'ÉVÉNEMENTS -->
+            <!-- ========================================================== -->
+            <div>
+                <h3 class="text-sm font-semibold text-cyan-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <i class="fas fa-calendar-plus"></i> {% trans "Création et gestion d'événements" %}
+                </h3>
+                <div class="space-y-3">
+
+                    <!-- Q5 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 5 ? null : 5">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-cyan-400 text-xs font-bold">Q5</span>
+                                {% trans "Comment créer un événement ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 5 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 5 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Dans votre tableau de bord, cliquez sur 'Nouvel événement'. Remplissez les informations essentielles : nom, type d'événement, date, heure, lieu. Vous pouvez également ajouter une description, un code vestimentaire, une photo et choisir les options de boissons. Une fois créé, vous pouvez commencer à inviter vos convives." %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Q6 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 6 ? null : 6">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-cyan-400 text-xs font-bold">Q6</span>
+                                {% trans "Puis-je modifier un événement après sa création ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 6 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 6 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Oui, vous pouvez modifier votre événement à tout moment. Cliquez sur 'Modifier' dans la page de détail de l'événement. Toutes les informations sont modifiables : nom, date, lieu, description, options, etc. Les invités déjà importés conservent leurs données." %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Q7 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 7 ? null : 7">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-cyan-400 text-xs font-bold">Q7</span>
+                                {% trans "Comment supprimer un événement ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 7 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 7 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Dans la page de détail de votre événement, cliquez sur le bouton 'Supprimer' (icône poubelle). Une confirmation vous sera demandée. La suppression est définitive et irréversible. Toutes les données liées à l'événement (invités, tables, réponses) seront également supprimées." %}
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- GROUPE 3 : GESTION DES INVITÉS -->
+            <!-- ========================================================== -->
+            <div>
+                <h3 class="text-sm font-semibold text-green-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <i class="fas fa-users"></i> {% trans "Gestion des invités" %}
+                </h3>
+                <div class="space-y-3">
+
+                    <!-- Q8 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 8 ? null : 8">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-green-400 text-xs font-bold">Q8</span>
+                                {% trans "Comment importer mes invités ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 8 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 8 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Rendez-vous dans la section 'Invités' de votre événement, puis cliquez sur 'Importer'. Téléchargez un fichier Excel (.xlsx) avec les colonnes suivantes : Prénom, Nom, Postnom (optionnel), Email (optionnel), Téléphone (optionnel), Table (optionnel). Les invités sont automatiquement ajoutés à votre liste. Les tables mentionnées sont créées automatiquement si elles n'existent pas." %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Q9 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 9 ? null : 9">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-green-400 text-xs font-bold">Q9</span>
+                                {% trans "Puis-je ajouter des invités un par un ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 9 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 9 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Oui, dans la section 'Invités' de votre événement, cliquez sur 'Ajouter un invité'. Saisissez ses informations (prénom, nom, email, téléphone) et sélectionnez une table si nécessaire. Cette méthode est idéale pour ajouter des invités de dernière minute." %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Q10 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 10 ? null : 10">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-green-400 text-xs font-bold">Q10</span>
+                                {% trans "Y a-t-il une limite d'invités ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 10 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 10 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Le nombre d'invités dépend de votre plan :" %}<br>
+                                <span class="text-purple-400">• {% trans "Plan Gratuit" %} : 50 {% trans "invités" %}</span><br>
+                                <span class="text-cyan-400">• {% trans "Plan Standard" %} : 100 {% trans "invités" %}</span><br>
+                                <span class="text-yellow-400">• {% trans "Plan Premium" %} : 200 {% trans "invités" %}</span><br>
+                                <span class="text-green-400">• {% trans "Plan Illimité" %} : {% trans "invités illimités" %}</span><br>
+                                {% trans "Vous pouvez consulter votre plan actuel dans la page de détail de votre événement." %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Q11 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 11 ? null : 11">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-green-400 text-xs font-bold">Q11</span>
+                                {% trans "Que deviennent les invités qui répondent au RSVP ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 11 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 11 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Les invités qui confirment leur présence via le lien RSVP sont automatiquement enregistrés dans la liste des réponses. Le système vérifie automatiquement si l'invité fait partie de votre liste pré-enregistrée et l'assigne à la table correspondante. Les invités non vérifiés apparaissent comme 'non vérifiés' pour vous permettre de les valider manuellement." %}
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- GROUPE 4 : GESTION DES TABLES -->
+            <!-- ========================================================== -->
+            <div>
+                <h3 class="text-sm font-semibold text-yellow-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <i class="fas fa-chair"></i> {% trans "Gestion des tables" %}
+                </h3>
+                <div class="space-y-3">
+
+                    <!-- Q12 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 12 ? null : 12">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-yellow-400 text-xs font-bold">Q12</span>
+                                {% trans "Comment activer la gestion des tables ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 12 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 12 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Lors de la création ou de la modification de votre événement, cochez l'option 'Gestion des tables'. Une table par défaut sera créée automatiquement. Vous pourrez ensuite ajouter, modifier ou supprimer des tables selon vos besoins." %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Q13 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 13 ? null : 13">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-yellow-400 text-xs font-bold">Q13</span>
+                                {% trans "Comment assigner des invités aux tables ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 13 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 13 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Deux méthodes sont disponibles :" %}<br>
+                                <span class="text-cyan-400">• {% trans "Assignation manuelle" %} : {% trans "Dans la section 'Tables', sélectionnez un invité et choisissez sa table." %}</span><br>
+                                <span class="text-purple-400">• {% trans "Assignation automatique" %} : {% trans "Cliquez sur 'Attribuer' pour que le système place automatiquement les invités dans les tables en fonction de leur capacité." %}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Q14 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 14 ? null : 14">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-yellow-400 text-xs font-bold">Q14</span>
+                                {% trans "Puis-je exporter le plan de table ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 14 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 14 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Oui ! Vous pouvez exporter le plan de table au format PDF, CSV ou Excel depuis la section 'Tables' de votre événement. Le PDF est particulièrement utile pour l'imprimer et l'afficher le jour J. Les exports CSV et Excel vous permettent de travailler les données dans un tableur." %}
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- GROUPE 5 : RSVP ET COMMUNICATION -->
+            <!-- ========================================================== -->
+            <div>
+                <h3 class="text-sm font-semibold text-pink-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <i class="fas fa-envelope"></i> {% trans "RSVP et communication" %}
+                </h3>
+                <div class="space-y-3">
+
+                    <!-- Q15 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 15 ? null : 15">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-pink-400 text-xs font-bold">Q15</span>
+                                {% trans "Comment mes invités confirment-ils leur présence ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 15 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 15 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Après avoir créé votre événement, un lien RSVP unique est généré automatiquement. Vous pouvez partager ce lien par email, WhatsApp ou SMS. Vos invités cliquent sur le lien, remplissent le formulaire (présence, nombre de personnes, boisson, etc.) et valident. Leur réponse apparaît instantanément dans votre tableau de bord." %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Q16 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 16 ? null : 16">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-pink-400 text-xs font-bold">Q16</span>
+                                {% trans "Puis-je envoyer des rappels aux invités ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 16 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 16 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Oui, le système vous permet d'envoyer des rappels automatiques aux invités qui n'ont pas encore répondu. Vous pouvez configurer ces rappels pour qu'ils soient envoyés quelques jours avant l'événement. Les invités reçoivent un email avec le lien RSVP pour confirmer leur présence." %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Q17 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 17 ? null : 17">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-pink-400 text-xs font-bold">Q17</span>
+                                {% trans "Comment personnaliser le message d'invitation ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 17 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 17 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Lors de la création ou de la modification de votre événement, vous pouvez écrire un message personnalisé dans le champ 'Message d'invitation'. Ce message sera utilisé dans les communications envoyées à vos invités. Vous pouvez aussi personnaliser l'invitation PDF avec la photo de votre événement et votre couleur préférée." %}
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- GROUPE 6 : PAIEMENT ET PLANS -->
+            <!-- ========================================================== -->
+            <div>
+                <h3 class="text-sm font-semibold text-indigo-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <i class="fas fa-credit-card"></i> {% trans "Paiement et plans" %}
+                </h3>
+                <div class="space-y-3">
+
+                    <!-- Q18 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 18 ? null : 18">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-indigo-400 text-xs font-bold">Q18</span>
+                                {% trans "Comment passer à un plan supérieur ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 18 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 18 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Dans la page de détail de votre événement, cliquez sur 'Choisir un plan'. Sélectionnez le plan souhaité (Standard, Premium ou Illimité), effectuez le paiement via Mobile Money, Orange Money ou Airtel Money, puis soumettez une capture d'écran du reçu. Un administrateur validera votre paiement et votre plan sera activé dans les plus brefs délais." %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Q19 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 19 ? null : 19">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-indigo-400 text-xs font-bold">Q19</span>
+                                {% trans "Que se passe-t-il si je dépasse la limite de mon plan ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 19 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 19 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Lorsque vous atteignez la limite de votre plan, vous ne pouvez plus ajouter de nouveaux invités ni de nouveaux co-organisateurs. Un message vous invite à passer à un plan supérieur. Une fois votre nouveau plan validé, les limites sont automatiquement augmentées et vous pouvez continuer à gérer vos invités." %}
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ========================================================== -->
+            <!-- GROUPE 7 : CHECK-IN LE JOUR J -->
+            <!-- ========================================================== -->
+            <div>
+                <h3 class="text-sm font-semibold text-orange-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <i class="fas fa-qrcode"></i> {% trans "Check-in le jour J" %}
+                </h3>
+                <div class="space-y-3">
+
+                    <!-- Q20 -->
+                    <div class="glass-card p-4 faq-item cursor-pointer hover:border-purple-500/30 transition" @click="open = open === 20 ? null : 20">
+                        <div class="flex justify-between items-center">
+                            <h4 class="text-sm font-semibold text-white flex items-center gap-2">
+                                <span class="text-orange-400 text-xs font-bold">Q20</span>
+                                {% trans "Comment fonctionne le check-in avec QR code ?" %}
+                            </h4>
+                            <i class="fas fa-chevron-down text-gray-400 faq-chevron" :class="open === 20 ? 'rotated' : ''"></i>
+                        </div>
+                        <div class="faq-content" :class="open === 20 ? 'open' : ''">
+                            <p class="text-sm text-gray-300 leading-relaxed">
+                                {% trans "Le jour de l'événement, vous ou vos co-organisateurs (si autorisés) utilisez le scanner intégré dans l'application. Chaque invité reçoit une invitation PDF avec un QR code unique. Scannez ce QR code à l'entrée pour valider sa présence. Le système enregistre automatiquement l'heure d'arrivée. Vous pouvez également saisir manuellement le code court si le QR code n'est pas lisible." %}
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- CONTACT / AIDE -->
+        <!-- ========================================================== -->
+        <div class="mt-12 text-center">
+            <div class="inline-flex items-center gap-2 bg-purple-500/10 rounded-full px-4 py-1.5 text-sm text-purple-400 mb-4 border border-purple-500/20">
+                <i class="fas fa-question-circle"></i>
+                <span>{% trans "Vous n'avez pas trouvé votre réponse ?" %}</span>
+            </div>
+            <p class="text-gray-400 text-sm max-w-md mx-auto">
+                {% trans "Notre équipe est à votre disposition pour répondre à toutes vos questions." %}
+            </p>
+            <a href="#contact" class="btn-primary mt-4 inline-flex">
+                <i class="fas fa-envelope mr-2"></i> {% trans "Contactez-nous" %}
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================ -->
 <!-- PRICING -->
 <!-- ============================================================ -->
-<section id="pricing" class="py-16 sm:py-20">
-    <div class="text-center mb-12">
-        <span class="inline-block text-sm font-semibold text-purple-400 uppercase tracking-wider">{% trans "Tarifs" %}</span>
-        <h2 class="text-3xl sm:text-4xl font-bold mt-2">{% trans "Des tarifs transparents" %}</h2>
-        <p class="text-gray-400 mt-3 max-w-2xl mx-auto">
-            {% trans "Choisissez la formule qui vous convient. Gratuit pour commencer." %}
-        </p>
-    </div>
-    
-    <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-        <!-- Offre Gratuite -->
-        <div class="glass-card p-6 text-center border-2 border-transparent hover:border-purple-500/30 transition">
-            <div class="text-sm font-semibold text-gray-400 uppercase tracking-wider">{% trans "Découverte" %}</div>
-            <div class="text-4xl font-bold mt-3 text-white">0 €</div>
-            <div class="text-sm text-gray-400">{% trans "par événement" %}</div>
-            <ul class="mt-6 space-y-2 text-sm text-gray-300 text-left">
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "1 événement" %}</li>
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "50 invités" %}</li>
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Gestion des tables" %}</li>
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "QR code & check-in" %}</li>
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Support email" %}</li>
-            </ul>
-            <a href="{% url 'authentication:register' %}" class="btn-primary w-full mt-6">{% trans "Commencer" %}</a>
-        </div>
-        
-        <!-- Offre Pro -->
-        <div class="glass-card p-6 text-center border-2 border-purple-500/30 bg-purple-500/5 hover:border-purple-500/50 transition">
-            <div class="inline-block bg-purple-500/20 text-purple-400 text-xs font-semibold px-3 py-1 rounded-full mb-2">{% trans "Populaire" %}</div>
-            <div class="text-sm font-semibold text-gray-400 uppercase tracking-wider">{% trans "Professionnel" %}</div>
-            <div class="text-4xl font-bold mt-3 text-white">19 €</div>
-            <div class="text-sm text-gray-400">{% trans "par mois" %}</div>
-            <ul class="mt-6 space-y-2 text-sm text-gray-300 text-left">
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Événements illimités" %}</li>
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Invités illimités" %}</li>
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Toutes les fonctionnalités" %}</li>
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Co-organisateurs" %}</li>
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Support prioritaire" %}</li>
-            </ul>
-            <a href="{% url 'authentication:register' %}" class="btn-primary w-full mt-6">{% trans "Essayer" %}</a>
-        </div>
-        
-        <!-- Offre Entreprise -->
-        <div class="glass-card p-6 text-center border-2 border-transparent hover:border-purple-500/30 transition">
-            <div class="text-sm font-semibold text-gray-400 uppercase tracking-wider">{% trans "Entreprise" %}</div>
-            <div class="text-4xl font-bold mt-3 text-white">49 €</div>
-            <div class="text-sm text-gray-400">{% trans "par mois" %}</div>
-            <ul class="mt-6 space-y-2 text-sm text-gray-300 text-left">
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Tout Pro" %}</li>
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "API dédiée" %}</li>
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Support 24/7" %}</li>
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Hébergement dédié" %}</li>
-                <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Branding personnalisé" %}</li>
-            </ul>
-            <a href="{% url 'authentication:register' %}" class="btn-primary w-full mt-6">{% trans "Contacter" %}</a>
-        </div>
-    </div>
-</section>
-
-<!-- ============================================================ -->
-<!-- TESTIMONIALS -->
-<!-- ============================================================ -->
-<section class="py-16 sm:py-20 border-y border-white/5">
-    <div class="text-center mb-12">
-        <span class="inline-block text-sm font-semibold text-purple-400 uppercase tracking-wider">{% trans "Témoignages" %}</span>
-        <h2 class="text-3xl sm:text-4xl font-bold mt-2">{% trans "Ils nous font confiance" %}</h2>
-    </div>
-    
-    <div class="grid md:grid-cols-3 gap-6">
-        <div class="glass-card p-6">
-            <div class="flex text-yellow-400 text-sm mb-3">
-                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-            </div>
-            <p class="text-sm text-gray-300 italic">
-                "KaramuManage a révolutionné l'organisation de notre mariage. Simple, efficace et beau !"
+<section id="pricing" class="py-16 sm:py-20 bg-white/5 dark:bg-white/5">
+    <div class="max-w-6xl mx-auto">
+        <div class="text-center mb-12">
+            <span class="inline-block text-sm font-semibold text-purple-400 uppercase tracking-wider">{% trans "Tarifs" %}</span>
+            <h2 class="text-3xl sm:text-4xl font-bold mt-2">{% trans "Des tarifs transparents" %}</h2>
+            <p class="text-gray-400 mt-3 max-w-2xl mx-auto">
+                {% trans "Choisissez la formule qui vous convient. Gratuit pour commencer." %}
             </p>
-            <div class="mt-4 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 flex items-center justify-center text-white font-bold text-sm">JM</div>
-                <div>
-                    <p class="text-sm font-semibold text-white">Jean & Marie</p>
-                    <p class="text-xs text-gray-400">Mariage - 150 invités</p>
-                </div>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <!-- Offre Gratuite -->
+            <div class="glass-card p-6 text-center border-2 border-transparent hover:border-purple-500/30 transition">
+                <div class="text-sm font-semibold text-gray-400 uppercase tracking-wider">{% trans "Découverte" %}</div>
+                <div class="text-4xl font-bold mt-3 text-white">0 €</div>
+                <div class="text-sm text-gray-400">{% trans "par événement" %}</div>
+                <ul class="mt-6 space-y-2 text-sm text-gray-300 text-left">
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "1 événement" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "50 invités" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Gestion des tables" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "QR code & check-in" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Support email" %}</li>
+                </ul>
+                <a href="{% url 'authentication:register' %}" class="btn-primary w-full mt-6">{% trans "Commencer" %}</a>
+            </div>
+            
+            <!-- Offre Standard -->
+            <div class="glass-card p-6 text-center border-2 border-purple-500/30 bg-purple-500/5 hover:border-purple-500/50 transition">
+                <div class="inline-block bg-purple-500/20 text-purple-400 text-xs font-semibold px-3 py-1 rounded-full mb-2">{% trans "Populaire" %}</div>
+                <div class="text-sm font-semibold text-gray-400 uppercase tracking-wider">{% trans "Standard" %}</div>
+                <div class="text-4xl font-bold mt-3 text-white">10 $</div>
+                <div class="text-sm text-gray-400">25 000 FC</div>
+                <ul class="mt-6 space-y-2 text-sm text-gray-300 text-left">
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "100 invités" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "5 co-organisateurs" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Toutes les fonctionnalités" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Support prioritaire" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Export avancé" %}</li>
+                </ul>
+                <a href="{% url 'authentication:register' %}" class="btn-primary w-full mt-6">{% trans "Choisir" %}</a>
+            </div>
+            
+            <!-- Offre Premium -->
+            <div class="glass-card p-6 text-center border-2 border-cyan-500/30 bg-cyan-500/5 hover:border-cyan-500/50 transition">
+                <div class="inline-block bg-cyan-500/20 text-cyan-400 text-xs font-semibold px-3 py-1 rounded-full mb-2">{% trans "Recommandé" %}</div>
+                <div class="text-sm font-semibold text-gray-400 uppercase tracking-wider">{% trans "Premium" %}</div>
+                <div class="text-4xl font-bold mt-3 text-white">15 $</div>
+                <div class="text-sm text-gray-400">35 000 FC</div>
+                <ul class="mt-6 space-y-2 text-sm text-gray-300 text-left">
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "200 invités" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "10 co-organisateurs" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Toutes les fonctionnalités" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Support VIP" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Analytics avancé" %}</li>
+                </ul>
+                <a href="{% url 'authentication:register' %}" class="btn-primary w-full mt-6">{% trans "Choisir" %}</a>
             </div>
         </div>
         
-        <div class="glass-card p-6">
-            <div class="flex text-yellow-400 text-sm mb-3">
-                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+        <!-- Plan Illimité -->
+        <div class="mt-6 max-w-2xl mx-auto">
+            <div class="glass-card p-6 text-center border-2 border-yellow-500/30 bg-yellow-500/5 hover:border-yellow-500/50 transition">
+                <div class="inline-block bg-yellow-500/20 text-yellow-400 text-xs font-semibold px-3 py-1 rounded-full mb-2">{% trans "Illimité" %}</div>
+                <div class="text-sm font-semibold text-gray-400 uppercase tracking-wider">{% trans "Professionnel" %}</div>
+                <div class="text-4xl font-bold mt-3 text-white">30 $</div>
+                <div class="text-sm text-gray-400">70 000 FC</div>
+                <ul class="mt-6 space-y-2 text-sm text-gray-300 text-left max-w-sm mx-auto">
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Invités illimités" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Co-organisateurs illimités" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Toutes les fonctionnalités" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "Support VIP 24/7" %}</li>
+                    <li><i class="fas fa-check-circle text-green-400 mr-2"></i> {% trans "API dédiée" %}</li>
+                </ul>
+                <a href="{% url 'authentication:register' %}" class="btn-primary w-full mt-6 max-w-sm mx-auto">{% trans "Choisir" %}</a>
             </div>
-            <p class="text-sm text-gray-300 italic">
-                "La gestion des tables et le check-in nous ont fait gagner un temps précieux le jour J."
-            </p>
-            <div class="mt-4 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-teal-400 flex items-center justify-center text-white font-bold text-sm">PL</div>
-                <div>
-                    <p class="text-sm font-semibold text-white">Pierre L.</p>
-                    <p class="text-xs text-gray-400">Anniversaire - 80 invités</p>
-                </div>
-            </div>
-        </div>
-        
-        <div class="glass-card p-6">
-            <div class="flex text-yellow-400 text-sm mb-3">
-                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-            </div>
-            <p class="text-sm text-gray-300 italic">
-                "L'estimation des dépenses nous a permis de maîtriser notre budget. Un outil indispensable !"
-            </p>
-            <div class="mt-4 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center text-white font-bold text-sm">SD</div>
-                <div>
-                    <p class="text-sm font-semibold text-white">Sophie D.</p>
-                    <p class="text-xs text-gray-400">Événement corporate - 200 invités</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- ============================================================ -->
-<!-- CTA FINAL -->
-<!-- ============================================================ -->
-<section class="py-16 sm:py-20 text-center">
-    <div class="max-w-2xl mx-auto">
-        <div class="inline-flex items-center gap-2 bg-purple-500/10 rounded-full px-4 py-1.5 text-sm text-purple-400 mb-6 border border-purple-500/20">
-            <i class="fas fa-rocket"></i>
-            <span>{% trans "Prêt à commencer ?" %}</span>
-        </div>
-        <h2 class="text-3xl sm:text-4xl font-bold">
-            {% trans "Organisez votre événement" %}
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
-                {% trans "dès aujourd'hui" %}
-            </span>
-        </h2>
-        <p class="text-gray-400 mt-3">
-            {% trans "Rejoignez des milliers d'organisateurs qui nous font confiance." %}
-        </p>
-        <div class="mt-8 flex flex-wrap justify-center gap-4">
-            <a href="{% url 'authentication:register' %}" class="btn-primary btn-lg px-8">
-                <i class="fas fa-user-plus"></i> {% trans "Créer mon compte" %}
-            </a>
-            <a href="{% url 'authentication:home' %}#how-it-works" class="btn-secondary btn-lg px-8">
-                <i class="fas fa-arrow-right"></i> {% trans "Découvrir" %}
-            </a>
         </div>
     </div>
 </section>
@@ -437,7 +815,7 @@
 <!-- ============================================================ -->
 <!-- CONTACT -->
 <!-- ============================================================ -->
-<section id="contact" class="py-16 sm:py-20 border-t border-white/5">
+<section id="contact" class="py-16 sm:py-20">
     <div class="max-w-2xl mx-auto text-center">
         <span class="inline-block text-sm font-semibold text-purple-400 uppercase tracking-wider">{% trans "Contact" %}</span>
         <h2 class="text-3xl sm:text-4xl font-bold mt-2">{% trans "Contactez-nous" %}</h2>
@@ -465,6 +843,35 @@
                 <i class="fas fa-paper-plane"></i> {% trans "Envoyer" %}
             </button>
         </form>
+    </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- CTA FINAL -->
+<!-- ============================================================ -->
+<section class="py-16 sm:py-20 text-center border-t border-white/5">
+    <div class="max-w-2xl mx-auto">
+        <div class="inline-flex items-center gap-2 bg-purple-500/10 rounded-full px-4 py-1.5 text-sm text-purple-400 mb-6 border border-purple-500/20">
+            <i class="fas fa-rocket"></i>
+            <span>{% trans "Prêt à commencer ?" %}</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-bold">
+            {% trans "Organisez votre événement" %}
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
+                {% trans "dès aujourd'hui" %}
+            </span>
+        </h2>
+        <p class="text-gray-400 mt-3">
+            {% trans "Rejoignez des milliers d'organisateurs qui nous font confiance." %}
+        </p>
+        <div class="mt-8 flex flex-wrap justify-center gap-4">
+            <a href="{% url 'authentication:register' %}" class="btn-primary btn-lg px-8">
+                <i class="fas fa-user-plus"></i> {% trans "Créer mon compte" %}
+            </a>
+            <a href="#how-it-works" class="btn-secondary btn-lg px-8">
+                <i class="fas fa-arrow-right"></i> {% trans "Découvrir" %}
+            </a>
+        </div>
     </div>
 </section>
 
