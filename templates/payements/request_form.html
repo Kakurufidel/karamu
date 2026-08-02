@@ -1,115 +1,251 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load i18n %}
 
-{% block title %}{{ title }} - KaramuManage{% endblock %}
+{% block title %}{% trans "Demande de paiement" %} - {{ event.name }}{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+<div class="max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+
     <!-- En-tête -->
-    <div class="text-center mb-8">
-        <div class="inline-flex items-center gap-2 bg-purple-500/10 rounded-full px-4 py-1.5 text-sm text-purple-400 mb-3">
-            <i class="fas fa-credit-card"></i>
-            <span>{% trans "Demande de paiement" %}</span>
-        </div>
-        <h1 class="text-2xl md:text-3xl font-bold">{{ title }}</h1>
-        <p class="text-gray-400 text-sm mt-1">
-            {% blocktrans with event_name=event.name %}Demande de paiement pour "{{ event_name }}"{% endblocktrans %}
-        </p>
+    <div class="mb-6">
+        <a href="{% url 'events:event_detail' event.slug %}" class="text-purple-400 hover:text-purple-300 transition text-sm">
+            <i class="fas fa-arrow-left mr-1"></i> {% trans "Retour à l'événement" %}
+        </a>
+        <h1 class="text-2xl sm:text-3xl font-bold mt-2">{% trans "Demande de paiement" %}</h1>
+        <p class="text-gray-400 text-sm mt-1">{{ event.name }}</p>
     </div>
 
-    <div class="glass-card p-6 md:p-8">
-        <!-- Plans disponibles -->
-        <div class="bg-white/5 p-4 rounded-xl mb-6">
-            <h3 class="text-sm font-semibold text-gray-400 mb-3">
-                <i class="fas fa-crown text-purple-400 mr-1"></i>
-                {% trans "Plans disponibles" %}
-            </h3>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="p-3 rounded-xl bg-purple-500/10 text-center border border-purple-500/20">
-                    <p class="font-bold text-purple-400">{% trans "Basic" %}</p>
-                    <p class="text-lg font-bold text-white">25 $</p>
-                    <p class="text-xs text-gray-400">{% trans "400 invités max" %}</p>
-                </div>
-                <div class="p-3 rounded-xl bg-cyan-500/10 text-center border border-cyan-500/20">
-                    <p class="font-bold text-cyan-400">{% trans "Premium" %}</p>
-                    <p class="text-lg font-bold text-white">40 $</p>
-                    <p class="text-xs text-gray-400">{% trans "Invités illimités" %}</p>
+    <!-- Informations sur le plan actuel -->
+    <div class="glass-card p-4 sm:p-6 mb-6">
+        <h2 class="text-sm font-semibold text-gray-400 mb-3">{% trans "Plan actuel" %}</h2>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+                <span class="text-lg font-bold text-purple-400">{{ plan_info.name }}</span>
+                <div class="flex flex-wrap gap-2 mt-1">
+                    <span class="badge badge-info text-xs">
+                        <i class="fas fa-users mr-1"></i> {{ plan_info.max_guests }} {% trans "invités" %}
+                    </span>
+                    <span class="badge badge-info text-xs">
+                        <i class="fas fa-user-friends mr-1"></i> {{ plan_info.max_collaborators }} {% trans "co-organisateurs" %}
+                    </span>
                 </div>
             </div>
-            <p class="text-xs text-gray-500 mt-3 text-center">
+            <div class="text-sm text-gray-400">
                 <i class="fas fa-info-circle mr-1"></i>
-                {% trans "Paiement unique par événement. Sans abonnement." %}
-            </p>
+                {% trans "Vous utilisez actuellement" %} {{ current_guest_count }}/{{ plan_info.max_guests }} {% trans "invités" %}
+            </div>
         </div>
+    </div>
 
-        <!-- Formulaire -->
-        <form method="post" enctype="multipart/form-data" novalidate>
-            {% csrf_token %}
-
-            <!-- Erreurs globales -->
-            {% if form.non_field_errors %}
-                <div class="form-errors-global">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <ul>
-                        {% for error in form.non_field_errors %}
-                            <li>{{ error }}</li>
-                        {% endfor %}
+    <!-- Plans disponibles -->
+    <div class="glass-card p-4 sm:p-6 mb-6">
+        <h2 class="text-sm font-semibold text-gray-400 mb-4">{% trans "Choisissez votre nouveau plan" %}</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Plan Standard -->
+            <div class="border border-white/10 rounded-xl p-4 hover:border-purple-500/30 transition {% if selected_plan == 'standard' %}border-purple-500/50 bg-purple-500/5{% endif %}">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-semibold text-white">{% trans "Standard" %}</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">{% trans "100 invités, 5 co-organisateurs" %}</p>
+                    </div>
+                    {% if selected_plan == 'standard' %}
+                        <span class="badge badge-green text-xs"><i class="fas fa-check-circle mr-1"></i> {% trans "Actif" %}</span>
+                    {% endif %}
+                </div>
+                <div class="mt-3">
+                    <p class="text-xl font-bold text-white">10 $ <span class="text-sm font-normal text-gray-400">/ {% trans "événement" %}</span></p>
+                    <p class="text-sm text-gray-400">25 000 FC</p>
+                </div>
+                <div class="mt-4">
+                    <ul class="space-y-1 text-xs text-gray-300">
+                        <li><i class="fas fa-check text-green-400 mr-1.5 w-3"></i> {% trans "Jusqu'à 100 invités" %}</li>
+                        <li><i class="fas fa-check text-green-400 mr-1.5 w-3"></i> {% trans "Jusqu'à 5 co-organisateurs" %}</li>
+                        <li><i class="fas fa-check text-green-400 mr-1.5 w-3"></i> {% trans "Toutes les fonctionnalités" %}</li>
                     </ul>
                 </div>
-            {% endif %}
-
-            <!-- Plan -->
-            <div class="mb-4">
-                <label for="{{ form.plan.id_for_label }}" class="form-label">
-                    <i class="fas fa-crown text-purple-400 mr-1"></i>
-                    {% trans "Plan" %} <span class="text-red-400">*</span>
-                </label>
-                {{ form.plan }}
-                {% if form.plan.errors %}
-                    <div class="form-error">
-                        <i class="fas fa-exclamation-circle"></i>
-                        {{ form.plan.errors.0 }}
-                    </div>
-                {% endif %}
+                <button onclick="selectPlan('standard')" 
+                        class="btn-primary w-full mt-4 justify-center text-sm {% if selected_plan == 'standard' %}opacity-50 cursor-not-allowed{% endif %}"
+                        {% if selected_plan == 'standard' %}disabled{% endif %}>
+                    <i class="fas fa-arrow-right mr-1.5"></i>
+                    {% if selected_plan == 'standard' %}{% trans "Plan actif" %}{% else %}{% trans "Choisir" %}{% endif %}
+                </button>
             </div>
 
-            <!-- Capture d'écran -->
-            <div class="mb-6">
-                <label for="{{ form.screenshot.id_for_label }}" class="form-label">
-                    <i class="fas fa-image text-cyan-400 mr-1"></i>
-                    {% trans "Capture d'écran du paiement" %} <span class="text-red-400">*</span>
-                </label>
-                <div class="relative">
-                    {{ form.screenshot }}
-                    <div class="mt-2 p-4 rounded-xl border-2 border-dashed border-white/10 text-center">
-                        <i class="fas fa-cloud-upload-alt text-2xl text-gray-500 mb-2 block"></i>
-                        <p class="text-xs text-gray-400">
-                            {% trans "Cliquez pour télécharger ou glissez-déposez ici" %}
-                        </p>
-                        <p class="text-xs text-gray-500 mt-1">
-                            {{ form.screenshot.help_text }}
-                        </p>
-                    </div>
+            <!-- Plan Premium -->
+            <div class="border border-white/10 rounded-xl p-4 hover:border-purple-500/30 transition {% if selected_plan == 'premium' %}border-purple-500/50 bg-purple-500/5{% endif %} relative">
+                <div class="absolute -top-2 -right-2">
+                    <span class="badge badge-yellow text-[10px]">{% trans "POPULAIRE" %}</span>
                 </div>
-                {% if form.screenshot.errors %}
-                    <div class="form-error">
-                        <i class="fas fa-exclamation-circle"></i>
-                        {{ form.screenshot.errors.0 }}
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-semibold text-white">{% trans "Premium" %}</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">{% trans "200 invités, 10 co-organisateurs" %}</p>
                     </div>
+                    {% if selected_plan == 'premium' %}
+                        <span class="badge badge-green text-xs"><i class="fas fa-check-circle mr-1"></i> {% trans "Actif" %}</span>
+                    {% endif %}
+                </div>
+                <div class="mt-3">
+                    <p class="text-xl font-bold text-white">15 $ <span class="text-sm font-normal text-gray-400">/ {% trans "événement" %}</span></p>
+                    <p class="text-sm text-gray-400">35 000 FC</p>
+                </div>
+                <div class="mt-4">
+                    <ul class="space-y-1 text-xs text-gray-300">
+                        <li><i class="fas fa-check text-green-400 mr-1.5 w-3"></i> {% trans "Jusqu'à 200 invités" %}</li>
+                        <li><i class="fas fa-check text-green-400 mr-1.5 w-3"></i> {% trans "Jusqu'à 10 co-organisateurs" %}</li>
+                        <li><i class="fas fa-check text-green-400 mr-1.5 w-3"></i> {% trans "Toutes les fonctionnalités" %}</li>
+                        <li><i class="fas fa-check text-green-400 mr-1.5 w-3"></i> {% trans "Support prioritaire" %}</li>
+                    </ul>
+                </div>
+                <button onclick="selectPlan('premium')" 
+                        class="btn-primary w-full mt-4 justify-center text-sm {% if selected_plan == 'premium' %}opacity-50 cursor-not-allowed{% endif %}"
+                        {% if selected_plan == 'premium' %}disabled{% endif %}>
+                    <i class="fas fa-arrow-right mr-1.5"></i>
+                    {% if selected_plan == 'premium' %}{% trans "Plan actif" %}{% else %}{% trans "Choisir" %}{% endif %}
+                </button>
+            </div>
+
+            <!-- Plan Illimité -->
+            <div class="border border-white/10 rounded-xl p-4 hover:border-purple-500/30 transition {% if selected_plan == 'unlimited' %}border-purple-500/50 bg-purple-500/5{% endif %}">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-semibold text-white">{% trans "Illimité" %}</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">{% trans "Invités illimités" %}</p>
+                    </div>
+                    {% if selected_plan == 'unlimited' %}
+                        <span class="badge badge-green text-xs"><i class="fas fa-check-circle mr-1"></i> {% trans "Actif" %}</span>
+                    {% endif %}
+                </div>
+                <div class="mt-3">
+                    <p class="text-xl font-bold text-white">30 $ <span class="text-sm font-normal text-gray-400">/ {% trans "événement" %}</span></p>
+                    <p class="text-sm text-gray-400">70 000 FC</p>
+                </div>
+                <div class="mt-4">
+                    <ul class="space-y-1 text-xs text-gray-300">
+                        <li><i class="fas fa-check text-green-400 mr-1.5 w-3"></i> {% trans "Invités illimités" %}</li>
+                        <li><i class="fas fa-check text-green-400 mr-1.5 w-3"></i> {% trans "Co-organisateurs illimités" %}</li>
+                        <li><i class="fas fa-check text-green-400 mr-1.5 w-3"></i> {% trans "Toutes les fonctionnalités" %}</li>
+                        <li><i class="fas fa-check text-green-400 mr-1.5 w-3"></i> {% trans "Support VIP 24/7" %}</li>
+                    </ul>
+                </div>
+                <button onclick="selectPlan('unlimited')" 
+                        class="btn-primary w-full mt-4 justify-center text-sm {% if selected_plan == 'unlimited' %}opacity-50 cursor-not-allowed{% endif %}"
+                        {% if selected_plan == 'unlimited' %}disabled{% endif %}>
+                    <i class="fas fa-arrow-right mr-1.5"></i>
+                    {% if selected_plan == 'unlimited' %}{% trans "Plan actif" %}{% else %}{% trans "Choisir" %}{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire de soumission de preuve -->
+    <div class="glass-card p-4 sm:p-6">
+        <h2 class="text-sm font-semibold text-gray-400 mb-4">{% trans "Soumettre la preuve de paiement" %}</h2>
+        
+        <form method="post" enctype="multipart/form-data" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="selected_plan" id="selected_plan" value="{{ selected_plan|default:'' }}">
+            
+            <!-- Instructions -->
+            <div class="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-sm text-gray-300">
+                <i class="fas fa-info-circle text-cyan-400 mr-1.5"></i>
+                {% trans "Effectuez le paiement via Mobile Money, Orange Money ou Airtel Money, puis téléchargez une capture d'écran du reçu." %}
+            </div>
+
+            <!-- Info paiement -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-xs text-gray-400 block mb-1">{% trans "Numéro de paiement" %}</label>
+                    <div class="form-input bg-white/5 font-mono text-sm">+243 812 345 678</div>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-400 block mb-1">{% trans "Référence" %}</label>
+                    <div class="form-input bg-white/5 font-mono text-sm">{{ event.slug|upper }}-{{ event.id }}</div>
+                </div>
+            </div>
+
+            <!-- Montant à payer -->
+            <div id="amount-display" class="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-300">{% trans "Montant à payer" %}</span>
+                    <span class="text-xl font-bold text-purple-400" id="amount-text">0 $</span>
+                </div>
+                <div class="flex justify-between items-center mt-1">
+                    <span class="text-xs text-gray-400">{% trans "En francs congolais" %}</span>
+                    <span class="text-sm font-semibold text-gray-300" id="amount-fc">0 FC</span>
+                </div>
+            </div>
+
+            <!-- Champs du formulaire -->
+            <div>
+                <label for="id_proof_image" class="text-xs text-gray-400 block mb-1">
+                    {% trans "Capture d'écran du reçu" %} <span class="text-red-400">*</span>
+                </label>
+                {{ form.proof_image }}
+                {% if form.proof_image.errors %}
+                    <p class="text-red-400 text-xs mt-1">{{ form.proof_image.errors.0 }}</p>
                 {% endif %}
+                <p class="text-[10px] text-gray-500 mt-1">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    {% trans "Formats acceptés : PNG, JPG, PDF. Taille max : 5MB." %}
+                </p>
+            </div>
+
+            <div>
+                <label for="id_notes" class="text-xs text-gray-400 block mb-1">{% trans "Notes (optionnel)" %}</label>
+                {{ form.notes }}
+                <p class="text-[10px] text-gray-500 mt-1">
+                    {% trans "Ajoutez des informations supplémentaires si nécessaire." %}
+                </p>
             </div>
 
             <!-- Boutons -->
-            <div class="flex flex-wrap gap-3 pt-6 border-t border-white/10">
-                <button type="submit" class="btn-primary flex-1 sm:flex-none">
-                    <i class="fas fa-paper-plane"></i>
-                    {% trans "Envoyer la demande" %}
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                <button type="submit" class="btn-primary flex-1 justify-center">
+                    <i class="fas fa-upload mr-1.5"></i> {% trans "Soumettre la demande" %}
                 </button>
-                <a href="{% url 'events:event_detail' event.slug %}" class="btn-secondary flex-1 sm:flex-none">
-                    <i class="fas fa-times"></i> {% trans "Annuler" %}
+                <a href="{% url 'events:event_detail' event.slug %}" class="btn-secondary flex-1 justify-center">
+                    <i class="fas fa-times mr-1.5"></i> {% trans "Annuler" %}
                 </a>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+    /**
+     * Sélectionne un plan et met à jour l'affichage
+     */
+    function selectPlan(plan) {
+        document.getElementById('selected_plan').value = plan;
+        
+        const prices = {
+            'standard': { usd: 10, fc: 25000 },
+            'premium': { usd: 15, fc: 35000 },
+            'unlimited': { usd: 30, fc: 70000 }
+        };
+        
+        const price = prices[plan];
+        if (price) {
+            document.getElementById('amount-text').textContent = price.usd + ' $';
+            document.getElementById('amount-fc').textContent = price.fc + ' FC';
+        }
+        
+        // Mettre en évidence le plan sélectionné
+        document.querySelectorAll('.border-white\\/10').forEach(card => {
+            card.classList.remove('border-purple-500/50', 'bg-purple-500/5');
+        });
+        event.target.closest('.border-white\\/10').classList.add('border-purple-500/50', 'bg-purple-500/5');
+    }
+
+    // Sélectionner le plan par défaut si déjà choisi
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectedPlan = document.getElementById('selected_plan').value;
+        if (selectedPlan) {
+            selectPlan(selectedPlan);
+        }
+    });
+</script>
 {% endblock %}

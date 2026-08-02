@@ -156,6 +156,9 @@
     .badge-green { background: rgba(16, 185, 129, 0.15); color: #34d399; }
     .badge-yellow { background: rgba(234, 179, 8, 0.15); color: #fbbf24; }
     .badge-red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+    .badge-warning { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+    .badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .badge-info { background: rgba(6, 182, 212, 0.15); color: #67e8f9; }
 
     /* ============================================================ */
     /* MODAL SUPPRESSION */
@@ -210,6 +213,30 @@
     }
 
     /* ============================================================ */
+    /* CARTE PLAN / PAIEMENT */
+    /* ============================================================ */
+    .plan-card {
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(6, 182, 212, 0.05));
+        border-radius: 12px;
+        padding: 16px;
+        transition: all 0.3s ease;
+    }
+    .plan-card:hover {
+        border-color: rgba(139, 92, 246, 0.4);
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.1);
+    }
+    .plan-card .plan-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #a78bfa;
+    }
+    .plan-card .plan-limits {
+        font-size: 12px;
+        color: rgba(255,255,255,0.6);
+    }
+
+    /* ============================================================ */
     /* RESPONSIVE */
     /* ============================================================ */
     @media (max-width: 640px) {
@@ -217,6 +244,7 @@
         .stat-card .stat-label { font-size: 9px; }
         .glass-card { padding: 12px; }
         .modal-content { padding: 24px 20px; }
+        .plan-card { padding: 12px; }
     }
 </style>
 {% endblock %}
@@ -258,6 +286,24 @@
                         <i class="fas fa-chair mr-1"></i> {% trans "Tables" %}
                     </span>
                 {% endif %}
+                <!-- Statut du paiement -->
+                {% if is_paid %}
+                    <span class="badge badge-success text-[10px] sm:text-xs">
+                        <i class="fas fa-check-circle mr-1"></i> {% trans "Payé" %}
+                    </span>
+                {% elif has_payment_pending %}
+                    <span class="badge badge-warning text-[10px] sm:text-xs">
+                        <i class="fas fa-clock mr-1"></i> {% trans "Paiement en attente" %}
+                    </span>
+                {% elif has_payment_rejected %}
+                    <span class="badge badge-red text-[10px] sm:text-xs">
+                        <i class="fas fa-times-circle mr-1"></i> {% trans "Paiement rejeté" %}
+                    </span>
+                {% else %}
+                    <span class="badge badge-gray text-[10px] sm:text-xs">
+                        <i class="fas fa-credit-card mr-1"></i> {% trans "Non payé" %}
+                    </span>
+                {% endif %}
             </div>
         </div>
         <div class="flex gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto">
@@ -271,12 +317,93 @@
     </div>
 
     <!-- ============================================================ -->
+    <!-- CARTE PLAN / PAIEMENT -->
+    <!-- ============================================================ -->
+    <div class="plan-card mb-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="plan-name">
+                        <i class="fas fa-crown mr-1"></i>
+                        {{ plan_info.name|default:"Plan gratuit" }}
+                    </span>
+                    <span class="badge badge-info text-[10px] sm:text-xs">
+                        <i class="fas fa-users mr-1"></i>
+                        {{ plan_info.max_guests }} {% trans "invités" %}
+                    </span>
+                    <span class="badge badge-info text-[10px] sm:text-xs">
+                        <i class="fas fa-user-friends mr-1"></i>
+                        {{ plan_info.max_collaborators }} {% trans "co-organisateurs" %}
+                    </span>
+                </div>
+                <div class="text-xs text-gray-400 mt-1">
+                    {% if is_paid %}
+                        <i class="fas fa-check-circle text-green-400 mr-1"></i>
+                        {% trans "Plan activé" %}
+                        {% if payment_verified_at %}
+                            - {% trans "Validé le" %} {{ payment_verified_at|date:"d/m/Y H:i" }}
+                        {% endif %}
+                    {% elif has_payment_pending %}
+                        <i class="fas fa-clock text-yellow-400 mr-1"></i>
+                        {% trans "Demande de paiement en attente de validation" %}
+                    {% elif has_payment_rejected %}
+                        <i class="fas fa-times-circle text-red-400 mr-1"></i>
+                        {% trans "Paiement rejeté" %}
+                        {% if payment_rejection_reason %}
+                            - {{ payment_rejection_reason }}
+                        {% endif %}
+                    {% else %}
+                        <i class="fas fa-info-circle text-cyan-400 mr-1"></i>
+                        {% trans "Passez à un plan supérieur pour débloquer plus de fonctionnalités" %}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex gap-1.5 sm:gap-2 flex-wrap w-full sm:w-auto">
+                {% if not is_paid and not has_payment_pending %}
+                    <a href="{% url 'payments:payment_request' event.id %}" class="btn-primary btn-sm text-xs sm:text-sm">
+                        <i class="fas fa-credit-card"></i> {% trans "Choisir un plan" %}
+                    </a>
+                {% elif has_payment_pending %}
+                    <span class="btn-secondary btn-sm text-xs sm:text-sm opacity-50 cursor-not-allowed">
+                        <i class="fas fa-hourglass-half"></i> {% trans "En attente..." %}
+                    </span>
+                {% elif is_paid %}
+                    <span class="badge badge-success text-xs sm:text-sm px-3 py-1.5">
+                        <i class="fas fa-check-circle"></i> {% trans "Plan actif" %}
+                    </span>
+                {% endif %}
+                {% if payment_proof_image %}
+                    <a href="{{ payment_proof_image.url }}" target="_blank" class="btn-secondary btn-sm text-xs sm:text-sm">
+                        <i class="fas fa-image"></i> {% trans "Voir justificatif" %}
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% if remaining_guests is not None and not is_paid %}
+            <div class="mt-3 p-2 rounded-xl bg-yellow-500/10 border border-yellow-500/20">
+                <p class="text-xs text-yellow-400">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    {% blocktrans with remaining=remaining_guests max=plan_info.max_guests %}
+                        Il vous reste {{ remaining }} places sur {{ max }} invités.
+                    {% endblocktrans %}
+                    {% if remaining_guests <= 0 %}
+                        <strong>{% trans "Limite atteinte !" %}</strong>
+                        <a href="{% url 'payments:payment_request' event.id %}" class="text-cyan-400 hover:underline ml-1">
+                            {% trans "Passez à un plan supérieur" %}
+                        </a>
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ============================================================ -->
     <!-- STATISTIQUES -->
     <!-- ============================================================ -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
         <a href="{% url 'guests:invited_list' event.id %}" class="stat-card text-center p-2 sm:p-3">
             <div class="stat-number text-purple-400">{{ stats.total_invited|default:0 }}</div>
-            <div class="stat-label">     {% trans "Invités" %}</div>
+            <div class="stat-label">{% trans "Invités" %}</div>
         </a>
         <a href="{% url 'guests:guest_list' event.id %}" class="stat-card text-center p-2 sm:p-3">
             <div class="stat-number text-cyan-400">{{ stats.total_responses|default:0 }}</div>
@@ -465,6 +592,13 @@
                         {% empty %}
                             <p class="text-center text-gray-400 text-xs sm:text-sm py-2">{% trans "Aucun co-organisateur." %}</p>
                         {% endfor %}
+                        <!-- Indicateur de limite -->
+                        {% if max_collaborators_allowed %}
+                            <div class="text-[10px] sm:text-xs text-gray-400 text-center pt-1 border-t border-white/5">
+                                <i class="fas fa-users mr-1"></i>
+                                {{ collaborators|length|add:1 }} / {{ max_collaborators_allowed }} {% trans "co-organisateurs max" %}
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -523,12 +657,15 @@
                                 <i class="fas fa-random"></i> {% trans "Attribuer" %}
                             </button>
                         </form>
+                        <a href="{% url 'events:tables_pdf' event.id %}" class="btn-secondary btn-sm text-xs sm:text-sm">
+                            <i class="fas fa-file-pdf"></i> {% trans "PDF" %}
+                        </a>
                     </div>
                     {% if not tables %}
                         <div class="mt-2 p-2 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs">
                             <i class="fas fa-exclamation-triangle mr-1"></i>
                             {% trans "Aucune table n'a encore été créée." %}
-                            <a href="{% url 'events:table_list' event.id %}" class="text-cyan-400 hover:underline ml-1">
+                            <a href="{% url 'events:table_create' event.id %}" class="text-cyan-400 hover:underline ml-1">
                                 {% trans "Créer des tables" %}
                             </a>
                         </div>
@@ -762,7 +899,19 @@
                                 {{ invited }} pré-enregistrés | {{ verified }} vérifiés | {{ unverified }} non vérifiés
                             {% endblocktrans %}
                         </span>
+                        {% if max_guests_allowed %}
+                            <span class="ml-1 sm:ml-2">| <i class="fas fa-users mr-0.5"></i> {{ current_guest_count }}/{{ max_guests_allowed }}</span>
+                        {% endif %}
                     </div>
+                    {% if not can_add_guests and not is_paid %}
+                        <div class="mt-2 p-2 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-[10px] sm:text-xs">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            {% trans "Limite d'invités atteinte." %}
+                            <a href="{% url 'payments:payment_request' event.id %}" class="text-cyan-400 hover:underline ml-1">
+                                {% trans "Passer à un plan supérieur" %}
+                            </a>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -844,7 +993,15 @@
             btn.innerHTML = '<i class="fas fa-check text-green-400"></i>';
             setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
         } catch (err) {
-            showToast('Erreur lors de la copie', 'error');
+            // Fallback pour les navigateurs modernes
+            navigator.clipboard.writeText(input.value).then(() => {
+                const btn = input.nextElementSibling;
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check text-green-400"></i>';
+                setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+            }).catch(() => {
+                showToast('Erreur lors de la copie', 'error');
+            });
         }
     }
 

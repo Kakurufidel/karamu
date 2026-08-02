@@ -4,6 +4,9 @@ from . import views
 app_name = 'invitation'
 
 urlpatterns = [
-    path('download/<uuid:token>/', views.GenerateInvitationPDFView.as_view(), name='download_pdf'),
-    path('preview/<uuid:token>/', views.InvitationPreviewView.as_view(), name='preview_pdf'),
+    # Telechargement du PDF d'invitation (attachment)
+    path('download/<str:token>/', views.GenerateInvitationPDFView.as_view(), name='download_pdf'),
+    
+    # Previsualisation du PDF dans le navigateur (inline)
+    path('preview/<str:token>/', views.InvitationPreviewView.as_view(), name='preview_pdf'),
 ]

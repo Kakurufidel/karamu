@@ -1,0 +1,78 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{% trans "Demande de paiement approuvée" %}</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 40px;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; padding: 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="background-color: #10B981; width: 64px; height: 64px; border-radius: 50%; 
+                        display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                <span style="font-size: 32px; color: white;">✓</span>
+            </div>
+            <h1 style="color: #10B981; margin: 0;">{% trans "Paiement approuvé !" %}</h1>
+            <p style="color: #666; margin: 5px 0 0;">{{ event.name }}</p>
+        </div>
+
+        <div style="border-top: 2px solid #10B981; padding-top: 20px;">
+            <p style="color: #333; font-size: 16px;">
+                {% trans "Bonjour" %} {{ user.get_full_name|default:user.email }},
+            </p>
+            <p style="color: #333; font-size: 16px;">
+                {% trans "Nous avons le plaisir de vous informer que votre demande de paiement pour l'événement" %}
+                <strong>"{{ event.name }}"</strong> {% trans "a été approuvée." %}
+            </p>
+
+            <div style="background-color: #f0fdf4; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #10B981;">
+                <h3 style="color: #10B981; margin: 0 0 10px;">{% trans "Votre plan est maintenant actif" %}</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 6px 0; color: #666; font-size: 14px;">
+                            {% trans "Plan" %}
+                        </td>
+                        <td style="padding: 6px 0; color: #333; font-weight: bold; font-size: 14px;">
+                            {{ payment.get_plan_display }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 0; color: #666; font-size: 14px;">
+                            {% trans "Invités" %}
+                        </td>
+                        <td style="padding: 6px 0; color: #333; font-weight: bold; font-size: 14px;">
+                            {{ event.max_guests_allowed }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 0; color: #666; font-size: 14px;">
+                            {% trans "Co-organisateurs" %}
+                        </td>
+                        <td style="padding: 6px 0; color: #333; font-weight: bold; font-size: 14px;">
+                            {{ event.max_collaborators_allowed }}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{ event_url }}" 
+                   style="display: inline-block; background-color: #8B5CF6; color: #ffffff; 
+                          padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+                    {% trans "Accéder à l'événement" %}
+                </a>
+            </div>
+
+            {% if payment.admin_notes %}
+                <div style="background-color: #f8f4ff; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                    <p style="color: #666; font-size: 13px; margin: 0;">
+                        <strong>{% trans "Note de l'administrateur" %}:</strong><br>
+                        {{ payment.admin_notes }}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
